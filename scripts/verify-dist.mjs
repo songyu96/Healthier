@@ -23,6 +23,7 @@ function assert(condition, message) {
 
 assert(manifest.scope === "/Healthier/", "manifest scope 必须是 /Healthier/");
 assert(manifest.start_url === "/Healthier/#/", "manifest start_url 必须使用 /Healthier/#/");
+assert(manifest.lang === "zh-CN", "manifest lang 必须是 zh-CN");
 assert(indexHtml.includes("/Healthier/assets/"), "构建入口资源没有使用 /Healthier/ base");
 assert(indexHtml.includes("manifest.webmanifest"), "index.html 未引用 manifest");
 assert(serviceWorker.includes("manifest.webmanifest"), "Service Worker 预缓存未包含 manifest");

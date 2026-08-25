@@ -13,6 +13,7 @@ export default defineConfig({
         name: "Healthier · 书本饮食助手",
         short_name: "Healthier",
         description: "依据《你是你吃出来的》系列规则记录并改善日常饮食",
+        lang: "zh-CN",
         theme_color: "#1f5c4a",
         background_color: "#f7f4ec",
         display: "standalone",
