@@ -10,6 +10,8 @@ const profile = {
   id: "default" as const,
   birthDate: "1990-01-01",
   dietPattern: "OMNIVORE" as const,
+  dailyExercise: "NONE" as const,
+  dietHabitSummary: "三餐规律",
   heightCm: 175,
   currentWeightKg: 72,
   activityLevel: "LIGHT" as const,

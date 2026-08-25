@@ -7,6 +7,8 @@ function profile(heightCm: number): UserProfile {
     id: "default",
     birthDate: "1990-01-01",
     dietPattern: "OMNIVORE",
+    dailyExercise: "NONE",
+    dietHabitSummary: "三餐规律",
     heightCm,
     currentWeightKg: 70,
     activityLevel: "LIGHT",
