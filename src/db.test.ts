@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { db, deleteMeal, loadMealsForDate, saveConfirmedMeal } from "./db";
-import type { ConfirmedMeal } from "./domain";
+import { calculateNutrition, type ConfirmedMeal } from "./domain";
+import { BASE_FOODS } from "./domain/nutrition/foodData";
 
 function sampleMeal(): ConfirmedMeal {
   return {
@@ -57,5 +58,25 @@ describe("meal persistence", () => {
     await deleteMeal(meal.id);
     expect(await loadMealsForDate("2026-08-25")).toEqual([]);
     expect(await db.mealItems.where("mealId").equals(meal.id).count()).toBe(0);
+  });
+
+  it("重新确认迁移餐食后把快照来源更新为CONFIRMED", async () => {
+    const meal = sampleMeal();
+    const nutritionSnapshot = calculateNutrition(meal, BASE_FOODS);
+    await saveConfirmedMeal({
+      ...meal,
+      nutritionSnapshot,
+      nutritionSnapshotOrigin: "MIGRATED"
+    });
+    expect((await db.meals.get(meal.id))?.nutritionSnapshotOrigin).toBe("MIGRATED");
+
+    await saveConfirmedMeal({
+      ...meal,
+      note: "已重新确认",
+      updatedAt: "2026-08-25T09:00:00.000Z",
+      nutritionSnapshot: calculateNutrition(meal, BASE_FOODS),
+      nutritionSnapshotOrigin: "CONFIRMED"
+    });
+    expect((await db.meals.get(meal.id))?.nutritionSnapshotOrigin).toBe("CONFIRMED");
   });
 });

@@ -382,7 +382,8 @@ function TodayPage() {
       };
       const meal: ConfirmedMeal = {
         ...mealWithoutNutrition,
-        nutritionSnapshot: calculateNutrition(mealWithoutNutrition, foods)
+        nutritionSnapshot: calculateNutrition(mealWithoutNutrition, foods),
+        nutritionSnapshotOrigin: "CONFIRMED"
       };
       await saveConfirmedMeal(meal);
       setDraft(undefined);
@@ -439,11 +440,15 @@ function TodayPage() {
   );
 }
 
-function MealRow({ meal, onEdit, onDelete }: { meal: ConfirmedMeal; onEdit: () => void; onDelete: () => void | Promise<void> }) {
+export function MealRow({ meal, onEdit, onDelete }: { meal: ConfirmedMeal; onEdit: () => void; onDelete: () => void | Promise<void> }) {
   return (
     <article className="meal-row">
       <div className="meal-time"><b>{meal.eatenAt.slice(11, 16)}</b><span>{MEAL_LABELS[meal.mealType]}</span></div>
-      <div className="meal-content"><h3>{meal.items.map((item) => item.name).join("、")}</h3><p>{meal.items.map((item) => `${item.quantityMin === item.quantityMax ? item.quantityMin : `${item.quantityMin}～${item.quantityMax}`}${item.unit}`).join(" · ")}</p></div>
+      <div className="meal-content">
+        <h3>{meal.items.map((item) => item.name).join("、")}{meal.nutritionSnapshotOrigin === "MIGRATED" && <span className="tag">升级时估算</span>}</h3>
+        <p>{meal.items.map((item) => `${item.quantityMin === item.quantityMax ? item.quantityMin : `${item.quantityMin}～${item.quantityMax}`}${item.unit}`).join(" · ")}</p>
+        {meal.nutritionSnapshotOrigin === "MIGRATED" && <small>营养快照按升级或旧备份恢复当时的食物库估算；重新确认保存后会更新来源。</small>}
+      </div>
       <div className="row-actions"><button className="text-button" type="button" onClick={onEdit}>编辑</button><button className="text-button danger" type="button" onClick={() => void onDelete()}>删除</button></div>
     </article>
   );
@@ -634,7 +639,8 @@ function HistoryPage() {
       };
       await saveConfirmedMeal({
         ...mealWithoutNutrition,
-        nutritionSnapshot: calculateNutrition(mealWithoutNutrition, foods)
+        nutritionSnapshot: calculateNutrition(mealWithoutNutrition, foods),
+        nutritionSnapshotOrigin: "CONFIRMED"
       });
       setDraft(undefined);
       setHistoryMessage("历史餐食已保存。");

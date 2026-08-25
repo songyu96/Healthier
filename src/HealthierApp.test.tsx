@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { AssessmentPanel, WeeklyActionsPanel } from "./HealthierApp";
-import { assessDay, assessWeek, calculateTargets, type UserProfile } from "./domain";
+import { AssessmentPanel, MealRow, WeeklyActionsPanel } from "./HealthierApp";
+import { assessDay, assessWeek, calculateTargets, type ConfirmedMeal, type UserProfile } from "./domain";
 
 function profile(healthFlags: UserProfile["healthFlags"]): UserProfile {
   return {
@@ -49,5 +49,34 @@ describe("AssessmentPanel safety rendering", () => {
     expect(html).toContain("正在用药");
     expect(html).not.toContain("下周行动");
     expect(html).not.toContain("完整记录不足");
+  });
+
+  it("迁移餐食展示升级时估算标记和局限说明", () => {
+    const meal: ConfirmedMeal = {
+      id: "migrated-meal",
+      protocolVersion: "HD1",
+      eatenAt: "2026-08-25T08:00:00",
+      date: "2026-08-25",
+      mealType: "B",
+      items: [{
+        tempId: "egg", name: "鸡蛋", category: "EG", state: "CK",
+        quantityMin: 1, quantityMax: 1, unit: "pc"
+      }],
+      cookingMethod: "BOIL",
+      note: "",
+      rawImportLine: "test",
+      unknownOil: false,
+      unknownSalt: false,
+      ruleSetVersion: "book-rules-0.1",
+      nutritionSnapshotOrigin: "MIGRATED",
+      createdAt: "2026-08-25T08:01:00",
+      updatedAt: "2026-08-25T08:01:00"
+    };
+    const html = renderToStaticMarkup(
+      <MealRow meal={meal} onEdit={() => undefined} onDelete={() => undefined} />
+    );
+
+    expect(html).toContain("升级时估算");
+    expect(html).toContain("旧备份恢复当时的食物库");
   });
 });
