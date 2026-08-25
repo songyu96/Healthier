@@ -8,6 +8,8 @@ import { calculateTargets } from "./targets";
 
 const profile = {
   id: "default" as const,
+  birthDate: "1990-01-01",
+  dietPattern: "OMNIVORE" as const,
   heightCm: 175,
   currentWeightKg: 72,
   activityLevel: "LIGHT" as const,

@@ -133,6 +133,12 @@ export function validateMealDraft(
   return errors;
 }
 
+const UNKNOWN_NOTE_WORDS = "未知|不详|不清楚|没看清|不确定|未记录|无法确认";
+
+function noteSuggestsUnknown(note: string, subject: "油" | "盐"): boolean {
+  return new RegExp(`${subject}[^|;]{0,8}(?:${UNKNOWN_NOTE_WORDS})|(?:${UNKNOWN_NOTE_WORDS})[^|;]{0,8}${subject}`).test(note);
+}
+
 export function parseHd1(rawLine: string): Hd1ParseResult {
   const line = rawLine.trim();
   const errors: string[] = [];
@@ -175,8 +181,8 @@ export function parseHd1(rawLine: string): Hd1ParseResult {
       cookingMethod: cookingMethod.trim() || "UNKNOWN",
       note: note.trim(),
       rawImportLine: rawLine,
-      unknownOil: /油[^|;]*未知|未知[^|;]*油/.test(note),
-      unknownSalt: /盐[^|;]*未知|未知[^|;]*盐/.test(note)
+      unknownOil: noteSuggestsUnknown(note, "油"),
+      unknownSalt: noteSuggestsUnknown(note, "盐")
     }
   };
 }

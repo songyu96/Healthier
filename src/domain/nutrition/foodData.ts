@@ -746,8 +746,7 @@ export const BASE_FOODS: FoodReference[] = [
     "id": "chicken-breast-roasted",
     "name": "鸡胸肉",
     "aliases": [
-      "去皮鸡胸",
-      "鸡肉"
+      "去皮鸡胸"
     ],
     "category": "MP",
     "basisUnit": "g",
@@ -946,9 +945,7 @@ export const BASE_FOODS: FoodReference[] = [
     "category": "SO",
     "basisUnit": "g",
     "compatibleStates": [
-      "RW",
-      "CK",
-      "EA"
+      "RW"
     ],
     "nutrientsPer100": {
       "kcal": 144,
@@ -1052,9 +1049,7 @@ export const BASE_FOODS: FoodReference[] = [
     "category": "NS",
     "basisUnit": "g",
     "compatibleStates": [
-      "RW",
-      "EA",
-      "PK"
+      "RW"
     ],
     "nutrientsPer100": {
       "kcal": 567,

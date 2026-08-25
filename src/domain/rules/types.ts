@@ -4,12 +4,16 @@ import type { NutrientRange, NutritionFacts } from "../nutrition/types";
 export const ACTIVITY_LEVELS = ["BEDRIDDEN", "LIGHT", "MODERATE", "HEAVY"] as const;
 export type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
 
-export type HealthFlag = "DISEASE" | "MEDICATION" | "PREGNANT" | "MINOR" | "EATING_DISORDER";
+export type HealthFlag = "DISEASE" | "MEDICATION" | "PREGNANT" | "MINOR" | "EATING_DISORDER" |
+  "ABNORMAL_TESTS" | "PERSISTENT_SYMPTOMS" | "MALNUTRITION";
+export type DietPattern = "OMNIVORE" | "VEGETARIAN" | "VEGAN" | "OTHER";
 
 export interface UserProfile {
   id: "default";
   name?: string;
   birthYear?: number;
+  birthDate?: string;
+  dietPattern?: DietPattern;
   sex?: "F" | "M" | "UNSPECIFIED";
   heightCm: number;
   currentWeightKg: number;
@@ -44,6 +48,9 @@ export interface DailyTargets {
   };
   safetyRestricted: boolean;
   safetyMessages: string[];
+  profileComplete?: boolean;
+  missingProfileFields?: string[];
+  proteinCrossCheckStatus?: "LOW" | "WITHIN" | "HIGH";
   sourceRuleIds: string[];
 }
 

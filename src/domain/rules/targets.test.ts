@@ -5,6 +5,8 @@ import type { UserProfile } from "./types";
 function profile(heightCm: number): UserProfile {
   return {
     id: "default",
+    birthDate: "1990-01-01",
+    dietPattern: "OMNIVORE",
     heightCm,
     currentWeightKg: 70,
     activityLevel: "LIGHT",

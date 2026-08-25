@@ -70,6 +70,9 @@ const dailyTargetsSchema = z.object({
   }).strict(),
   safetyRestricted: z.boolean(),
   safetyMessages: z.array(z.string()),
+  profileComplete: z.boolean().optional(),
+  missingProfileFields: z.array(z.string()).optional(),
+  proteinCrossCheckStatus: z.enum(["LOW", "WITHIN", "HIGH"]).optional(),
   sourceRuleIds: z.array(z.string())
 }).strict();
 
@@ -77,13 +80,18 @@ const profileSchema = z.object({
   id: z.literal("default"),
   name: z.string().optional(),
   birthYear: z.number().int().min(1900).max(3000).optional(),
+  birthDate: dateKeySchema.optional(),
+  dietPattern: z.enum(["OMNIVORE", "VEGETARIAN", "VEGAN", "OTHER"]).optional(),
   sex: z.enum(["F", "M", "UNSPECIFIED"]).optional(),
   heightCm: z.number().finite().gt(105).max(250),
   currentWeightKg: finitePositive.max(500),
   waistCm: finitePositive.max(300).optional(),
   activityLevel: z.enum(ACTIVITY_LEVELS),
   overweightAdjustmentEnabled: z.boolean(),
-  healthFlags: z.array(z.enum(["DISEASE", "MEDICATION", "PREGNANT", "MINOR", "EATING_DISORDER"])),
+  healthFlags: z.array(z.enum([
+    "DISEASE", "MEDICATION", "PREGNANT", "MINOR", "EATING_DISORDER",
+    "ABNORMAL_TESTS", "PERSISTENT_SYMPTOMS", "MALNUTRITION"
+  ])),
   updatedAt: dateTimeSchema
 }).strict();
 

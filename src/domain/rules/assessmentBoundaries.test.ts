@@ -9,6 +9,8 @@ import { calculateTargets } from "./targets";
 
 const targets = calculateTargets({
   id: "default",
+  birthDate: "1990-01-01",
+  dietPattern: "OMNIVORE",
   heightCm: 175,
   currentWeightKg: 70,
   activityLevel: "LIGHT",

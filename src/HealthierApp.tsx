@@ -75,7 +75,10 @@ const HEALTH_FLAGS: { value: HealthFlag; label: string }[] = [
   { value: "MEDICATION", label: "正在用药" },
   { value: "PREGNANT", label: "孕产期" },
   { value: "MINOR", label: "未成年人" },
-  { value: "EATING_DISORDER", label: "存在进食障碍风险" }
+  { value: "EATING_DISORDER", label: "存在进食障碍风险" },
+  { value: "ABNORMAL_TESTS", label: "有重要异常检查/化验结果" },
+  { value: "PERSISTENT_SYMPTOMS", label: "有持续症状" },
+  { value: "MALNUTRITION", label: "有明显营养不良风险" }
 ];
 
 function localDateKey(date = new Date()): string {
@@ -162,7 +165,7 @@ function Layout({ children }: PropsWithChildren) {
         <span className="local-badge">仅存本机</span>
       </header>
       {update && (
-        <button className="update-banner" type="button" onClick={() => void update()}>
+        <button className="update-banner" type="button" onClick={() => { if (confirm("更新会刷新页面，请确认已保存当前草稿。继续更新？")) void update(); }}>
           新版本已准备好，点此更新
         </button>
       )}
@@ -403,7 +406,7 @@ function TodayPage() {
         <div className="section-heading"><div><span className="eyebrow">今日记录</span><h2>{meals.length} 个餐次</h2></div></div>
         {meals.length === 0 ? <EmptyState text="还没有餐食记录。" /> : (
           <div className="meal-list">
-            {meals.map((meal) => <MealRow key={meal.id} meal={meal} onEdit={() => setDraft(meal)} onDelete={async () => { if (confirm("删除这条餐食记录？")) await deleteMeal(meal.id); }} />)}
+            {meals.map((meal) => <MealRow key={meal.id} meal={meal} onEdit={() => setDraft(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); } catch (error) { setMessage(errorMessage(error)); } }} />)}
           </div>
         )}
         <div className="daily-controls">
@@ -462,7 +465,7 @@ function ProfileEditor({ showTitle = true, onSaved }: { showTitle?: boolean; onS
       {showTitle && <div className="section-heading"><div><span className="eyebrow">计算依据</span><h2>个人资料</h2></div></div>}
       <div className="form-grid two-columns">
         <label>称呼（可选）<input value={form.name ?? ""} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
-        <label>出生年份（可选）<input type="number" min="1900" max={new Date().getFullYear()} value={form.birthYear ?? ""} onChange={(event) => setForm({ ...form, birthYear: event.target.value ? number(event.target.value) : undefined })} /></label>
+        <label>出生日期<input type="date" max={localDateKey()} value={form.birthDate ?? ""} onChange={(event) => setForm({ ...form, birthDate: event.target.value || undefined })} /></label>
         <label>身高（cm）<input required type="number" min="106" max="250" step="0.1" value={form.heightCm} onChange={(event) => setForm({ ...form, heightCm: number(event.target.value) })} /></label>
         <label>当前体重（kg）<input required type="number" min="20" max="300" step="0.1" value={form.currentWeightKg} onChange={(event) => setForm({ ...form, currentWeightKg: number(event.target.value) })} /></label>
         <label>活动强度
@@ -473,6 +476,11 @@ function ProfileEditor({ showTitle = true, onSaved }: { showTitle?: boolean; onS
         <label>性别（仅记录）
           <select value={form.sex ?? "UNSPECIFIED"} onChange={(event) => setForm({ ...form, sex: event.target.value as UserProfile["sex"] })}>
             <option value="UNSPECIFIED">不指定</option><option value="F">女</option><option value="M">男</option>
+          </select>
+        </label>
+        <label>日常饮食模式
+          <select value={form.dietPattern ?? ""} onChange={(event) => setForm({ ...form, dietPattern: event.target.value ? event.target.value as UserProfile["dietPattern"] : undefined })}>
+            <option value="">请选择</option><option value="OMNIVORE">杂食</option><option value="VEGETARIAN">蛋奶素/素食</option><option value="VEGAN">纯素</option><option value="OTHER">其他</option>
           </select>
         </label>
       </div>
@@ -493,7 +501,12 @@ function CalculatorPage() {
       <ProfileEditor />
       {targets && (
         <>
-          <section className="card result-card">
+          {targets.safetyRestricted ? <section className="card result-card">
+            <span className="eyebrow">自动建议已暂停</span>
+            <h2>当前只保留记录功能</h2>
+            <p>请先补全健康模式资料，或就已勾选的特殊情况咨询医生/注册营养师。本页不展示追赶式能量和宏量目标。</p>
+            {targets.safetyMessages.map((message) => <p className="notice warning" key={message}>{message}</p>)}
+          </section> : <section className="card result-card">
             <span className="eyebrow">你的每日目标</span>
             <div className="big-result"><strong>{targets.energyKcal.toFixed(0)}</strong><span>kcal / 天</span></div>
             <p>{targets.standardWeightKg.toFixed(1)} kg 标准体重 × {targets.activityFactor} kcal/kg</p>
@@ -503,12 +516,11 @@ function CalculatorPage() {
               <div><span>脂肪 30%</span><b>{targets.fatG.toFixed(1)} g</b></div>
             </div>
             <dl className="result-list">
-              <div><dt>蛋白质交叉检查</dt><dd>{formatRange(targets.proteinCrossCheck.min, targets.proteinCrossCheck.max, "g", 1)}</dd></div>
+              <div><dt>蛋白质交叉检查</dt><dd>{formatRange(targets.proteinCrossCheck.min, targets.proteinCrossCheck.max, "g", 1)} · {targets.proteinCrossCheckStatus === "LOW" ? "15%口径偏低" : targets.proteinCrossCheckStatus === "HIGH" ? "15%口径偏高" : "两个口径一致"}</dd></div>
               <div><dt>动物/植物蛋白分配</dt><dd>各约 {targets.animalProteinG.toFixed(1)} g</dd></div>
               <div><dt>早餐能量范围</dt><dd>{formatRange(targets.breakfastEnergy.min, targets.breakfastEnergy.max, "kcal")}</dd></div>
             </dl>
-            {targets.safetyMessages.map((message) => <p className="notice warning" key={message}>{message}</p>)}
-          </section>
+          </section>}
           <section className="card">
             <div className="section-heading"><div><span className="eyebrow">来源追踪</span><h2>采用的书本规则</h2></div></div>
             <ul className="rule-list">
@@ -531,11 +543,14 @@ function HistoryPage() {
   const foods = useFoodReferences();
   const start = dateOffset(-6);
   const end = localDateKey();
+  const [selectedDate, setSelectedDate] = useState(end);
   const meals = useLiveQuery(() => loadMealsBetween(start, end), [start, end], []);
+  const selectedMeals = useLiveQuery(() => loadMealsForDate(selectedDate), [selectedDate], []);
   const settings = useLiveQuery(() => db.settings.toArray(), [], []);
   const metrics = useLiveQuery(() => db.bodyMetrics.orderBy("measuredAt").toArray(), [], []);
   const [draft, setDraft] = useState<ConfirmedMeal>();
   const [saving, setSaving] = useState(false);
+  const [historyMessage, setHistoryMessage] = useState("");
   const currentTargets = profile ? calculateTargets(profile) : undefined;
   const dates = Array.from({ length: 7 }, (_, index) => dateOffset(index - 6));
   const completedMap = new Map(dates.map((date) => [date, completedFromSettings(settings, date)]));
@@ -585,6 +600,9 @@ function HistoryPage() {
         nutritionSnapshot: calculateNutrition(mealWithoutNutrition, foods)
       });
       setDraft(undefined);
+      setHistoryMessage("历史餐食已保存。");
+    } catch (error) {
+      setHistoryMessage(errorMessage(error));
     } finally { setSaving(false); }
   };
 
@@ -610,11 +628,10 @@ function HistoryPage() {
         {week.issues.length ? <ol className="issue-list">{week.issues.slice(0, 3).map((issue) => <li key={issue}>{issue}</li>)}</ol> : <p>当前记录未发现优先级更高的问题，继续保持完整记录和食材轮换。</p>}
       </section>
       <section className="card">
-        <div className="section-heading"><div><span className="eyebrow">历史餐食</span><h2>最近 7 天</h2></div></div>
-        {dates.slice().reverse().map((date) => {
-          const dateMeals = meals.filter((meal) => meal.date === date);
-          return <div className="history-day" key={date}><h3>{date}<span>{completedMap.get(date) ? "完整" : "未标记完整"}</span></h3>{dateMeals.length ? dateMeals.map((meal) => <MealRow key={meal.id} meal={meal} onEdit={() => setDraft(meal)} onDelete={async () => { if (confirm("删除这条餐食记录？")) await deleteMeal(meal.id); }} />) : <p className="muted">无记录</p>}</div>;
-        })}
+        <div className="section-heading"><div><span className="eyebrow">按日期管理</span><h2>查看任意日期餐食</h2></div></div>
+        <label>选择日期<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
+        {historyMessage && <p className="notice">{historyMessage}</p>}
+        <div className="history-day"><h3>{selectedDate}<span>{completedFromSettings(settings, selectedDate) ? "完整" : "未标记完整"}</span></h3>{selectedMeals.length ? selectedMeals.map((meal) => <MealRow key={meal.id} meal={meal} onEdit={() => setDraft(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); setHistoryMessage("餐食已删除。"); } catch (error) { setHistoryMessage(errorMessage(error)); } }} />) : <p className="muted">该日期无记录</p>}</div>
       </section>
       {draft && <MealDraftEditor draft={draft} foods={foods} onChange={(next) => setDraft(next as ConfirmedMeal)} onCancel={() => setDraft(undefined)} onSave={() => void saveEdit()} saving={saving} />}
     </div>
