@@ -231,6 +231,22 @@ export const backupPayloadSchema = z.object({
     if (meal.nutritionSnapshot && meal.nutritionSnapshot.mealId !== meal.id) {
       context.addIssue({ code: "custom", message: `营养快照与餐食ID不一致：${meal.id}` });
     }
+    if (meal.nutritionSnapshotOrigin && !meal.nutritionSnapshot) {
+      context.addIssue({ code: "custom", message: `营养快照来源缺少对应快照：${meal.id}` });
+    }
+    if (meal.nutritionSnapshot) {
+      const mealTempIds = new Set(
+        payload.mealItems.filter((item) => item.mealId === meal.id).map((item) => item.tempId)
+      );
+      const snapshotTempIds = new Set([
+        ...meal.nutritionSnapshot.items.map((item) => item.tempId),
+        ...meal.nutritionSnapshot.unknownItems.map((item) => item.tempId)
+      ]);
+      if (mealTempIds.size !== snapshotTempIds.size ||
+          [...mealTempIds].some((tempId) => !snapshotTempIds.has(tempId))) {
+        context.addIssue({ code: "custom", message: `营养快照与餐食项不一致：${meal.id}` });
+      }
+    }
   });
   payload.meals.forEach((meal) => {
     if (!payload.mealItems.some((item) => item.mealId === meal.id)) {

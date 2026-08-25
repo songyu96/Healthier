@@ -12,6 +12,8 @@ import {
 
 function profile(heightCm: number): UserProfile {
   return {
+    dailyExercise: "NONE",
+    dietHabitSummary: "三餐规律",
     id: "default",
     heightCm,
     currentWeightKg: 70,

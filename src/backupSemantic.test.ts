@@ -62,4 +62,53 @@ describe("backup semantic validation", () => {
       settings: [{ key: "water:2026-08-25", value: "很多" }]
     });
   });
+
+  it("拒绝快照tempId与真实餐食项不一致", async () => {
+    const payload = await readBackupPayload();
+    const mealId = "meal-snapshot-mismatch";
+    const invalid = {
+      ...payload,
+      meals: [{
+        id: mealId,
+        protocolVersion: "HD1",
+        eatenAt: "2026-08-25T08:00:00",
+        date: "2026-08-25",
+        mealType: "B",
+        cookingMethod: "BOIL",
+        note: "",
+        rawImportLine: "test",
+        unknownOil: false,
+        unknownSalt: false,
+        ruleSetVersion: "book-rules-0.1",
+        nutritionSnapshot: {
+          mealId,
+          totals: {
+            min: { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 },
+            max: { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 }
+          },
+          items: [],
+          unknownItems: [{ tempId: "snapshot-only", name: "米饭", reason: "未知" }],
+          sourceRefs: [],
+          complete: false,
+          knownItemCount: 0,
+          totalItemCount: 1
+        },
+        createdAt: "2026-08-25T08:01:00",
+        updatedAt: "2026-08-25T08:01:00"
+      }],
+      mealItems: [{
+        id: `${mealId}:actual-item`,
+        mealId,
+        tempId: "actual-item",
+        name: "米饭",
+        category: "GR",
+        state: "CK",
+        quantityMin: 100,
+        quantityMax: 100,
+        unit: "g"
+      }]
+    };
+
+    await expectRejectedWithoutDataLoss(invalid);
+  });
 });

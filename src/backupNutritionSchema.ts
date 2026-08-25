@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FOOD_CATEGORIES } from "./domain";
+import { FOOD_CATEGORIES, isNutritionFacts } from "./domain";
 
 const finiteNonNegative = z.number().finite().nonnegative();
 
@@ -61,5 +61,8 @@ export const nutritionFactsSchema = z.object({
   }
   if (facts.complete !== (facts.unknownItems.length === 0)) {
     context.addIssue({ code: "custom", message: "营养完整状态与未知项不一致" });
+  }
+  if (!isNutritionFacts(facts)) {
+    context.addIssue({ code: "custom", message: "营养快照计算语义不一致" });
   }
 });

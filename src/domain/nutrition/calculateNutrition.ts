@@ -135,15 +135,84 @@ export function calculateNutrition(
   };
 }
 
+const NUTRIENT_KEYS = ["kcal", "protein", "fat", "carb", "fiber"] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isFiniteNonNegative(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+function isNutrientVector(value: unknown): value is NutrientVector {
+  return isRecord(value) && NUTRIENT_KEYS.every((key) => isFiniteNonNegative(value[key]));
+}
+
+function isNutrientRange(value: unknown): value is NutrientRange {
+  if (!isRecord(value)) return false;
+  const { min, max } = value;
+  if (!isNutrientVector(min) || !isNutrientVector(max)) return false;
+  return NUTRIENT_KEYS.every((key) => min[key] <= max[key]);
+}
+
+function approximatelyEqual(left: number, right: number): boolean {
+  return Math.abs(left - right) <= 1e-6 * Math.max(1, Math.abs(left), Math.abs(right));
+}
+
+function sameNutrientRange(left: NutrientRange, right: NutrientRange): boolean {
+  return NUTRIENT_KEYS.every((key) =>
+    approximatelyEqual(left.min[key], right.min[key]) &&
+    approximatelyEqual(left.max[key], right.max[key])
+  );
+}
+
 export function isNutritionFacts(value: unknown): value is NutritionFacts {
-  if (!value || typeof value !== "object") return false;
-  const facts = value as Partial<NutritionFacts>;
-  return typeof facts.mealId === "string" &&
-    typeof facts.complete === "boolean" &&
-    Number.isInteger(facts.knownItemCount) &&
-    Number.isInteger(facts.totalItemCount) &&
-    Array.isArray(facts.items) && Array.isArray(facts.unknownItems) &&
-    Array.isArray(facts.sourceRefs) && Boolean(facts.totals);
+  if (!isRecord(value) || !isNonEmptyString(value.mealId) ||
+      typeof value.complete !== "boolean" || !Number.isInteger(value.knownItemCount) ||
+      !Number.isInteger(value.totalItemCount) || !Array.isArray(value.items) ||
+      !Array.isArray(value.unknownItems) || !Array.isArray(value.sourceRefs) ||
+      !isNutrientRange(value.totals)) return false;
+
+  const itemsValid = value.items.every((item) => isRecord(item) &&
+    isNonEmptyString(item.tempId) && isNonEmptyString(item.foodId) &&
+    isNonEmptyString(item.name) && isNonEmptyString(item.category) &&
+    (item.basisUnit === "g" || item.basisUnit === "ml") &&
+    isFiniteNonNegative(item.basisQuantityMin) &&
+    isFiniteNonNegative(item.basisQuantityMax) &&
+    item.basisQuantityMin <= item.basisQuantityMax &&
+    isNutrientRange(item.nutrients) && isNonEmptyString(item.sourceRef));
+  const unknownItemsValid = value.unknownItems.every((item) => isRecord(item) &&
+    isNonEmptyString(item.tempId) && isNonEmptyString(item.name) && isNonEmptyString(item.reason));
+  if (!itemsValid || !unknownItemsValid ||
+      !value.sourceRefs.every(isNonEmptyString)) return false;
+
+  const items = value.items as ItemNutritionFact[];
+  const unknownItems = value.unknownItems as NutritionFacts["unknownItems"];
+  const sourceRefs = value.sourceRefs as string[];
+  const tempIds = [...items.map((item) => item.tempId), ...unknownItems.map((item) => item.tempId)];
+  if (new Set(tempIds).size !== tempIds.length ||
+      value.knownItemCount !== items.length ||
+      value.totalItemCount !== tempIds.length ||
+      value.complete !== (unknownItems.length === 0)) return false;
+
+  const expectedTotals = items.reduce<NutrientRange>(
+    (sum, item) => ({
+      min: addVector(sum.min, item.nutrients.min),
+      max: addVector(sum.max, item.nutrients.max)
+    }),
+    { min: { ...ZERO_VECTOR }, max: { ...ZERO_VECTOR } }
+  );
+  if (!sameNutrientRange(value.totals, expectedTotals)) return false;
+
+  const expectedSourceRefs = new Set(items.map((item) => item.sourceRef));
+  return new Set(sourceRefs).size === sourceRefs.length &&
+    sourceRefs.length === expectedSourceRefs.size &&
+    sourceRefs.every((sourceRef) => expectedSourceRefs.has(sourceRef));
 }
 
 export function nutritionFactsForMeal(meal: ConfirmedMeal, foods: FoodReference[]): NutritionFacts {

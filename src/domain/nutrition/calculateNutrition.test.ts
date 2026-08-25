@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ConfirmedMeal } from "../meals/types";
 import type { FoodReference } from "./types";
-import { calculateNutrition } from "./calculateNutrition";
+import { calculateNutrition, isNutritionFacts } from "./calculateNutrition";
 import { BASE_FOODS } from "./foodData";
 
 function meal(overrides: Partial<ConfirmedMeal> = {}): ConfirmedMeal {
@@ -84,4 +84,31 @@ describe("calculateNutrition", () => {
     expect(result.unknownItems[0].reason).toContain("未提供营养值");
   });
 });
+
+  it("运行时拒绝总计、tempId或来源集合被篡改的快照", () => {
+    const valid = calculateNutrition(meal(), BASE_FOODS);
+    expect(isNutritionFacts(valid)).toBe(true);
+
+    const tamperedTotals = {
+      ...valid,
+      totals: {
+        ...valid.totals,
+        min: { ...valid.totals.min, kcal: valid.totals.min.kcal + 1 }
+      }
+    };
+    expect(isNutritionFacts(tamperedTotals)).toBe(false);
+
+    const duplicateTempId = {
+      ...valid,
+      items: [valid.items[0], valid.items[0]],
+      knownItemCount: 2,
+      totalItemCount: 2
+    };
+    expect(isNutritionFacts(duplicateTempId)).toBe(false);
+
+    expect(isNutritionFacts({
+      ...valid,
+      sourceRefs: [...valid.sourceRefs, "USER:tampered:2026"]
+    })).toBe(false);
+  });
 
