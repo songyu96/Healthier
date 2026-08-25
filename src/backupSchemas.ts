@@ -6,6 +6,7 @@ import {
   MEAL_TYPES,
   QUANTITY_UNITS
 } from "./domain";
+import { nutritionFactsSchema } from "./backupNutritionSchema";
 
 const finiteNonNegative = z.number().finite().nonnegative();
 const finitePositive = z.number().finite().positive();
@@ -107,6 +108,7 @@ const mealSchema = z.object({
   unknownSalt: z.boolean(),
   ruleSetVersion: z.string().min(1),
   targetSnapshot: dailyTargetsSchema.optional(),
+  nutritionSnapshot: nutritionFactsSchema.optional(),
   createdAt: dateTimeSchema,
   updatedAt: dateTimeSchema
 }).strict()
@@ -144,6 +146,11 @@ const foodOverrideSchema = z.object({
   updatedAt: dateTimeSchema
 }).strict();
 
+const dayCompletionSchema = z.union([
+  z.boolean(),
+  z.object({ completed: z.literal(true), revision: z.number().int().nonnegative(), completedAt: dateTimeSchema }).strict()
+]);
+
 const settingSchema = z.object({
   key: z.string().min(1),
   value: z.unknown()
@@ -151,13 +158,24 @@ const settingSchema = z.object({
   if (!isJsonValue(setting.value)) {
     context.addIssue({ code: "custom", message: "设置值必须是可序列化JSON" });
   }
-  if (setting.key.startsWith("dayComplete:") && typeof setting.value !== "boolean") {
-    context.addIssue({ code: "custom", message: "完成日设置必须是布尔值" });
+  if (setting.key.startsWith("dayComplete:") && !dayCompletionSchema.safeParse(setting.value).success) {
+    context.addIssue({ code: "custom", message: "完成日设置格式无效" });
   }
   if (setting.key.startsWith("water:") && (
     typeof setting.value !== "number" || !Number.isFinite(setting.value) || setting.value < 0
   )) {
     context.addIssue({ code: "custom", message: "饮水设置必须是非负有限数值" });
+  }
+  if (setting.key.startsWith("dayRevision:") && (
+    typeof setting.value !== "number" || !Number.isInteger(setting.value) || setting.value < 0
+  )) {
+    context.addIssue({ code: "custom", message: "完成日修订号必须是非负整数" });
+  }
+  if (setting.key.startsWith("dayTarget:") && !dailyTargetsSchema.safeParse(setting.value).success) {
+    context.addIssue({ code: "custom", message: "每日目标快照格式无效" });
+  }
+  if (setting.key === "restoreRollback" && typeof setting.value !== "string") {
+    context.addIssue({ code: "custom", message: "恢复回滚点必须是加密字符串" });
   }
 });
 
@@ -196,6 +214,11 @@ export const backupPayloadSchema = z.object({
     }
     if (item.id !== `${item.mealId}:${item.tempId}`) {
       context.addIssue({ code: "custom", message: `食物项ID与餐食关系不一致：${item.id}` });
+    }
+  });
+  payload.meals.forEach((meal) => {
+    if (meal.nutritionSnapshot && meal.nutritionSnapshot.mealId !== meal.id) {
+      context.addIssue({ code: "custom", message: `营养快照与餐食ID不一致：${meal.id}` });
     }
   });
   payload.meals.forEach((meal) => {

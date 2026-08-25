@@ -14,7 +14,7 @@ afterEach(async () => {
 
 async function expectRejectedWithoutDataLoss(raw: unknown): Promise<void> {
   await db.settings.put({ key: "original", value: "保留" });
-  await expect(restoreBackup(raw as BackupPayload)).rejects.toThrow();
+  await expect(restoreBackup(raw as BackupPayload, "rollback-password")).rejects.toThrow();
   expect(await db.settings.get("original")).toEqual({ key: "original", value: "保留" });
 }
 

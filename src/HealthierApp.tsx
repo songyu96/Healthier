@@ -19,8 +19,11 @@ import {
   assessWeek,
   calculateNutrition,
   calculateTargets,
+  isDailyTargets,
+  nutritionFactsForMeal,
   parseHd1,
   recommendNextMeal,
+  resolveDailyTargets,
   validateMealDraft,
   type ActivityLevel,
   type ConfirmedMeal,
@@ -38,11 +41,14 @@ import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
 import {
   db,
   deleteMeal,
+  getDayCompletion,
   getSetting,
   loadMealsBetween,
   loadMealsForDate,
   saveConfirmedMeal,
+  setDayCompletion,
   setSetting,
+  type AppSetting,
   type BodyMetric,
   type FoodOverride
 } from "./db";
@@ -117,7 +123,21 @@ function useFoodReferences(): FoodReference[] {
 }
 
 function mealFacts(meals: ConfirmedMeal[], foods: FoodReference[]) {
-  return meals.map((meal) => ({ meal, facts: calculateNutrition(meal, foods) }));
+  return meals.map((meal) => ({ meal, facts: nutritionFactsForMeal(meal, foods) }));
+}
+
+function settingValue(settings: AppSetting[], key: string): unknown {
+  return settings.find((setting) => setting.key === key)?.value;
+}
+
+function completedFromSettings(settings: AppSetting[], date: string): boolean {
+  const completion = settingValue(settings, `dayComplete:${date}`);
+  if (typeof completion === "boolean") return completion;
+  if (!completion || typeof completion !== "object") return false;
+  const revision = settingValue(settings, `dayRevision:${date}`);
+  const completionValue = completion as { completed?: unknown; revision?: unknown };
+  return completionValue.completed === true &&
+    completionValue.revision === (typeof revision === "number" ? revision : 0);
 }
 
 function Layout({ children }: PropsWithChildren) {
@@ -291,14 +311,19 @@ function TodayPage() {
   const foods = useFoodReferences();
   const today = localDateKey();
   const meals = useLiveQuery(() => loadMealsForDate(today), [today], []);
-  const completed = useLiveQuery(() => getSetting(`dayComplete:${today}`, false), [today], false);
+  const completed = useLiveQuery(() => getDayCompletion(today), [today], false);
+  const storedDayTarget = useLiveQuery(() => getSetting<unknown>(`dayTarget:${today}`, undefined), [today]);
   const waterMl = useLiveQuery(() => getSetting(`water:${today}`, 0), [today], 0);
   const [rawLine, setRawLine] = useState(`HD1|${today.replaceAll("-", "")}-0800|B|鸡蛋~EG~CK~1-1pc;牛奶~DA~EA~250-250ml|水煮|油盐未知`);
   const [errors, setErrors] = useState<string[]>([]);
   const [draft, setDraft] = useState<ParsedMeal | ConfirmedMeal>();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const targets = useMemo(() => profile ? calculateTargets(profile) : undefined, [profile]);
+  const currentTargets = useMemo(() => profile ? calculateTargets(profile) : undefined, [profile]);
+  const targets = useMemo(
+    () => currentTargets ? resolveDailyTargets(meals, storedDayTarget, currentTargets) : undefined,
+    [currentTargets, meals, storedDayTarget]
+  );
   const assessment = useMemo(() => targets ? assessDay(today, mealFacts(meals, foods), targets, { completed, waterMl }) : undefined, [completed, foods, meals, targets, today, waterMl]);
 
   const parse = () => {
@@ -314,7 +339,7 @@ function TodayPage() {
   };
 
   const save = async () => {
-    if (!draft || !targets) return;
+    if (!draft || !currentTargets) return;
     const validationErrors = validateMealDraft(draft);
     if (validationErrors.length > 0) {
       setMessage(validationErrors.join(" "));
@@ -322,19 +347,30 @@ function TodayPage() {
     }
     setSaving(true);
     try {
+      const storedTarget = draft.date === today
+        ? storedDayTarget
+        : await getSetting<unknown>(`dayTarget:${draft.date}`, undefined);
+      const draftTarget = "id" in draft ? draft.targetSnapshot : undefined;
+      const targetSnapshot = isDailyTargets(draftTarget)
+        ? draftTarget
+        : resolveDailyTargets([], storedTarget, currentTargets);
       const now = new Date().toISOString();
-      const meal: ConfirmedMeal = "id" in draft ? {
+      const mealWithoutNutrition: ConfirmedMeal = "id" in draft ? {
         ...draft,
-        ruleSetVersion: targets.ruleSetVersion,
-        targetSnapshot: targets,
+        ruleSetVersion: targetSnapshot.ruleSetVersion,
+        targetSnapshot,
         updatedAt: now
       } : {
         ...draft,
         id: crypto.randomUUID(),
-        ruleSetVersion: targets.ruleSetVersion,
-        targetSnapshot: targets,
+        ruleSetVersion: targetSnapshot.ruleSetVersion,
+        targetSnapshot,
         createdAt: now,
         updatedAt: now
+      };
+      const meal: ConfirmedMeal = {
+        ...mealWithoutNutrition,
+        nutritionSnapshot: calculateNutrition(mealWithoutNutrition, foods)
       };
       await saveConfirmedMeal(meal);
       setDraft(undefined);
@@ -372,7 +408,19 @@ function TodayPage() {
         )}
         <div className="daily-controls">
           <label>饮水（ml）<input type="number" min="0" step="100" value={waterMl} onChange={(event) => void setSetting(`water:${today}`, number(event.target.value))} /></label>
-          <label className="checkbox complete-toggle"><input type="checkbox" checked={completed} onChange={(event) => void setSetting(`dayComplete:${today}`, event.target.checked)} /><span><b>今天已记录完整</b><small>只有勾选后才计入周达标统计</small></span></label>
+          <label className="checkbox complete-toggle"><input
+            type="checkbox"
+            checked={completed}
+            disabled={meals.length === 0 && !completed}
+            onChange={async (event) => {
+              try {
+                await setDayCompletion(today, event.target.checked);
+                setMessage(event.target.checked ? "今天已标记为记录完整。" : "已取消完整标记。");
+              } catch (error) {
+                setMessage(errorMessage(error));
+              }
+            }}
+          /><span><b>今天已记录完整</b><small>餐食发生变化后会自动取消，需重新确认</small></span></label>
         </div>
       </section>
     </div>
@@ -488,15 +536,20 @@ function HistoryPage() {
   const metrics = useLiveQuery(() => db.bodyMetrics.orderBy("measuredAt").toArray(), [], []);
   const [draft, setDraft] = useState<ConfirmedMeal>();
   const [saving, setSaving] = useState(false);
-  const targets = profile ? calculateTargets(profile) : undefined;
-  const completedMap = new Map(settings.filter((item) => item.key.startsWith("dayComplete:")).map((item) => [item.key.slice(12), Boolean(item.value)]));
-  const waterMap = new Map(settings.filter((item) => item.key.startsWith("water:")).map((item) => [item.key.slice(6), Number(item.value)]));
+  const currentTargets = profile ? calculateTargets(profile) : undefined;
   const dates = Array.from({ length: 7 }, (_, index) => dateOffset(index - 6));
-  const days = targets ? dates.map((date) => {
+  const completedMap = new Map(dates.map((date) => [date, completedFromSettings(settings, date)]));
+  const waterMap = new Map(settings.filter((item) => item.key.startsWith("water:")).map((item) => [item.key.slice(6), Number(item.value)]));
+  const days = currentTargets ? dates.map((date) => {
     const dateMeals = meals.filter((meal) => meal.date === date);
-    return assessDay(date, mealFacts(dateMeals, foods), targets, { completed: completedMap.get(date) ?? false, waterMl: waterMap.get(date) ?? 0 });
+    const dayTargets = resolveDailyTargets(
+      dateMeals,
+      settingValue(settings, `dayTarget:${date}`),
+      currentTargets
+    );
+    return assessDay(date, mealFacts(dateMeals, foods), dayTargets, { completed: completedMap.get(date) ?? false, waterMl: waterMap.get(date) ?? 0 });
   }) : [];
-  const week = targets ? assessWeek(start, end, days, metrics) : undefined;
+  const week = currentTargets ? assessWeek(start, end, days, metrics) : undefined;
   const waistMetrics = metrics.filter((item) => item.waistCm !== undefined);
   const latestWaist = waistMetrics.at(-1)?.waistCm;
   const previousWaist = waistMetrics.at(-2)?.waistCm;
@@ -505,7 +558,7 @@ function HistoryPage() {
     : undefined;
 
   const saveEdit = async () => {
-    if (!draft || !targets) return;
+    if (!draft || !currentTargets) return;
     const validationErrors = validateMealDraft(draft);
     if (validationErrors.length > 0) {
       alert(validationErrors.join("\n"));
@@ -513,12 +566,26 @@ function HistoryPage() {
     }
     setSaving(true);
     try {
-      await saveConfirmedMeal({ ...draft, ruleSetVersion: targets.ruleSetVersion, targetSnapshot: targets, updatedAt: new Date().toISOString() });
+      const targetSnapshot = resolveDailyTargets(
+        [draft],
+        settingValue(settings, `dayTarget:${draft.date}`),
+        currentTargets
+      );
+      const mealWithoutNutrition: ConfirmedMeal = {
+        ...draft,
+        ruleSetVersion: targetSnapshot.ruleSetVersion,
+        targetSnapshot,
+        updatedAt: new Date().toISOString()
+      };
+      await saveConfirmedMeal({
+        ...mealWithoutNutrition,
+        nutritionSnapshot: calculateNutrition(mealWithoutNutrition, foods)
+      });
       setDraft(undefined);
     } finally { setSaving(false); }
   };
 
-  if (!profile || !targets || !week) return <PageIntro eyebrow="周总结" title="先填写个人资料" description="有每日目标后才能生成周总结。"><NavLink className="primary button-link" to="/calculator">去填写资料</NavLink></PageIntro>;
+  if (!profile || !currentTargets || !week) return <PageIntro eyebrow="周总结" title="先填写个人资料" description="有每日目标后才能生成周总结。"><NavLink className="primary button-link" to="/calculator">去填写资料</NavLink></PageIntro>;
 
   return (
     <div className="page-stack">
@@ -634,6 +701,7 @@ function FoodsPage() {
 function SettingsPage() {
   const { profile } = useApp();
   const metrics = useLiveQuery(() => db.bodyMetrics.orderBy("measuredAt").reverse().toArray(), [], []);
+  const rollbackBackup = useLiveQuery(() => getSetting<string | undefined>("restoreRollback", undefined), []);
   const [metric, setMetric] = useState({ date: localDateKey(), weightKg: profile?.currentWeightKg ?? 70, waistCm: profile?.waistCm ?? 0, note: "" });
   const [password, setPassword] = useState("");
   const [backupText, setBackupText] = useState("");
@@ -664,7 +732,16 @@ function SettingsPage() {
   const restore = async () => {
     if (!preview || !confirm("确定整体替换本机全部 Healthier 数据？此操作不可合并。")) return;
     try {
-      await restoreBackup(preview);
+      await restoreBackup(preview, password);
+      location.reload();
+    } catch (error) { setMessage(errorMessage(error)); }
+  };
+
+  const undoRestore = async () => {
+    if (!rollbackBackup || !confirm("撤销上次恢复，并换回恢复前的数据？")) return;
+    try {
+      const payload = await decryptBackup(rollbackBackup, password);
+      await restoreBackup(payload, password);
       location.reload();
     } catch (error) { setMessage(errorMessage(error)); }
   };
@@ -688,6 +765,7 @@ function SettingsPage() {
         <label className="file-picker">选择 `.hdbak` 文件<input type="file" accept=".hdbak,application/json" onChange={async (event) => { const file = event.target.files?.[0]; setBackupText(file ? await file.text() : ""); setPreview(undefined); }} /></label>
         <button className="secondary full-width" type="button" disabled={!backupText} onClick={() => void inspectBackup()}>校验并预览</button>
         {preview && <div className="backup-preview"><b>备份时间：{new Date(preview.exportedAt).toLocaleString("zh-CN")}</b><span>餐食 {preview.meals.length} 条 · 食物项 {preview.mealItems.length} 条 · 身体指标 {preview.bodyMetrics.length} 条</span><button className="danger-button" type="button" onClick={() => void restore()}>确认整体替换</button></div>}
+        {rollbackBackup && <button className="secondary full-width" type="button" onClick={() => void undoRestore()}>撤销上次恢复</button>}
         {message && <p className="notice">{message.trim()}</p>}
       </section>
       <section className="card quiet-card"><h2>隐私与适用范围</h2><p>本应用不上传数据、不调用 AI 接口，也不提供疾病治疗、用药或化验单建议。营养评价只用于个人日常自查。</p></section>

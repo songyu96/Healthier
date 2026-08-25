@@ -39,9 +39,13 @@ describe("encrypted backup", () => {
     const payload = await decryptBackup(encrypted, "correct-password");
     await db.settings.put({ key: "local-only", value: "应删除" });
 
-    await restoreBackup(payload);
+    await restoreBackup(payload, "correct-password");
 
     expect(await db.settings.get("from-backup")).toEqual({ key: "from-backup", value: "保留" });
     expect(await db.settings.get("local-only")).toBeUndefined();
+    const rollback = await db.settings.get("restoreRollback");
+    expect(typeof rollback?.value).toBe("string");
+    const rollbackPayload = await decryptBackup(rollback?.value as string, "correct-password");
+    expect(rollbackPayload.settings).toContainEqual({ key: "local-only", value: "应删除" });
   });
 });

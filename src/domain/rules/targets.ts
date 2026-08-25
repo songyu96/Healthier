@@ -1,3 +1,4 @@
+import type { ConfirmedMeal } from "../meals/types";
 import type { ActivityLevel, DailyTargets, UserProfile } from "./types";
 
 export const RULE_SET_VERSION = "book-rules-0.1";
@@ -8,6 +9,26 @@ export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   MODERATE: 35,
   HEAVY: 40
 };
+
+export function isDailyTargets(value: unknown): value is DailyTargets {
+  if (!value || typeof value !== "object") return false;
+  const targets = value as Partial<DailyTargets>;
+  return typeof targets.ruleSetVersion === "string" &&
+    typeof targets.energyKcal === "number" && Number.isFinite(targets.energyKcal) &&
+    typeof targets.proteinG === "number" && Number.isFinite(targets.proteinG) &&
+    typeof targets.safetyRestricted === "boolean" &&
+    Array.isArray(targets.sourceRuleIds) && Boolean(targets.foodGroups);
+}
+
+export function resolveDailyTargets(
+  meals: Pick<ConfirmedMeal, "targetSnapshot">[],
+  storedDayTarget: unknown,
+  fallback: DailyTargets
+): DailyTargets {
+  if (isDailyTargets(storedDayTarget)) return storedDayTarget;
+  const mealTarget = meals.find((meal) => isDailyTargets(meal.targetSnapshot))?.targetSnapshot;
+  return isDailyTargets(mealTarget) ? mealTarget : fallback;
+}
 
 export function calculateTargets(profile: UserProfile): DailyTargets {
   if (!Number.isFinite(profile.heightCm) || profile.heightCm <= 105 || profile.heightCm > 250) {

@@ -30,6 +30,12 @@ export interface AppSetting {
   value: unknown;
 }
 
+export interface DayCompletion {
+  completed: true;
+  revision: number;
+  completedAt: string;
+}
+
 export class HealthierDatabase extends Dexie {
   profiles!: EntityTable<UserProfile, "id">;
   bodyMetrics!: EntityTable<BodyMetric, "id">;
@@ -53,6 +59,19 @@ export class HealthierDatabase extends Dexie {
 
 export const db = new HealthierDatabase();
 
+const dayRevisionKey = (date: string) => `dayRevision:${date}`;
+const dayCompletionKey = (date: string) => `dayComplete:${date}`;
+const dayTargetKey = (date: string) => `dayTarget:${date}`;
+
+async function invalidateDay(date: string): Promise<void> {
+  const revisionSetting = await db.settings.get(dayRevisionKey(date));
+  const revision = typeof revisionSetting?.value === "number" && Number.isInteger(revisionSetting.value)
+    ? revisionSetting.value
+    : 0;
+  await db.settings.put({ key: dayRevisionKey(date), value: revision + 1 });
+  await db.settings.delete(dayCompletionKey(date));
+}
+
 export async function saveConfirmedMeal(meal: ConfirmedMeal): Promise<void> {
   const { items, ...storedMeal } = meal;
   const storedItems: StoredMealItem[] = items.map((item) => ({
@@ -61,18 +80,57 @@ export async function saveConfirmedMeal(meal: ConfirmedMeal): Promise<void> {
     mealId: meal.id
   }));
 
-  await db.transaction("rw", db.meals, db.mealItems, async () => {
+  await db.transaction("rw", db.meals, db.mealItems, db.settings, async () => {
+    const existing = await db.meals.get(meal.id);
     await db.meals.put(storedMeal);
     await db.mealItems.where("mealId").equals(meal.id).delete();
     if (storedItems.length > 0) await db.mealItems.bulkPut(storedItems);
+    await invalidateDay(meal.date);
+    if (existing && existing.date !== meal.date) await invalidateDay(existing.date);
+    if (meal.targetSnapshot && !await db.settings.get(dayTargetKey(meal.date))) {
+      await db.settings.put({ key: dayTargetKey(meal.date), value: meal.targetSnapshot });
+    }
   });
 }
 
 export async function deleteMeal(mealId: string): Promise<void> {
-  await db.transaction("rw", db.meals, db.mealItems, async () => {
+  await db.transaction("rw", db.meals, db.mealItems, db.settings, async () => {
+    const existing = await db.meals.get(mealId);
     await db.meals.delete(mealId);
     await db.mealItems.where("mealId").equals(mealId).delete();
+    if (existing) await invalidateDay(existing.date);
   });
+}
+
+export async function setDayCompletion(date: string, completed: boolean): Promise<void> {
+  await db.transaction("rw", db.meals, db.settings, async () => {
+    if (!completed) {
+      await db.settings.delete(dayCompletionKey(date));
+      return;
+    }
+    if (await db.meals.where("date").equals(date).count() === 0) {
+      throw new Error("至少记录一餐后才能标记当天记录完整。");
+    }
+    const revisionSetting = await db.settings.get(dayRevisionKey(date));
+    const revision = typeof revisionSetting?.value === "number" && Number.isInteger(revisionSetting.value)
+      ? revisionSetting.value
+      : 0;
+    const value: DayCompletion = { completed: true, revision, completedAt: new Date().toISOString() };
+    await db.settings.put({ key: dayCompletionKey(date), value });
+  });
+}
+
+export async function getDayCompletion(date: string): Promise<boolean> {
+  const [completionSetting, revisionSetting] = await Promise.all([
+    db.settings.get(dayCompletionKey(date)),
+    db.settings.get(dayRevisionKey(date))
+  ]);
+  if (typeof completionSetting?.value === "boolean") return completionSetting.value;
+  const completion = completionSetting?.value as Partial<DayCompletion> | undefined;
+  const revision = typeof revisionSetting?.value === "number" && Number.isInteger(revisionSetting.value)
+    ? revisionSetting.value
+    : 0;
+  return completion?.completed === true && completion.revision === revision;
 }
 
 export async function loadMealsForDate(date: string): Promise<ConfirmedMeal[]> {
@@ -108,4 +166,3 @@ export async function getSetting<T>(key: string, fallback: T): Promise<T> {
   const setting = await db.settings.get(key);
   return setting ? setting.value as T : fallback;
 }
-

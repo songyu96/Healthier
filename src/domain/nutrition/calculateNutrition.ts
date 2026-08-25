@@ -135,3 +135,19 @@ export function calculateNutrition(
   };
 }
 
+export function isNutritionFacts(value: unknown): value is NutritionFacts {
+  if (!value || typeof value !== "object") return false;
+  const facts = value as Partial<NutritionFacts>;
+  return typeof facts.mealId === "string" &&
+    typeof facts.complete === "boolean" &&
+    Number.isInteger(facts.knownItemCount) &&
+    Number.isInteger(facts.totalItemCount) &&
+    Array.isArray(facts.items) && Array.isArray(facts.unknownItems) &&
+    Array.isArray(facts.sourceRefs) && Boolean(facts.totals);
+}
+
+export function nutritionFactsForMeal(meal: ConfirmedMeal, foods: FoodReference[]): NutritionFacts {
+  return isNutritionFacts(meal.nutritionSnapshot) && meal.nutritionSnapshot.mealId === meal.id
+    ? meal.nutritionSnapshot
+    : calculateNutrition(meal, foods);
+}

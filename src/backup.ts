@@ -56,16 +56,20 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number)
 }
 
 export async function readBackupPayload(): Promise<BackupPayload> {
-  return backupPayloadSchema.parse({
-    schemaVersion: 1,
-    exportedAt: new Date().toISOString(),
-    profiles: await db.profiles.toArray(),
-    bodyMetrics: await db.bodyMetrics.toArray(),
-    meals: await db.meals.toArray(),
-    mealItems: await db.mealItems.toArray(),
-    foodOverrides: await db.foodOverrides.toArray(),
-    settings: await db.settings.toArray()
-  });
+  return db.transaction(
+    "r",
+    [db.profiles, db.bodyMetrics, db.meals, db.mealItems, db.foodOverrides, db.settings],
+    async () => backupPayloadSchema.parse({
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      profiles: await db.profiles.toArray(),
+      bodyMetrics: await db.bodyMetrics.toArray(),
+      meals: await db.meals.toArray(),
+      mealItems: await db.mealItems.toArray(),
+      foodOverrides: await db.foodOverrides.toArray(),
+      settings: await db.settings.toArray()
+    })
+  );
 }
 
 export async function exportEncryptedBackup(password: string): Promise<string> {
@@ -113,8 +117,11 @@ export async function decryptBackup(text: string, password: string): Promise<Bac
   }
 }
 
-export async function restoreBackup(payload: BackupPayload): Promise<void> {
+export async function restoreBackup(payload: BackupPayload, rollbackPassword: string): Promise<void> {
   const validated = backupPayloadSchema.parse(payload);
+  const rollback = await exportEncryptedBackup(rollbackPassword);
+  const restoredSettings = validated.settings.filter((setting) => setting.key !== "restoreRollback");
+
   await db.transaction(
     "rw",
     [db.profiles, db.bodyMetrics, db.meals, db.mealItems, db.foodOverrides, db.settings],
@@ -132,7 +139,8 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
       if (validated.meals.length) await db.meals.bulkAdd(validated.meals);
       if (validated.mealItems.length) await db.mealItems.bulkAdd(validated.mealItems);
       if (validated.foodOverrides.length) await db.foodOverrides.bulkAdd(validated.foodOverrides);
-      if (validated.settings.length) await db.settings.bulkAdd(validated.settings);
+      if (restoredSettings.length) await db.settings.bulkAdd(restoredSettings);
+      await db.settings.put({ key: "restoreRollback", value: rollback });
     }
   );
 }
