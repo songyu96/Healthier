@@ -20,6 +20,7 @@ import {
   assessWeek,
   calculateNutrition,
   calculateTargets,
+  createRepeatMealDraft,
   nutritionFactsForMeal,
   parseHd1,
   recommendNextMeal,
@@ -86,6 +87,11 @@ const HEALTH_FLAGS: { value: HealthFlag; label: string }[] = [
 function localDateKey(date = new Date()): string {
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function localDateTime(date = new Date()): string {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return `${new Date(date.getTime() - offset).toISOString().slice(0, 16)}:00`;
 }
 
 function dateOffset(days: number): string {
@@ -416,7 +422,17 @@ function TodayPage() {
         <div className="section-heading"><div><span className="eyebrow">今日记录</span><h2>{meals.length} 个餐次</h2></div></div>
         {meals.length === 0 ? <EmptyState text="还没有餐食记录。" /> : (
           <div className="meal-list">
-            {meals.map((meal) => <MealRow key={meal.id} meal={meal} onEdit={() => setDraft(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); } catch (error) { setMessage(errorMessage(error)); } }} />)}
+            {meals.map((meal) => <MealRow
+              key={meal.id}
+              meal={meal}
+              onRepeat={() => {
+                setDraft(createRepeatMealDraft(meal, localDateTime()));
+                setErrors([]);
+                setMessage("已复制餐食，请确认时间、内容和重量后保存。");
+              }}
+              onEdit={() => setDraft(meal)}
+              onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); } catch (error) { setMessage(errorMessage(error)); } }}
+            />)}
           </div>
         )}
         <div className="daily-controls">
@@ -440,7 +456,7 @@ function TodayPage() {
   );
 }
 
-export function MealRow({ meal, onEdit, onDelete }: { meal: ConfirmedMeal; onEdit: () => void; onDelete: () => void | Promise<void> }) {
+export function MealRow({ meal, onRepeat, onEdit, onDelete }: { meal: ConfirmedMeal; onRepeat?: () => void; onEdit: () => void; onDelete: () => void | Promise<void> }) {
   return (
     <article className="meal-row">
       <div className="meal-time"><b>{meal.eatenAt.slice(11, 16)}</b><span>{MEAL_LABELS[meal.mealType]}</span></div>
@@ -449,7 +465,7 @@ export function MealRow({ meal, onEdit, onDelete }: { meal: ConfirmedMeal; onEdi
         <p>{meal.items.map((item) => `${item.quantityMin === item.quantityMax ? item.quantityMin : `${item.quantityMin}～${item.quantityMax}`}${item.unit}`).join(" · ")}</p>
         {meal.nutritionSnapshotOrigin === "MIGRATED" && <small>营养快照按升级或旧备份恢复当时的食物库估算；重新确认保存后会更新来源。</small>}
       </div>
-      <div className="row-actions"><button className="text-button" type="button" onClick={onEdit}>编辑</button><button className="text-button danger" type="button" onClick={() => void onDelete()}>删除</button></div>
+      <div className="row-actions">{onRepeat && <button className="text-button" type="button" onClick={onRepeat}>再记一次</button>}<button className="text-button" type="button" onClick={onEdit}>编辑</button><button className="text-button danger" type="button" onClick={() => void onDelete()}>删除</button></div>
     </article>
   );
 }

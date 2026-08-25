@@ -79,4 +79,36 @@ describe("AssessmentPanel safety rendering", () => {
     expect(html).toContain("升级时估算");
     expect(html).toContain("旧备份恢复当时的食物库");
   });
+
+  it("仅在提供重复记录操作时展示再记一次按钮", () => {
+    const meal: ConfirmedMeal = {
+      id: "meal-1",
+      protocolVersion: "HD1",
+      eatenAt: "2026-08-25T08:00:00",
+      date: "2026-08-25",
+      mealType: "B",
+      items: [{
+        tempId: "egg", name: "鸡蛋", category: "EG", state: "CK",
+        quantityMin: 1, quantityMax: 1, unit: "pc"
+      }],
+      cookingMethod: "水煮",
+      note: "",
+      rawImportLine: "test",
+      unknownOil: false,
+      unknownSalt: false,
+      ruleSetVersion: "book-rules-0.1",
+      createdAt: "2026-08-25T08:01:00",
+      updatedAt: "2026-08-25T08:01:00"
+    };
+
+    const todayHtml = renderToStaticMarkup(
+      <MealRow meal={meal} onRepeat={() => undefined} onEdit={() => undefined} onDelete={() => undefined} />
+    );
+    const historyHtml = renderToStaticMarkup(
+      <MealRow meal={meal} onEdit={() => undefined} onDelete={() => undefined} />
+    );
+
+    expect(todayHtml).toContain("再记一次");
+    expect(historyHtml).not.toContain("再记一次");
+  });
 });
