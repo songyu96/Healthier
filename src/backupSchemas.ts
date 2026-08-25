@@ -117,6 +117,7 @@ const mealSchema = z.object({
   ruleSetVersion: z.string().min(1),
   targetSnapshot: dailyTargetsSchema.optional(),
   nutritionSnapshot: nutritionFactsSchema.optional(),
+  nutritionSnapshotOrigin: z.enum(["CONFIRMED", "MIGRATED"]).optional(),
   createdAt: dateTimeSchema,
   updatedAt: dateTimeSchema
 }).strict()

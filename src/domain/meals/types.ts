@@ -58,6 +58,7 @@ export interface ConfirmedMeal extends ParsedMeal {
   ruleSetVersion: string;
   targetSnapshot?: unknown;
   nutritionSnapshot?: unknown;
+  nutritionSnapshotOrigin?: "CONFIRMED" | "MIGRATED";
   createdAt: string;
   updatedAt: string;
 }

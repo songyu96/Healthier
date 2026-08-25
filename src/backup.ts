@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { db } from "./db";
+import { db, materializeMissingNutritionSnapshots } from "./db";
+import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
 import { backupPayloadSchema, type BackupPayload } from "./backupSchemas";
 export type { BackupPayload } from "./backupSchemas";
 
@@ -67,7 +68,9 @@ export async function readBackupPayload(): Promise<BackupPayload> {
       meals: await db.meals.toArray(),
       mealItems: await db.mealItems.toArray(),
       foodOverrides: await db.foodOverrides.toArray(),
-      settings: await db.settings.toArray()
+      settings: (await db.settings.toArray()).filter(
+        (setting) => setting.key !== "restoreRollback"
+      )
     })
   );
 }
@@ -120,6 +123,12 @@ export async function decryptBackup(text: string, password: string): Promise<Bac
 export async function restoreBackup(payload: BackupPayload, rollbackPassword: string): Promise<void> {
   const validated = backupPayloadSchema.parse(payload);
   const rollback = await exportEncryptedBackup(rollbackPassword);
+  const restoredFoods = mergeFoodReferences(BASE_FOODS, validated.foodOverrides);
+  const restoredMeals = materializeMissingNutritionSnapshots(
+    validated.meals,
+    validated.mealItems,
+    restoredFoods
+  );
   const restoredSettings = validated.settings.filter((setting) => setting.key !== "restoreRollback");
 
   await db.transaction(
@@ -136,7 +145,7 @@ export async function restoreBackup(payload: BackupPayload, rollbackPassword: st
       ]);
       if (validated.profiles.length) await db.profiles.bulkAdd(validated.profiles);
       if (validated.bodyMetrics.length) await db.bodyMetrics.bulkAdd(validated.bodyMetrics);
-      if (validated.meals.length) await db.meals.bulkAdd(validated.meals);
+      if (restoredMeals.length) await db.meals.bulkAdd(restoredMeals);
       if (validated.mealItems.length) await db.mealItems.bulkAdd(validated.mealItems);
       if (validated.foodOverrides.length) await db.foodOverrides.bulkAdd(validated.foodOverrides);
       if (restoredSettings.length) await db.settings.bulkAdd(restoredSettings);

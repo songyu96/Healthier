@@ -1,10 +1,13 @@
 import Dexie, { type EntityTable } from "dexie";
-import type {
-  ConfirmedMeal,
-  FoodReference,
-  MealItemInput,
-  UserProfile
+import {
+  calculateNutrition,
+  isNutritionFacts,
+  type ConfirmedMeal,
+  type FoodReference,
+  type MealItemInput,
+  type UserProfile
 } from "./domain";
+import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
 
 export interface BodyMetric {
   id: string;
@@ -30,6 +33,38 @@ export interface AppSetting {
   value: unknown;
 }
 
+const STORE_SCHEMA = {
+  profiles: "id",
+  bodyMetrics: "id, measuredAt",
+  meals: "id, date, eatenAt, mealType",
+  mealItems: "id, mealId, [mealId+tempId], category",
+  foodOverrides: "id, name, category",
+  settings: "key"
+};
+
+export function materializeMissingNutritionSnapshots(
+  meals: StoredMeal[],
+  mealItems: StoredMealItem[],
+  foods: FoodReference[]
+): StoredMeal[] {
+  const itemsByMeal = new Map<string, StoredMealItem[]>();
+  mealItems.forEach((item) => {
+    const current = itemsByMeal.get(item.mealId) ?? [];
+    current.push(item);
+    itemsByMeal.set(item.mealId, current);
+  });
+
+  return meals.map((meal) => {
+    if (isNutritionFacts(meal.nutritionSnapshot)) return meal;
+    const items = itemsByMeal.get(meal.id) ?? [];
+    return {
+      ...meal,
+      nutritionSnapshot: calculateNutrition({ id: meal.id, items }, foods),
+      nutritionSnapshotOrigin: "MIGRATED"
+    };
+  });
+}
+
 export interface DayCompletion {
   completed: true;
   revision: number;
@@ -46,13 +81,16 @@ export class HealthierDatabase extends Dexie {
 
   constructor(name = "healthier-mvp") {
     super(name);
-    this.version(1).stores({
-      profiles: "id",
-      bodyMetrics: "id, measuredAt",
-      meals: "id, date, eatenAt, mealType",
-      mealItems: "id, mealId, [mealId+tempId], category",
-      foodOverrides: "id, name, category",
-      settings: "key"
+    this.version(1).stores(STORE_SCHEMA);
+    this.version(2).stores(STORE_SCHEMA).upgrade(async (transaction) => {
+      const meals = await transaction.table<StoredMeal>("meals").toArray();
+      const mealItems = await transaction.table<StoredMealItem>("mealItems").toArray();
+      const overrides = await transaction.table<FoodOverride>("foodOverrides").toArray();
+      const foods = mergeFoodReferences(BASE_FOODS, overrides);
+      const migratedMeals = materializeMissingNutritionSnapshots(meals, mealItems, foods);
+      if (migratedMeals.length > 0) {
+        await transaction.table<StoredMeal>("meals").bulkPut(migratedMeals);
+      }
     });
   }
 }
@@ -73,7 +111,13 @@ async function invalidateDay(date: string): Promise<void> {
 }
 
 export async function saveConfirmedMeal(meal: ConfirmedMeal): Promise<void> {
-  const { items, ...storedMeal } = meal;
+  const { items, ...mealWithoutItems } = meal;
+  const storedMeal: StoredMeal = {
+    ...mealWithoutItems,
+    nutritionSnapshotOrigin: isNutritionFacts(meal.nutritionSnapshot)
+      ? meal.nutritionSnapshotOrigin ?? "CONFIRMED"
+      : undefined
+  };
   const storedItems: StoredMealItem[] = items.map((item) => ({
     ...item,
     id: `${meal.id}:${item.tempId}`,
