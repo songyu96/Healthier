@@ -28,6 +28,7 @@ import {
   type ActivityLevel,
   type ConfirmedMeal,
   type DailyAssessment,
+  type DailyTargets,
   type FoodCategory,
   type FoodReference,
   type FoodState,
@@ -35,7 +36,8 @@ import {
   type MealItemInput,
   type ParsedMeal,
   type QuantityUnit,
-  type UserProfile
+  type UserProfile,
+  type WeeklyAssessment
 } from "./domain";
 import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
 import {
@@ -550,6 +552,24 @@ function CalculatorPage() {
     </div>
   );
 }
+export function WeeklyActionsPanel({
+  week,
+  targets
+}: { week: WeeklyAssessment; targets: DailyTargets }) {
+  if (targets.safetyRestricted) {
+    return <section className="card">
+      <div className="section-heading"><div><span className="eyebrow">安全提示</span><h2>普通建议已暂停</h2></div></div>
+      <p>当前周总结只展示历史摄入事实和记录覆盖，不提供目标比较或饮食调整建议。</p>
+      {targets.safetyMessages.map((message) => <p className="notice warning" key={message}>{message}</p>)}
+    </section>;
+  }
+
+  return <section className="card">
+    <div className="section-heading"><div><span className="eyebrow">下周行动</span><h2>先解决最重要的问题</h2></div></div>
+    {week.issues.length ? <ol className="issue-list">{week.issues.slice(0, 3).map((issue) => <li key={issue}>{issue}</li>)}</ol> : <p>当前记录未发现优先级更高的问题，继续保持完整记录和食材轮换。</p>}
+  </section>;
+}
+
 
 function HistoryPage() {
   const { profile } = useApp();
@@ -632,18 +652,15 @@ function HistoryPage() {
         <div><span>有效记录</span><strong>{week.validDays}<small> / 7 天</small></strong></div>
         <div><span>营养有效</span><strong>{week.nutritionValidDays}<small> 天</small></strong></div>
         <div><span>食物种类</span><strong>{week.uniqueFoodCount}<small> 种</small></strong></div>
-        <div><span>早餐达标</span><strong>{week.breakfastPassDays}<small> 天</small></strong></div>
+        {!currentTargets.safetyRestricted && <div><span>早餐达标</span><strong>{week.breakfastPassDays}<small> 天</small></strong></div>}
       </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">周平均</span><h2>摄入区间</h2></div></div>
-        <p className="helper">周平均只使用营养数据完整的完成日；鱼肉蛋目标需7天完整且计量口径可比。</p>
+        <p className="helper">{currentTargets.safetyRestricted ? "安全受限时仅展示营养完整完成日的历史事实，不进行目标比较。" : "周平均只使用营养数据完整的完成日；鱼肉蛋目标需7天完整且计量口径可比。"}</p>
         {week.averageNutrition ? <div className="status-grid"><div><span>能量</span><b>{formatRange(week.averageNutrition.min.kcal, week.averageNutrition.max.kcal, "kcal")}</b></div><div><span>蛋白质</span><b>{formatRange(week.averageNutrition.min.protein, week.averageNutrition.max.protein, "g", 1)}</b></div><div><span>最近体重变化</span><b>{week.weightChangeKg === undefined ? "记录不足" : `${week.weightChangeKg > 0 ? "+" : ""}${week.weightChangeKg.toFixed(1)} kg`}</b></div><div><span>最近腰围变化</span><b>{waistChange === undefined ? "记录不足" : `${waistChange > 0 ? "+" : ""}${waistChange.toFixed(1)} cm`}</b></div></div> : <EmptyState text="还没有营养完整的完成日。" />}
         <div className="status-grid"><div><span>鱼虾</span><b>{formatWeeklyGroup(week.fishTotal.min, week.fishTotal.max, week.incomparableAnimalGroups.includes("fish"))}</b></div><div><span>畜禽肉</span><b>{formatWeeklyGroup(week.meatTotal.min, week.meatTotal.max, week.incomparableAnimalGroups.includes("meat"))}</b></div><div><span>蛋类</span><b>{formatWeeklyGroup(week.eggTotal.min, week.eggTotal.max, week.incomparableAnimalGroups.includes("egg"))}</b></div></div>
       </section>
-      <section className="card">
-        <div className="section-heading"><div><span className="eyebrow">下周行动</span><h2>先解决最重要的问题</h2></div></div>
-        {week.issues.length ? <ol className="issue-list">{week.issues.slice(0, 3).map((issue) => <li key={issue}>{issue}</li>)}</ol> : <p>当前记录未发现优先级更高的问题，继续保持完整记录和食材轮换。</p>}
-      </section>
+      <WeeklyActionsPanel week={week} targets={currentTargets} />
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">按日期管理</span><h2>查看任意日期餐食</h2></div></div>
         <label>选择日期<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
