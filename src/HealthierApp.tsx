@@ -294,12 +294,12 @@ function AssessmentPanel({ assessment }: { assessment: DailyAssessment }) {
         <div className="status-grid">
           <div><span>早餐评分</span><b>{assessment.breakfastScore ? formatRange(assessment.breakfastScore.min, assessment.breakfastScore.max, "分") : "未记录"}</b></div>
           <div><span>午餐三类</span><b>{assessment.lunchGroupsComplete === undefined ? "未记录" : assessment.lunchGroupsComplete ? "齐全" : "不齐全"}</b></div>
-          <div><span>蔬菜</span><b>{formatRange(assessment.groups.vegetable.min, assessment.groups.vegetable.max, "g")}</b></div>
-          <div><span>鲜果</span><b>{formatRange(assessment.groups.fruit.min, assessment.groups.fruit.max, "g")}</b></div>
-          <div><span>奶类</span><b>{formatRange(assessment.groups.dairy.min, assessment.groups.dairy.max, "g/ml")}</b></div>
+          <div><span>蔬菜</span><b>{formatRange(assessment.groups.vegetable.min, assessment.groups.vegetable.max, "g")}{assessment.incomparableGroups.includes("vegetable") ? "（已知可比小计）" : ""}</b></div>
+          <div><span>鲜果</span><b>{formatRange(assessment.groups.fruit.min, assessment.groups.fruit.max, "g")}{assessment.incomparableGroups.includes("fruit") ? "（已知可比小计）" : ""}</b></div>
+          <div><span>液态奶口径</span><b>{formatRange(assessment.groups.dairy.min, assessment.groups.dairy.max, "ml")}{assessment.incomparableGroups.includes("dairy") ? "（已知可比小计）" : ""}</b></div>
           <div><span>食物种类</span><b>{assessment.foodVarietyCount} 种</b></div>
         </div>
-        <p className="helper">午餐仅判断蔬菜、蛋白质和主食是否齐全；熟重比例与食物库换算均为近似。</p>
+        <p className="helper">午餐仅判断三类结构是否出现；书本克数目标只比较有明确生熟重与单位口径的记录。</p>
         {assessment.warnings.map((warning) => <p className="notice warning" key={warning}>{warning}</p>)}
       </section>
     </>
@@ -550,7 +550,10 @@ function HistoryPage() {
     return assessDay(date, mealFacts(dateMeals, foods), dayTargets, { completed: completedMap.get(date) ?? false, waterMl: waterMap.get(date) ?? 0 });
   }) : [];
   const week = currentTargets ? assessWeek(start, end, days, metrics) : undefined;
-  const waistMetrics = metrics.filter((item) => item.waistCm !== undefined);
+  const waistMetrics = metrics.filter((item) => {
+    const date = item.measuredAt.slice(0, 10);
+    return item.waistCm !== undefined && date >= start && date <= end;
+  });
   const latestWaist = waistMetrics.at(-1)?.waistCm;
   const previousWaist = waistMetrics.at(-2)?.waistCm;
   const waistChange = latestWaist !== undefined && previousWaist !== undefined
@@ -592,12 +595,15 @@ function HistoryPage() {
       <PageIntro eyebrow={`${start} — ${end}`} title="最近 7 天" description="仅“已记录完整”的日期进入平均值和达标统计。" />
       <section className="card weekly-hero">
         <div><span>有效记录</span><strong>{week.validDays}<small> / 7 天</small></strong></div>
+        <div><span>营养有效</span><strong>{week.nutritionValidDays}<small> 天</small></strong></div>
         <div><span>食物种类</span><strong>{week.uniqueFoodCount}<small> 种</small></strong></div>
         <div><span>早餐达标</span><strong>{week.breakfastPassDays}<small> 天</small></strong></div>
       </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">周平均</span><h2>摄入区间</h2></div></div>
-        {week.averageNutrition ? <div className="status-grid"><div><span>能量</span><b>{formatRange(week.averageNutrition.min.kcal, week.averageNutrition.max.kcal, "kcal")}</b></div><div><span>蛋白质</span><b>{formatRange(week.averageNutrition.min.protein, week.averageNutrition.max.protein, "g", 1)}</b></div><div><span>鱼肉蛋累计</span><b>{formatRange(week.animalFoodTotal.min, week.animalFoodTotal.max, "g")}</b></div><div><span>最近体重变化</span><b>{week.weightChangeKg === undefined ? "记录不足" : `${week.weightChangeKg > 0 ? "+" : ""}${week.weightChangeKg.toFixed(1)} kg`}</b></div><div><span>最近腰围变化</span><b>{waistChange === undefined ? "记录不足" : `${waistChange > 0 ? "+" : ""}${waistChange.toFixed(1)} cm`}</b></div></div> : <EmptyState text="还没有完整记录日。" />}
+        <p className="helper">周平均只使用营养数据完整的完成日；鱼肉蛋目标需7天完整且计量口径可比。</p>
+        {week.averageNutrition ? <div className="status-grid"><div><span>能量</span><b>{formatRange(week.averageNutrition.min.kcal, week.averageNutrition.max.kcal, "kcal")}</b></div><div><span>蛋白质</span><b>{formatRange(week.averageNutrition.min.protein, week.averageNutrition.max.protein, "g", 1)}</b></div><div><span>最近体重变化</span><b>{week.weightChangeKg === undefined ? "记录不足" : `${week.weightChangeKg > 0 ? "+" : ""}${week.weightChangeKg.toFixed(1)} kg`}</b></div><div><span>最近腰围变化</span><b>{waistChange === undefined ? "记录不足" : `${waistChange > 0 ? "+" : ""}${waistChange.toFixed(1)} cm`}</b></div></div> : <EmptyState text="还没有营养完整的完成日。" />}
+        <div className="status-grid"><div><span>鱼虾</span><b>{formatRange(week.fishTotal.min, week.fishTotal.max, "g")}</b></div><div><span>畜禽肉</span><b>{formatRange(week.meatTotal.min, week.meatTotal.max, "g")}</b></div><div><span>蛋类</span><b>{formatRange(week.eggTotal.min, week.eggTotal.max, "g")}</b></div></div>
       </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">下周行动</span><h2>先解决最重要的问题</h2></div></div>

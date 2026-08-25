@@ -26,7 +26,20 @@ export function recommendNextMeal(assessment: DailyAssessment): RecommendedActio
     });
   }
 
-  if (assessment.groups.vegetable.max < assessment.targets.foodGroups.vegetable.min) {
+  if (assessment.incomparableGroups.length > 0) {
+    add({
+      id: "group-basis-incomplete",
+      title: "先确认食物组计量口径",
+      detail: "部分记录混有熟重、体积或未定义折算，当前只显示可比较小计，不据此判断已达标。",
+      ruleIds: ["BR-A-001", "BR-F-001"],
+      kind: "NEXT_MEAL"
+    });
+  }
+
+  if (
+    !assessment.incomparableGroups.includes("vegetable") &&
+    assessment.groups.vegetable.max < assessment.targets.foodGroups.vegetable.min
+  ) {
     add({
       id: "vegetable-gap",
       title: "下一餐先补蔬菜",
@@ -49,7 +62,10 @@ export function recommendNextMeal(assessment: DailyAssessment): RecommendedActio
     });
   }
 
-  if (assessment.groups.fruit.max < assessment.targets.foodGroups.fruit.min) {
+  if (
+    !assessment.incomparableGroups.includes("fruit") &&
+    assessment.groups.fruit.max < assessment.targets.foodGroups.fruit.min
+  ) {
     add({
       id: "fruit-gap",
       title: "安排新鲜水果",
@@ -59,11 +75,14 @@ export function recommendNextMeal(assessment: DailyAssessment): RecommendedActio
     });
   }
 
-  if (assessment.groups.dairy.max < assessment.targets.foodGroups.dairy.min) {
+  if (
+    !assessment.incomparableGroups.includes("dairy") &&
+    assessment.groups.dairy.max < assessment.targets.foodGroups.dairy.min
+  ) {
     add({
       id: "dairy-gap",
-      title: "奶类仍有缺口",
-      detail: "可在下一餐或加餐安排牛奶、酸奶等奶制品。",
+      title: "液态奶口径仍有缺口",
+      detail: "可在下一餐或加餐安排牛奶；其他奶制品只有在有明确折算规则时才计入。",
       ruleIds: ["BR-F-004"],
       kind: "NEXT_MEAL"
     });
@@ -81,4 +100,3 @@ export function recommendNextMeal(assessment: DailyAssessment): RecommendedActio
 
   return actions;
 }
-

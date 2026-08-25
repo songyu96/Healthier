@@ -67,7 +67,7 @@ describe("assessDay", () => {
     expect(actions[0].id).toBe("vegetable-gap");
   });
 
-  it("未知营养数据仍按人工确认重量计入食物组", () => {
+  it("未知熟重不计入可比较食物组克数", () => {
     const meal = breakfast();
     meal.items = [{
       tempId: "unknown-veg",
@@ -83,7 +83,8 @@ describe("assessDay", () => {
 
     expect(assessment.unknownNutritionCount).toBe(1);
     expect(assessment.nutrition.min.kcal).toBe(0);
-    expect(assessment.groups.vegetable).toEqual({ min: 80, max: 120 });
+    expect(assessment.groups.vegetable).toEqual({ min: 0, max: 0 });
+    expect(assessment.incomparableGroups).toContain("vegetable");
+    expect(recommendNextMeal(assessment).map((action) => action.id)).not.toContain("vegetable-gap");
   });
 });
-

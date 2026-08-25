@@ -71,6 +71,8 @@ export interface FoodGroupTotals {
   egg: RangeValue;
 }
 
+export type FoodGroupKey = keyof FoodGroupTotals;
+
 export interface DailyAssessment {
   date: string;
   completed: boolean;
@@ -80,7 +82,9 @@ export interface DailyAssessment {
   lunchGroupsComplete?: boolean;
   foodVarietyCount: number;
   foodNames: string[];
+  diversityEstimated: boolean;
   unknownNutritionCount: number;
+  incomparableGroups: FoodGroupKey[];
   nutritionComplete: boolean;
   nutritionKnownItemCount: number;
   nutritionTotalItemCount: number;
@@ -103,9 +107,13 @@ export interface WeeklyAssessment {
   startDate: string;
   endDate: string;
   validDays: number;
+  nutritionValidDays: number;
   averageNutrition?: NutrientRange;
   breakfastPassDays: number;
   animalFoodTotal: RangeValue;
+  fishTotal: RangeValue;
+  meatTotal: RangeValue;
+  eggTotal: RangeValue;
   uniqueFoodCount: number;
   latestWeightKg?: number;
   previousWeightKg?: number;

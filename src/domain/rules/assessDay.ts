@@ -1,8 +1,9 @@
-import type { FoodCategory } from "../meals/types";
-import type { NutrientRange, NutrientVector } from "../nutrition/types";
+import type { FoodCategory, MealItemInput } from "../meals/types";
+import type { ItemNutritionFact, NutrientRange, NutrientVector } from "../nutrition/types";
 import type {
   DailyAssessment,
   DailyTargets,
+  FoodGroupKey,
   FoodGroupTotals,
   MealWithFacts,
   RangeValue
@@ -10,6 +11,19 @@ import type {
 
 const ZERO_RANGE = (): RangeValue => ({ min: 0, max: 0 });
 const ZERO_NUTRIENTS = (): NutrientVector => ({ kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 });
+
+const GROUP_KEYS_BY_CATEGORY: Partial<Record<FoodCategory, FoodGroupKey[]>> = {
+  GR: ["grain"],
+  WG: ["grain", "wholeGrain"],
+  TU: ["grain", "tuber"],
+  DV: ["vegetable", "darkVegetable"],
+  LV: ["vegetable"],
+  FR: ["fruit"],
+  DA: ["dairy"],
+  FI: ["animalFood", "fish"],
+  MP: ["animalFood", "meat"],
+  EG: ["animalFood", "egg"]
+};
 
 function addNutrients(left: NutrientVector, right: NutrientVector): NutrientVector {
   return {
@@ -42,18 +56,44 @@ function groupTargets(): FoodGroupTotals {
   };
 }
 
+function groupKeys(category: FoodCategory): FoodGroupKey[] {
+  return GROUP_KEYS_BY_CATEGORY[category] ?? [];
+}
+
 function addGroup(groups: FoodGroupTotals, category: FoodCategory, min: number, max: number): void {
-  if (["GR", "WG", "TU"].includes(category)) addRange(groups.grain, min, max);
-  if (category === "WG") addRange(groups.wholeGrain, min, max);
-  if (category === "TU") addRange(groups.tuber, min, max);
-  if (["DV", "LV"].includes(category)) addRange(groups.vegetable, min, max);
-  if (category === "DV") addRange(groups.darkVegetable, min, max);
-  if (category === "FR") addRange(groups.fruit, min, max);
-  if (category === "DA") addRange(groups.dairy, min, max);
-  if (["FI", "MP", "EG"].includes(category)) addRange(groups.animalFood, min, max);
-  if (category === "FI") addRange(groups.fish, min, max);
-  if (category === "MP") addRange(groups.meat, min, max);
-  if (category === "EG") addRange(groups.egg, min, max);
+  groupKeys(category).forEach((key) => addRange(groups[key], min, max));
+}
+
+function isComparableGroupQuantity(item: MealItemInput, fact: ItemNutritionFact): boolean {
+  if (item.category === "DA") {
+    return item.unit === "ml" && fact.basisUnit === "ml" && ["EA", "PK"].includes(item.state);
+  }
+  if (item.category === "EG") {
+    return fact.basisUnit === "g" && ["g", "pc"].includes(item.unit) && ["RW", "CK", "EA"].includes(item.state);
+  }
+  if (item.category === "FR") {
+    return item.unit === "g" && fact.basisUnit === "g" && ["RW", "EA"].includes(item.state);
+  }
+  return item.unit === "g" && fact.basisUnit === "g" && item.state === "RW";
+}
+
+const INGREDIENT_KEY_BY_FOOD_ID: Record<string, string> = {
+  "bread-whole-wheat": "ingredient:wheat",
+  "egg-noodles-cooked": "ingredient:wheat"
+};
+
+function diversityKey(item: MealItemInput, fact?: ItemNutritionFact): string {
+  const foodId = fact?.foodId ?? item.canonicalFoodId;
+  if (foodId) return INGREDIENT_KEY_BY_FOOD_ID[foodId] ?? foodId;
+  return `name:${item.name.trim().toLocaleLowerCase("zh-CN")}`;
+}
+
+function diversityQuantity(item: MealItemInput, fact?: ItemNutritionFact): RangeValue | undefined {
+  if (fact) return { min: fact.basisQuantityMin, max: fact.basisQuantityMax };
+  if (item.unit === "g" || item.unit === "ml") {
+    return { min: item.quantityMin, max: item.quantityMax };
+  }
+  return undefined;
 }
 
 function breakfastStructureCategories(categories: Set<FoodCategory>): number {
@@ -83,17 +123,30 @@ export function assessDay(
   const groups = groupTargets();
   const categories = new Set<FoodCategory>();
   const foodNames = new Set<string>();
+  const incomparableGroups = new Set<FoodGroupKey>();
+  let diversityEstimated = false;
 
   mealFacts.forEach(({ meal, facts }) => {
     const factsByTempId = new Map(facts.items.map((item) => [item.tempId, item]));
     meal.items.forEach((item) => {
       categories.add(item.category);
-      foodNames.add(item.name.trim().toLocaleLowerCase("zh-CN"));
       const fact = factsByTempId.get(item.tempId);
-      if (fact) {
-        addGroup(groups, fact.category, fact.basisQuantityMin, fact.basisQuantityMax);
-      } else if (item.unit !== "pc") {
-        addGroup(groups, item.category, item.quantityMin, item.quantityMax);
+      const itemGroupKeys = groupKeys(item.category);
+      if (itemGroupKeys.length > 0) {
+        if (fact && isComparableGroupQuantity(item, fact)) {
+          addGroup(groups, fact.category, fact.basisQuantityMin, fact.basisQuantityMax);
+        } else {
+          itemGroupKeys.forEach((key) => incomparableGroups.add(key));
+        }
+      }
+
+      if (!["OI", "OT"].includes(item.category)) {
+        const quantity = diversityQuantity(item, fact);
+        if (quantity?.min !== undefined && quantity.min >= 5) {
+          foodNames.add(diversityKey(item, fact));
+        } else if (!quantity || quantity.max >= 5) {
+          diversityEstimated = true;
+        }
       }
     });
   });
@@ -141,6 +194,8 @@ export function assessDay(
   if (unknownOil) warnings.push("有餐次油量未知，当前营养数字只是已知小计，脂肪和能量可能被低估。 ");
   if (mealFacts.some(({ meal }) => meal.unknownSalt)) warnings.push("有餐次盐量未知，本应用不估算确定钠摄入。 ");
   if (unknownNutritionCount > 0) warnings.push("部分食物没有可靠营养数据，当前营养数字只是已知小计。 ");
+  if (incomparableGroups.size > 0) warnings.push("部分食物组存在熟重、体积或折算口径问题，相关克数仅显示可比较的已知小计，不判断已达标。 ");
+  if (diversityEstimated) warnings.push("部分食材无法确认是否达到5克，多样性只统计明确达到门槛的食材。 ");
 
   return {
     date,
@@ -151,7 +206,9 @@ export function assessDay(
     lunchGroupsComplete,
     foodVarietyCount: foodNames.size,
     foodNames: [...foodNames],
+    diversityEstimated,
     unknownNutritionCount,
+    incomparableGroups: [...incomparableGroups],
     nutritionComplete: unknownNutritionCount === 0 && !unknownOil,
     nutritionKnownItemCount: mealFacts.reduce((sum, current) => sum + current.facts.knownItemCount, 0),
     nutritionTotalItemCount: mealFacts.reduce((sum, current) => sum + current.facts.totalItemCount, 0),
@@ -162,4 +219,3 @@ export function assessDay(
     presentCategories: [...categories]
   };
 }
-
