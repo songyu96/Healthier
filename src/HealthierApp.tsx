@@ -15,6 +15,7 @@ import {
   FOOD_STATES,
   MEAL_LABELS,
   QUANTITY_UNITS,
+  applyCurrentSafetyAdmission,
   assessDay,
   assessWeek,
   calculateNutrition,
@@ -265,7 +266,7 @@ function MealDraftEditor({ draft, foods, onChange, onCancel, onSave, saving }: M
   );
 }
 
-function AssessmentPanel({ assessment }: { assessment: DailyAssessment }) {
+export function AssessmentPanel({ assessment }: { assessment: DailyAssessment }) {
   const actions = recommendNextMeal(assessment);
   return (
     <>
@@ -276,7 +277,7 @@ function AssessmentPanel({ assessment }: { assessment: DailyAssessment }) {
         )}
         <div className="energy-row">
           <strong>{formatRange(assessment.nutrition.min.kcal, assessment.nutrition.max.kcal, "kcal")}</strong>
-          <span>目标 {assessment.targets.energyKcal.toFixed(0)} kcal</span>
+          {!assessment.targets.safetyRestricted && <span>目标 {assessment.targets.energyKcal.toFixed(0)} kcal</span>}
         </div>
         <div className="macro-grid">
           <div><span>蛋白质</span><b>{formatRange(assessment.nutrition.min.protein, assessment.nutrition.max.protein, "g", 1)}</b></div>
@@ -292,7 +293,7 @@ function AssessmentPanel({ assessment }: { assessment: DailyAssessment }) {
           ))}
         </div>
       </section>
-      <section className="card">
+      {!assessment.targets.safetyRestricted && <section className="card">
         <div className="section-heading"><div><span className="eyebrow">结构检查</span><h2>今天吃得完整吗</h2></div></div>
         <div className="status-grid">
           <div><span>早餐评分</span><b>{assessment.breakfastScore ? formatRange(assessment.breakfastScore.min, assessment.breakfastScore.max, "分") : "未记录"}</b></div>
@@ -304,7 +305,7 @@ function AssessmentPanel({ assessment }: { assessment: DailyAssessment }) {
         </div>
         <p className="helper">午餐仅判断三类结构是否出现；书本克数目标只比较有明确生熟重与单位口径的记录。</p>
         {assessment.warnings.map((warning) => <p className="notice warning" key={warning}>{warning}</p>)}
-      </section>
+      </section>}
     </>
   );
 }
@@ -324,7 +325,12 @@ function TodayPage() {
   const [message, setMessage] = useState("");
   const currentTargets = useMemo(() => profile ? calculateTargets(profile) : undefined, [profile]);
   const targets = useMemo(
-    () => currentTargets ? resolveDailyTargets(meals, storedDayTarget, currentTargets) : undefined,
+    () => currentTargets
+      ? applyCurrentSafetyAdmission(
+          resolveDailyTargets(meals, storedDayTarget, currentTargets),
+          currentTargets
+        )
+      : undefined,
     [currentTargets, meals, storedDayTarget]
   );
   const assessment = useMemo(() => targets ? assessDay(today, mealFacts(meals, foods), targets, { completed, waterMl }) : undefined, [completed, foods, meals, targets, today, waterMl]);
@@ -557,9 +563,12 @@ function HistoryPage() {
   const waterMap = new Map(settings.filter((item) => item.key.startsWith("water:")).map((item) => [item.key.slice(6), Number(item.value)]));
   const days = currentTargets ? dates.map((date) => {
     const dateMeals = meals.filter((meal) => meal.date === date);
-    const dayTargets = resolveDailyTargets(
-      dateMeals,
-      settingValue(settings, `dayTarget:${date}`),
+    const dayTargets = applyCurrentSafetyAdmission(
+      resolveDailyTargets(
+        dateMeals,
+        settingValue(settings, `dayTarget:${date}`),
+        currentTargets
+      ),
       currentTargets
     );
     return assessDay(date, mealFacts(dateMeals, foods), dayTargets, { completed: completedMap.get(date) ?? false, waterMl: waterMap.get(date) ?? 0 });

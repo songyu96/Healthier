@@ -29,6 +29,18 @@ export function resolveDailyTargets(
   const mealTarget = meals.find((meal) => isDailyTargets(meal.targetSnapshot))?.targetSnapshot;
   return isDailyTargets(mealTarget) ? mealTarget : fallback;
 }
+export function applyCurrentSafetyAdmission(
+  historicalTargets: DailyTargets,
+  currentTargets: DailyTargets
+): DailyTargets {
+  return {
+    ...historicalTargets,
+    safetyRestricted: currentTargets.safetyRestricted,
+    safetyMessages: currentTargets.safetyMessages,
+    profileComplete: currentTargets.profileComplete,
+    missingProfileFields: currentTargets.missingProfileFields
+  };
+}
 
 function ageOnDate(birthDateText: string, today: Date): number | undefined {
   const birthDate = new Date(`${birthDateText}T00:00:00`);

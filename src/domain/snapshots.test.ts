@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_FOODS } from "./nutrition/foodData";
 import {
+  applyCurrentSafetyAdmission,
   calculateNutrition,
   calculateTargets,
   nutritionFactsForMeal,
@@ -66,5 +67,33 @@ describe("historical snapshots", () => {
     const saved = { ...meal(), targetSnapshot: oldTargets };
 
     expect(resolveDailyTargets([saved], undefined, currentTargets)).toEqual(oldTargets);
+  });
+
+  it("历史数值目标固定，但新增健康标记实时触发安全门", () => {
+    const historicalTargets = calculateTargets({
+      ...profile(175), birthDate: "1990-01-01", dietPattern: "OMNIVORE"
+    });
+    const currentTargets = calculateTargets({
+      ...profile(185), birthDate: "1990-01-01", dietPattern: "OMNIVORE", healthFlags: ["MEDICATION"]
+    });
+    const resolved = applyCurrentSafetyAdmission(historicalTargets, currentTargets);
+
+    expect(resolved.energyKcal).toBe(historicalTargets.energyKcal);
+    expect(resolved.safetyRestricted).toBe(true);
+    expect(resolved.safetyMessages.join(" ")).toContain("正在用药");
+  });
+
+  it("取消健康标记后不沿用历史快照中的安全限制", () => {
+    const historicalTargets = calculateTargets({
+      ...profile(175), birthDate: "1990-01-01", dietPattern: "OMNIVORE", healthFlags: ["MEDICATION"]
+    });
+    const currentTargets = calculateTargets({
+      ...profile(185), birthDate: "1990-01-01", dietPattern: "OMNIVORE"
+    });
+    const resolved = applyCurrentSafetyAdmission(historicalTargets, currentTargets);
+
+    expect(resolved.energyKcal).toBe(historicalTargets.energyKcal);
+    expect(resolved.safetyRestricted).toBe(false);
+    expect(resolved.safetyMessages).toEqual([]);
   });
 });
