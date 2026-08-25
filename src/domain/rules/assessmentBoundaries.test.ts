@@ -4,6 +4,7 @@ import { BASE_FOODS } from "../nutrition/foodData";
 import type { ConfirmedMeal } from "../meals/types";
 import { assessDay } from "./assessDay";
 import { assessWeek } from "./assessWeek";
+import { recommendNextMeal } from "./recommendations";
 import { calculateTargets } from "./targets";
 
 const targets = calculateTargets({
@@ -57,18 +58,27 @@ describe("assessment boundaries", () => {
     expect(assessment.nutrition.min.kcal).toBe(0);
     expect(assessment.nutrition.max.kcal).toBe(0);
     expect(assessment.warnings.join(" ")).toContain("油量未知");
+    expect(assessment.nutritionComplete).toBe(false);
+    const actions = recommendNextMeal(assessment);
+    expect(actions.map((action) => action.id)).not.toContain("protein-gap");
   });
 
-  it("早餐最低分恰好60分时计为周达标", () => {
+  it("早餐最低分必须大于60才计为周达标", () => {
     const base = assessDay("2026-08-25", [], targets, { completed: true, waterMl: 0 });
-    const week = assessWeek(
+    const exactSixty = assessWeek(
       "2026-08-19",
       "2026-08-25",
       [{ ...base, breakfastScore: { min: 60, max: 60 } }],
       []
     );
-
-    expect(week.breakfastPassDays).toBe(1);
+    const aboveSixty = assessWeek(
+      "2026-08-19",
+      "2026-08-25",
+      [{ ...base, breakfastScore: { min: 60.01, max: 60.01 } }],
+      []
+    );
+    expect(exactSixty.breakfastPassDays).toBe(0);
+    expect(aboveSixty.breakfastPassDays).toBe(1);
   });
 
   it("内置食物库至少40种且每项保留真实来源标识", () => {

@@ -79,6 +79,11 @@ export function calculateNutrition(
       return;
     }
 
+    if (!food.nutrientsPer100) {
+      unknownItems.push({ tempId: item.tempId, name: item.name, reason: "食物仅配置为食物组记录，未提供营养值" });
+      return;
+    }
+
     if (!food.compatibleStates.includes(item.state)) {
       unknownItems.push({
         tempId: item.tempId,
@@ -123,7 +128,10 @@ export function calculateNutrition(
     totals,
     items: facts,
     unknownItems,
-    sourceRefs: [...new Set(facts.map((fact) => fact.sourceRef))]
+    sourceRefs: [...new Set(facts.map((fact) => fact.sourceRef))],
+    complete: unknownItems.length === 0,
+    knownItemCount: facts.length,
+    totalItemCount: meal.items.length
   };
 }
 

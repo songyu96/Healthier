@@ -9,6 +9,7 @@ import {
   type Hd1ParseResult,
   type MealItemInput,
   type MealType,
+  type ParsedMeal,
   type QuantityUnit
 } from "./types";
 
@@ -18,6 +19,7 @@ const stateSchema = z.enum(FOOD_STATES);
 const unitSchema = z.enum(QUANTITY_UNITS);
 const datePattern = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})$/;
 const quantityPattern = /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)(g|ml|pc)$/;
+const storedDateTimePattern = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
 function parseDateTime(value: string): { eatenAt: string; date: string } | null {
   const match = datePattern.exec(value);
@@ -71,7 +73,12 @@ function parseItem(value: string, index: number): { item?: MealItemInput; error?
   const quantityMin = Number(quantityMatch[1]);
   const quantityMax = Number(quantityMatch[2]);
   const unitResult = unitSchema.safeParse(quantityMatch[3]);
-  if (!unitResult.success || quantityMin > quantityMax) {
+  if (
+    !unitResult.success ||
+    !Number.isFinite(quantityMin) ||
+    !Number.isFinite(quantityMax) ||
+    quantityMin < 0 || quantityMax <= 0 || quantityMin > quantityMax
+  ) {
     return { error: `“${name}”的数量范围无效。` };
   }
 
@@ -86,6 +93,44 @@ function parseItem(value: string, index: number): { item?: MealItemInput; error?
       unit: unitResult.data as QuantityUnit
     }
   };
+}
+
+function isValidStoredDateTime(value: string, expectedDate: string): boolean {
+  const match = storedDateTimePattern.exec(value);
+  if (!match) return false;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText = "00"] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+  const date = new Date(year, month - 1, day, hour, minute, second);
+  const pad = (part: number) => String(part).padStart(2, "0");
+  const actualDate = `${year}-${pad(month)}-${pad(day)}`;
+  return actualDate === expectedDate &&
+    date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day &&
+    date.getHours() === hour && date.getMinutes() === minute && date.getSeconds() === second;
+}
+
+export function validateMealDraft(
+  meal: Pick<ParsedMeal, "date" | "eatenAt" | "items">
+): string[] {
+  const errors: string[] = [];
+  if (!isValidStoredDateTime(meal.eatenAt, meal.date)) {
+    errors.push("进餐时间必须是有效日期时间，并与记录日期一致。");
+  }
+  if (meal.items.length === 0) errors.push("至少需要一项食物。");
+  meal.items.forEach((item, index) => {
+    if (!item.name.trim()) errors.push(`第${index + 1}项食物名称不能为空。`);
+    if (
+      !Number.isFinite(item.quantityMin) || !Number.isFinite(item.quantityMax) ||
+      item.quantityMin < 0 || item.quantityMax <= 0 || item.quantityMin > item.quantityMax
+    ) {
+      errors.push(`“${item.name || `第${index + 1}项食物`}”的重量范围无效。`);
+    }
+  });
+  return errors;
 }
 
 export function parseHd1(rawLine: string): Hd1ParseResult {
@@ -129,7 +174,7 @@ export function parseHd1(rawLine: string): Hd1ParseResult {
       items,
       cookingMethod: cookingMethod.trim() || "UNKNOWN",
       note: note.trim(),
-      rawImportLine: line,
+      rawImportLine: rawLine,
       unknownOil: /油[^|;]*未知|未知[^|;]*油/.test(note),
       unknownSalt: /盐[^|;]*未知|未知[^|;]*盐/.test(note)
     }

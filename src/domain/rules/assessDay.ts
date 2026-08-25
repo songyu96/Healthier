@@ -132,10 +132,15 @@ export function assessDay(
       ].every((group) => group.some((category) => lunchCategories.has(category as FoodCategory)))
     : undefined;
 
+  const unknownNutritionCount = mealFacts.reduce(
+    (sum, current) => sum + current.facts.unknownItems.length,
+    0
+  );
+  const unknownOil = mealFacts.some(({ meal }) => meal.unknownOil);
   const warnings: string[] = [];
-  if (mealFacts.some(({ meal }) => meal.unknownOil)) warnings.push("有餐次油量未知，脂肪和能量可能被低估。 ");
+  if (unknownOil) warnings.push("有餐次油量未知，当前营养数字只是已知小计，脂肪和能量可能被低估。 ");
   if (mealFacts.some(({ meal }) => meal.unknownSalt)) warnings.push("有餐次盐量未知，本应用不估算确定钠摄入。 ");
-  if (mealFacts.some(({ facts }) => facts.unknownItems.length > 0)) warnings.push("部分食物没有可靠营养数据，只参与食物组记录。 ");
+  if (unknownNutritionCount > 0) warnings.push("部分食物没有可靠营养数据，当前营养数字只是已知小计。 ");
 
   return {
     date,
@@ -146,8 +151,11 @@ export function assessDay(
     lunchGroupsComplete,
     foodVarietyCount: foodNames.size,
     foodNames: [...foodNames],
-    unknownNutritionCount: mealFacts.reduce((sum, current) => sum + current.facts.unknownItems.length, 0),
-    unknownOil: mealFacts.some(({ meal }) => meal.unknownOil),
+    unknownNutritionCount,
+    nutritionComplete: unknownNutritionCount === 0 && !unknownOil,
+    nutritionKnownItemCount: mealFacts.reduce((sum, current) => sum + current.facts.knownItemCount, 0),
+    nutritionTotalItemCount: mealFacts.reduce((sum, current) => sum + current.facts.totalItemCount, 0),
+    unknownOil,
     waterMl: options.waterMl,
     warnings: warnings.map((warning) => warning.trim()),
     targets,

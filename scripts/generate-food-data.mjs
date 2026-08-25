@@ -33,7 +33,7 @@ for (const row of parseRows(await readFile(resolve(sourceDir, "FOOD_DES.txt"), "
 
 const nutrientsByFood = new Map();
 for (const food of selection) {
-  nutrientsByFood.set(food.ndbNo, { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 });
+  nutrientsByFood.set(food.ndbNo, {});
 }
 
 for (const row of parseRows(await readFile(resolve(sourceDir, "NUT_DATA.txt"), "latin1"))) {
@@ -46,6 +46,12 @@ for (const row of parseRows(await readFile(resolve(sourceDir, "NUT_DATA.txt"), "
 
 for (const food of selection) {
   if (!descriptions.has(food.ndbNo)) throw new Error(`找不到USDA食物：${food.ndbNo}`);
+  const nutrients = nutrientsByFood.get(food.ndbNo);
+  for (const property of Object.values(nutrientNumbers)) {
+    if (!Number.isFinite(nutrients[property])) {
+      throw new Error(`USDA食物${food.ndbNo}缺少必需营养素：${property}`);
+    }
+  }
 }
 
 const generatedFoods = selection.map(({ ndbNo, states, ...food }) => ({

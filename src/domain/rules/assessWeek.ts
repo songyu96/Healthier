@@ -61,7 +61,7 @@ export function assessWeek(
 
   if (validDays.length < 4) issues.push("本周完整记录不足4天，趋势结论仅供参考。 ");
   if (foodNames.size < 25 && validDays.length >= 4) issues.push("本周食物种类少于书中最低25种目标。 ");
-  if (validDays.filter((day) => (day.breakfastScore?.min ?? 0) >= 60).length < Math.ceil(validDays.length / 2)) {
+  if (validDays.filter((day) => (day.breakfastScore?.min ?? 0) > 60).length < Math.ceil(validDays.length / 2)) {
     issues.push("本周多数有效记录日的早餐未明确达到及格线。 ");
   }
 
@@ -70,7 +70,7 @@ export function assessWeek(
     endDate,
     validDays: validDays.length,
     averageNutrition,
-    breakfastPassDays: validDays.filter((day) => (day.breakfastScore?.min ?? 0) >= 60).length,
+    breakfastPassDays: validDays.filter((day) => (day.breakfastScore?.min ?? 0) > 60).length,
     animalFoodTotal,
     uniqueFoodCount: foodNames.size,
     latestWeightKg: latest?.weightKg,

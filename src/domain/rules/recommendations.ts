@@ -16,6 +16,16 @@ export function recommendNextMeal(assessment: DailyAssessment): RecommendedActio
     if (actions.length < 3) actions.push(action);
   };
 
+  if (!assessment.nutritionComplete) {
+    add({
+      id: "nutrition-incomplete",
+      title: "先确认未知食物和用油",
+      detail: "当前只统计了已知营养小计，不据此判断宏量营养素明确不足。",
+      ruleIds: ["BR-A-001"],
+      kind: "NEXT_MEAL"
+    });
+  }
+
   if (assessment.groups.vegetable.max < assessment.targets.foodGroups.vegetable.min) {
     add({
       id: "vegetable-gap",
@@ -26,7 +36,10 @@ export function recommendNextMeal(assessment: DailyAssessment): RecommendedActio
     });
   }
 
-  if (assessment.nutrition.max.protein < assessment.targets.proteinG * 0.8) {
+  if (
+    assessment.nutritionComplete &&
+    assessment.nutrition.max.protein < assessment.targets.proteinG * 0.8
+  ) {
     add({
       id: "protein-gap",
       title: "补一份可靠蛋白质",

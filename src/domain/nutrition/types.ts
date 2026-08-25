@@ -20,7 +20,7 @@ export interface FoodReference {
   category: FoodCategory;
   compatibleStates: FoodState[];
   basisUnit: Extract<QuantityUnit, "g" | "ml">;
-  nutrientsPer100: NutrientVector;
+  nutrientsPer100?: NutrientVector;
   gramsPerPiece?: number;
   source: {
     kind: "USDA_FDC" | "BOOK" | "USER";
@@ -54,5 +54,8 @@ export interface NutritionFacts {
   items: ItemNutritionFact[];
   unknownItems: UnknownNutritionItem[];
   sourceRefs: string[];
+  complete: boolean;
+  knownItemCount: number;
+  totalItemCount: number;
 }
 

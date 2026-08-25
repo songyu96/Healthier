@@ -1,21 +1,11 @@
 import { z } from "zod";
 import { db } from "./db";
+import { backupPayloadSchema, type BackupPayload } from "./backupSchemas";
+export type { BackupPayload } from "./backupSchemas";
 
 const ITERATIONS = 310_000;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8", { fatal: true });
-
-const recordSchema = z.record(z.string(), z.unknown());
-const payloadSchema = z.object({
-  schemaVersion: z.literal(1),
-  exportedAt: z.string(),
-  profiles: z.array(recordSchema),
-  bodyMetrics: z.array(recordSchema),
-  meals: z.array(recordSchema),
-  mealItems: z.array(recordSchema),
-  foodOverrides: z.array(recordSchema),
-  settings: z.array(recordSchema)
-});
 
 const envelopeSchema = z.object({
   format: z.literal("HD-BACKUP-1"),
@@ -31,8 +21,6 @@ const envelopeSchema = z.object({
   iv: z.string(),
   ciphertext: z.string()
 });
-
-export type BackupPayload = z.infer<typeof payloadSchema>;
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -68,7 +56,7 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number)
 }
 
 export async function readBackupPayload(): Promise<BackupPayload> {
-  return payloadSchema.parse({
+  return backupPayloadSchema.parse({
     schemaVersion: 1,
     exportedAt: new Date().toISOString(),
     profiles: await db.profiles.toArray(),
@@ -119,13 +107,14 @@ export async function decryptBackup(text: string, password: string): Promise<Bac
       key,
       toArrayBufferBytes(base64ToBytes(envelope.ciphertext))
     );
-    return payloadSchema.parse(JSON.parse(decoder.decode(plaintext)));
+    return backupPayloadSchema.parse(JSON.parse(decoder.decode(plaintext)));
   } catch {
     throw new Error("密码错误或备份文件已经损坏。");
   }
 }
 
 export async function restoreBackup(payload: BackupPayload): Promise<void> {
+  const validated = backupPayloadSchema.parse(payload);
   await db.transaction(
     "rw",
     [db.profiles, db.bodyMetrics, db.meals, db.mealItems, db.foodOverrides, db.settings],
@@ -138,12 +127,12 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
         db.foodOverrides.clear(),
         db.settings.clear()
       ]);
-      if (payload.profiles.length) await db.profiles.bulkAdd(payload.profiles as never[]);
-      if (payload.bodyMetrics.length) await db.bodyMetrics.bulkAdd(payload.bodyMetrics as never[]);
-      if (payload.meals.length) await db.meals.bulkAdd(payload.meals as never[]);
-      if (payload.mealItems.length) await db.mealItems.bulkAdd(payload.mealItems as never[]);
-      if (payload.foodOverrides.length) await db.foodOverrides.bulkAdd(payload.foodOverrides as never[]);
-      if (payload.settings.length) await db.settings.bulkAdd(payload.settings as never[]);
+      if (validated.profiles.length) await db.profiles.bulkAdd(validated.profiles);
+      if (validated.bodyMetrics.length) await db.bodyMetrics.bulkAdd(validated.bodyMetrics);
+      if (validated.meals.length) await db.meals.bulkAdd(validated.meals);
+      if (validated.mealItems.length) await db.mealItems.bulkAdd(validated.mealItems);
+      if (validated.foodOverrides.length) await db.foodOverrides.bulkAdd(validated.foodOverrides);
+      if (validated.settings.length) await db.settings.bulkAdd(validated.settings);
     }
   );
 }

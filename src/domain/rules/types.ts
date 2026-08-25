@@ -81,6 +81,9 @@ export interface DailyAssessment {
   foodVarietyCount: number;
   foodNames: string[];
   unknownNutritionCount: number;
+  nutritionComplete: boolean;
+  nutritionKnownItemCount: number;
+  nutritionTotalItemCount: number;
   unknownOil: boolean;
   waterMl: number;
   warnings: string[];
