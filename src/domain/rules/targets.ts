@@ -66,6 +66,8 @@ export function calculateTargets(profile: UserProfile): DailyTargets {
   const missingProfileFields: string[] = [];
   if (!profile.birthDate) missingProfileFields.push("出生日期");
   if (!profile.dietPattern) missingProfileFields.push("饮食模式");
+  if (!profile.dailyExercise) missingProfileFields.push("日常运动");
+  if (!profile.dietHabitSummary?.trim()) missingProfileFields.push("饮食习惯");
   if (missingProfileFields.length > 0) {
     safetyMessages.push(`健康模式资料不完整：缺少${missingProfileFields.join("、")}。`);
   }

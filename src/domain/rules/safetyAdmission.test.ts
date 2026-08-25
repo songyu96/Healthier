@@ -14,6 +14,8 @@ function profile(overrides: Partial<UserProfile> = {}): UserProfile {
     id: "default",
     birthDate: "1990-01-01",
     dietPattern: "OMNIVORE",
+    dailyExercise: "NONE",
+    dietHabitSummary: "三餐规律",
     heightCm: 175,
     currentWeightKg: 70,
     activityLevel: "LIGHT",
@@ -31,10 +33,15 @@ describe("health mode admission", () => {
     expect(targets.safetyRestricted).toBe(false);
   });
 
-  it("缺少出生日期或饮食模式时暂停自动建议", () => {
-    const targets = calculateTargets(profile({ birthDate: undefined, dietPattern: undefined }));
+  it("缺少最小资料任一字段时暂停自动建议", () => {
+    const targets = calculateTargets(profile({
+      birthDate: undefined,
+      dietPattern: undefined,
+      dailyExercise: undefined,
+      dietHabitSummary: undefined
+    }));
     expect(targets.profileComplete).toBe(false);
-    expect(targets.missingProfileFields).toEqual(["出生日期", "饮食模式"]);
+    expect(targets.missingProfileFields).toEqual(["出生日期", "饮食模式", "日常运动", "饮食习惯"]);
     expect(targets.safetyRestricted).toBe(true);
   });
 

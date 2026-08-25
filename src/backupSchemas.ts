@@ -82,6 +82,8 @@ const profileSchema = z.object({
   birthYear: z.number().int().min(1900).max(3000).optional(),
   birthDate: dateKeySchema.optional(),
   dietPattern: z.enum(["OMNIVORE", "VEGETARIAN", "VEGAN", "OTHER"]).optional(),
+  dailyExercise: z.enum(["NONE", "LIGHT", "MODERATE", "VIGOROUS"]).optional(),
+  dietHabitSummary: z.string().trim().min(1).optional(),
   sex: z.enum(["F", "M", "UNSPECIFIED"]).optional(),
   heightCm: z.number().finite().gt(105).max(250),
   currentWeightKg: finitePositive.max(500),

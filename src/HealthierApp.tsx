@@ -20,7 +20,6 @@ import {
   assessWeek,
   calculateNutrition,
   calculateTargets,
-  isDailyTargets,
   nutritionFactsForMeal,
   parseHd1,
   recommendNextMeal,
@@ -102,6 +101,11 @@ function formatRange(min: number, max: number, unit: string, digits = 0): string
   const left = min.toFixed(digits);
   const right = max.toFixed(digits);
   return min === max ? `${left} ${unit}` : `${left}～${right} ${unit}`;
+}
+
+function formatWeeklyGroup(min: number, max: number, incomparable: boolean): string {
+  const known = formatRange(min, max, "g");
+  return incomparable ? `不可比较（已知可比小计 ${known}）` : known;
 }
 
 function errorMessage(error: unknown): string {
@@ -359,10 +363,7 @@ function TodayPage() {
       const storedTarget = draft.date === today
         ? storedDayTarget
         : await getSetting<unknown>(`dayTarget:${draft.date}`, undefined);
-      const draftTarget = "id" in draft ? draft.targetSnapshot : undefined;
-      const targetSnapshot = isDailyTargets(draftTarget)
-        ? draftTarget
-        : resolveDailyTargets([], storedTarget, currentTargets);
+      const targetSnapshot = resolveDailyTargets([], storedTarget, currentTargets);
       const now = new Date().toISOString();
       const mealWithoutNutrition: ConfirmedMeal = "id" in draft ? {
         ...draft,
@@ -489,6 +490,12 @@ function ProfileEditor({ showTitle = true, onSaved }: { showTitle?: boolean; onS
             <option value="">请选择</option><option value="OMNIVORE">杂食</option><option value="VEGETARIAN">蛋奶素/素食</option><option value="VEGAN">纯素</option><option value="OTHER">其他</option>
           </select>
         </label>
+        <label>日常运动
+          <select value={form.dailyExercise ?? ""} onChange={(event) => setForm({ ...form, dailyExercise: event.target.value ? event.target.value as UserProfile["dailyExercise"] : undefined })}>
+            <option value="">请选择</option><option value="NONE">不运动/未安排</option><option value="LIGHT">轻量</option><option value="MODERATE">中等</option><option value="VIGOROUS">高强度</option>
+          </select>
+        </label>
+        <label>饮食习惯简述<input placeholder="如：三餐规律、常外卖" value={form.dietHabitSummary ?? ""} onChange={(event) => setForm({ ...form, dietHabitSummary: event.target.value || undefined })} /></label>
       </div>
       <label className="checkbox"><input type="checkbox" checked={form.overweightAdjustmentEnabled} onChange={(event) => setForm({ ...form, overweightAdjustmentEnabled: event.target.checked })} /><span><b>手动采用超重调整</b><small>仅在轻体力活动时，把系数从30调整为25；不会自动判断。</small></span></label>
       <fieldset className="health-flags"><legend>安全提示条件（可多选）</legend>{HEALTH_FLAGS.map((flag) => <label className="checkbox" key={flag.value}><input type="checkbox" checked={form.healthFlags.includes(flag.value)} onChange={(event) => setForm({ ...form, healthFlags: event.target.checked ? [...form.healthFlags, flag.value] : form.healthFlags.filter((value) => value !== flag.value) })} />{flag.label}</label>)}</fieldset>
@@ -560,6 +567,7 @@ function HistoryPage() {
   const currentTargets = profile ? calculateTargets(profile) : undefined;
   const dates = Array.from({ length: 7 }, (_, index) => dateOffset(index - 6));
   const completedMap = new Map(dates.map((date) => [date, completedFromSettings(settings, date)]));
+  const selectedCompleted = completedFromSettings(settings, selectedDate);
   const waterMap = new Map(settings.filter((item) => item.key.startsWith("water:")).map((item) => [item.key.slice(6), Number(item.value)]));
   const days = currentTargets ? dates.map((date) => {
     const dateMeals = meals.filter((meal) => meal.date === date);
@@ -594,7 +602,7 @@ function HistoryPage() {
     setSaving(true);
     try {
       const targetSnapshot = resolveDailyTargets(
-        [draft],
+        [],
         settingValue(settings, `dayTarget:${draft.date}`),
         currentTargets
       );
@@ -630,7 +638,7 @@ function HistoryPage() {
         <div className="section-heading"><div><span className="eyebrow">周平均</span><h2>摄入区间</h2></div></div>
         <p className="helper">周平均只使用营养数据完整的完成日；鱼肉蛋目标需7天完整且计量口径可比。</p>
         {week.averageNutrition ? <div className="status-grid"><div><span>能量</span><b>{formatRange(week.averageNutrition.min.kcal, week.averageNutrition.max.kcal, "kcal")}</b></div><div><span>蛋白质</span><b>{formatRange(week.averageNutrition.min.protein, week.averageNutrition.max.protein, "g", 1)}</b></div><div><span>最近体重变化</span><b>{week.weightChangeKg === undefined ? "记录不足" : `${week.weightChangeKg > 0 ? "+" : ""}${week.weightChangeKg.toFixed(1)} kg`}</b></div><div><span>最近腰围变化</span><b>{waistChange === undefined ? "记录不足" : `${waistChange > 0 ? "+" : ""}${waistChange.toFixed(1)} cm`}</b></div></div> : <EmptyState text="还没有营养完整的完成日。" />}
-        <div className="status-grid"><div><span>鱼虾</span><b>{formatRange(week.fishTotal.min, week.fishTotal.max, "g")}</b></div><div><span>畜禽肉</span><b>{formatRange(week.meatTotal.min, week.meatTotal.max, "g")}</b></div><div><span>蛋类</span><b>{formatRange(week.eggTotal.min, week.eggTotal.max, "g")}</b></div></div>
+        <div className="status-grid"><div><span>鱼虾</span><b>{formatWeeklyGroup(week.fishTotal.min, week.fishTotal.max, week.incomparableAnimalGroups.includes("fish"))}</b></div><div><span>畜禽肉</span><b>{formatWeeklyGroup(week.meatTotal.min, week.meatTotal.max, week.incomparableAnimalGroups.includes("meat"))}</b></div><div><span>蛋类</span><b>{formatWeeklyGroup(week.eggTotal.min, week.eggTotal.max, week.incomparableAnimalGroups.includes("egg"))}</b></div></div>
       </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">下周行动</span><h2>先解决最重要的问题</h2></div></div>
@@ -641,6 +649,19 @@ function HistoryPage() {
         <label>选择日期<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
         {historyMessage && <p className="notice">{historyMessage}</p>}
         <div className="history-day"><h3>{selectedDate}<span>{completedFromSettings(settings, selectedDate) ? "完整" : "未标记完整"}</span></h3>{selectedMeals.length ? selectedMeals.map((meal) => <MealRow key={meal.id} meal={meal} onEdit={() => setDraft(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); setHistoryMessage("餐食已删除。"); } catch (error) { setHistoryMessage(errorMessage(error)); } }} />) : <p className="muted">该日期无记录</p>}</div>
+        <label className="checkbox complete-toggle"><input
+          type="checkbox"
+          checked={selectedCompleted}
+          disabled={selectedMeals.length === 0 && !selectedCompleted}
+          onChange={async (event) => {
+            try {
+              await setDayCompletion(selectedDate, event.target.checked);
+              setHistoryMessage(event.target.checked ? `${selectedDate} 已标记为记录完整。` : `${selectedDate} 已取消完整标记。`);
+            } catch (error) {
+              setHistoryMessage(errorMessage(error));
+            }
+          }}
+        /><span><b>该日已记录完整</b><small>编辑或删除餐食后会自动失效，需重新确认</small></span></label>
       </section>
       {draft && <MealDraftEditor draft={draft} foods={foods} onChange={(next) => setDraft(next as ConfirmedMeal)} onCancel={() => setDraft(undefined)} onSave={() => void saveEdit()} saving={saving} />}
     </div>

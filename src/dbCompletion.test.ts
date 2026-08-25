@@ -103,4 +103,36 @@ describe("day completion consistency", () => {
 
     expect((await db.settings.get("dayTarget:2026-08-25"))?.value).toEqual(firstTarget);
   });
+
+  it("跨日期移动统一采用目标日期快照并同步餐食", async () => {
+    const sourceTarget = calculateTargets(profile(175));
+    const destinationTarget = calculateTargets(profile(185));
+    const currentTarget = calculateTargets(profile(178));
+    const source = sampleMeal("meal-moving", "2026-08-25");
+
+    await saveConfirmedMeal({ ...source, targetSnapshot: sourceTarget });
+    await saveConfirmedMeal({
+      ...sampleMeal("meal-destination", "2026-08-26"),
+      targetSnapshot: destinationTarget
+    });
+    await saveConfirmedMeal({
+      ...source,
+      date: "2026-08-26",
+      eatenAt: "2026-08-26T09:00:00",
+      targetSnapshot: sourceTarget,
+      updatedAt: "2026-08-26T09:10:00.000Z"
+    });
+
+    expect((await db.meals.get(source.id))?.targetSnapshot).toEqual(destinationTarget);
+
+    await saveConfirmedMeal({
+      ...source,
+      date: "2026-08-27",
+      eatenAt: "2026-08-27T09:00:00",
+      targetSnapshot: currentTarget,
+      updatedAt: "2026-08-27T09:10:00.000Z"
+    });
+    expect((await db.meals.get(source.id))?.targetSnapshot).toEqual(currentTarget);
+    expect((await db.settings.get("dayTarget:2026-08-27"))?.value).toEqual(currentTarget);
+  });
 });

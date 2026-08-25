@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { ConfirmedMeal, FoodReference, MealItemInput } from "..";
+import { parseHd1, type ConfirmedMeal, type FoodReference, type MealItemInput } from "..";
 import { calculateNutrition } from "../nutrition/calculateNutrition";
 import { BASE_FOODS } from "../nutrition/foodData";
 import { assessDay } from "./assessDay";
+import { assessWeek } from "./assessWeek";
 import { calculateTargets } from "./targets";
 
 const targets = calculateTargets({
@@ -122,5 +123,29 @@ describe("food group basis and diversity", () => {
 
     expect(result.foodVarietyCount).toBe(0);
     expect(result.diversityEstimated).toBe(true);
+  });
+
+  it("内置熟鱼肉从HD1进入周报时显示不可比较而不是完整0克", () => {
+    const parsed = parseHd1("HD1|20260825-1200|L|三文鱼~FI~CK~100-100g;鸡胸肉~MP~CK~100-100g|烤|油盐已知");
+    if (!parsed.ok) throw new Error(parsed.errors.join(" "));
+    const input: ConfirmedMeal = {
+      ...parsed.value,
+      id: "cooked-animal-meal",
+      ruleSetVersion: targets.ruleSetVersion,
+      createdAt: "2026-08-25T12:01:00",
+      updatedAt: "2026-08-25T12:01:00"
+    };
+    const daily = assess(input, BASE_FOODS);
+    const days = Array.from({ length: 7 }, (_, index) => ({
+      ...daily,
+      date: `2026-08-${String(19 + index).padStart(2, "0")}`
+    }));
+    const weekly = assessWeek("2026-08-19", "2026-08-25", days, []);
+
+    expect(daily.groups.fish).toEqual({ min: 0, max: 0 });
+    expect(daily.groups.meat).toEqual({ min: 0, max: 0 });
+    expect(daily.incomparableGroups).toEqual(expect.arrayContaining(["fish", "meat"]));
+    expect(weekly.incomparableAnimalGroups).toEqual(expect.arrayContaining(["fish", "meat"]));
+    expect(weekly.issues.join(" ")).toContain("不能与书中周目标直接比较");
   });
 });

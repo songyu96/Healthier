@@ -7,6 +7,7 @@ export type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
 export type HealthFlag = "DISEASE" | "MEDICATION" | "PREGNANT" | "MINOR" | "EATING_DISORDER" |
   "ABNORMAL_TESTS" | "PERSISTENT_SYMPTOMS" | "MALNUTRITION";
 export type DietPattern = "OMNIVORE" | "VEGETARIAN" | "VEGAN" | "OTHER";
+export type DailyExerciseLevel = "NONE" | "LIGHT" | "MODERATE" | "VIGOROUS";
 
 export interface UserProfile {
   id: "default";
@@ -14,6 +15,8 @@ export interface UserProfile {
   birthYear?: number;
   birthDate?: string;
   dietPattern?: DietPattern;
+  dailyExercise?: DailyExerciseLevel;
+  dietHabitSummary?: string;
   sex?: "F" | "M" | "UNSPECIFIED";
   heightCm: number;
   currentWeightKg: number;
@@ -120,6 +123,7 @@ export interface WeeklyAssessment {
   animalFoodTotal: RangeValue;
   fishTotal: RangeValue;
   meatTotal: RangeValue;
+  incomparableAnimalGroups: Array<"fish" | "meat" | "egg">;
   eggTotal: RangeValue;
   uniqueFoodCount: number;
   latestWeightKg?: number;

@@ -71,6 +71,9 @@ export function assessWeek(
   const fishTotal = sumGroup(validDays, "fish");
   const meatTotal = sumGroup(validDays, "meat");
   const eggTotal = sumGroup(validDays, "egg");
+  const incomparableAnimalGroups = (["fish", "meat", "egg"] as const).filter(
+    (key) => validDays.some((day) => day.incomparableGroups.includes(key))
+  );
   const foodNames = new Set(validDays.flatMap((day) => day.foodNames));
   const sortedMetrics = bodyMetrics
     .filter((metric) => {
@@ -139,6 +142,7 @@ export function assessWeek(
     fishTotal,
     meatTotal,
     eggTotal,
+    incomparableAnimalGroups,
     uniqueFoodCount: foodNames.size,
     latestWeightKg: latest?.weightKg,
     previousWeightKg: previous?.weightKg,

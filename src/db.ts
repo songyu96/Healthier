@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from "dexie";
 import {
   calculateNutrition,
+  isDailyTargets,
   isNutritionFacts,
   type ConfirmedMeal,
   type FoodReference,
@@ -126,13 +127,22 @@ export async function saveConfirmedMeal(meal: ConfirmedMeal): Promise<void> {
 
   await db.transaction("rw", db.meals, db.mealItems, db.settings, async () => {
     const existing = await db.meals.get(meal.id);
-    await db.meals.put(storedMeal);
+    const destinationTargetSetting = await db.settings.get(dayTargetKey(meal.date));
+    const destinationTarget = isDailyTargets(destinationTargetSetting?.value)
+      ? destinationTargetSetting.value
+      : isDailyTargets(storedMeal.targetSnapshot) ? storedMeal.targetSnapshot : undefined;
+    const alignedStoredMeal: StoredMeal = destinationTarget ? {
+      ...storedMeal,
+      ruleSetVersion: destinationTarget.ruleSetVersion,
+      targetSnapshot: destinationTarget
+    } : storedMeal;
+    await db.meals.put(alignedStoredMeal);
     await db.mealItems.where("mealId").equals(meal.id).delete();
     if (storedItems.length > 0) await db.mealItems.bulkPut(storedItems);
     await invalidateDay(meal.date);
     if (existing && existing.date !== meal.date) await invalidateDay(existing.date);
-    if (meal.targetSnapshot && !await db.settings.get(dayTargetKey(meal.date))) {
-      await db.settings.put({ key: dayTargetKey(meal.date), value: meal.targetSnapshot });
+    if (destinationTarget && !isDailyTargets(destinationTargetSetting?.value)) {
+      await db.settings.put({ key: dayTargetKey(meal.date), value: destinationTarget });
     }
   });
 }
