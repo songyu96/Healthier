@@ -2,6 +2,7 @@ export * from "./meals/types";
 export * from "./meals/hd1";
 export * from "./meals/portions";
 export * from "./meals/repeatMeal";
+export * from "./meals/mealTemplates";
 export * from "./nutrition/types";
 export * from "./nutrition/calculateNutrition";
 export * from "./rules/types";

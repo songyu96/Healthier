@@ -14,6 +14,7 @@ import {
   FOOD_CATEGORIES,
   FOOD_KINDS,
   FOOD_STATES,
+  MEAL_TEMPLATES,
   MEAL_LABELS,
   QUANTITY_UNITS,
   applyCurrentSafetyAdmission,
@@ -21,6 +22,7 @@ import {
   assessWeek,
   calculateNutrition,
   calculateTargets,
+  createMealDraftFromTemplate,
   createRepeatMealDraft,
   nutritionFactsForMeal,
   parseHd1,
@@ -427,6 +429,19 @@ function TodayPage() {
     <div className="page-stack">
       <PageIntro eyebrow={today} title={`今天，${profile.name || "给自己吃好一点"}`} description="记录事实，看到缺口，再决定下一餐。所有数据只保存在这台设备。" />
       {assessment && <AssessmentPanel assessment={assessment} />}
+      <section className="card">
+        <div className="section-heading"><div><span className="eyebrow">常用搭配</span><h2>点一下生成可编辑草稿</h2></div><span className="step-pill">示例份量</span></div>
+        <p className="helper">模板只提供记录起点，不是书本目标或个性化推荐；保存前请确认实际食物、重量和油盐。</p>
+        <div className="template-grid">
+          {MEAL_TEMPLATES.map((template) => (
+            <button className="template-button" type="button" key={template.id} onClick={() => {
+              setDraft(createMealDraftFromTemplate(template, localDateTime()));
+              setErrors([]);
+              setMessage("已生成“" + template.name + "”草稿，请按实际情况修改后保存。");
+            }}><strong>{template.name}</strong><span>{template.description}</span></button>
+          ))}
+        </div>
+      </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">HD1 导入</span><h2>粘贴一行餐食</h2></div><span className="step-pill">先解析，再确认</span></div>
         <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLine(event.target.value)} spellCheck={false} />
