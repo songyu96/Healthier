@@ -4,9 +4,12 @@ import { calculateNutrition } from "./calculateNutrition";
 import { BASE_FOODS } from "./foodData";
 
 describe("food data source compatibility audit", () => {
-  it("烤鸡胸不使用宽泛鸡肉别名", () => {
+  it("具体肉类条目不使用宽泛肉类别名", () => {
     const chicken = BASE_FOODS.find((food) => food.id === "chicken-breast-roasted")!;
     expect(chicken.aliases).not.toContain("鸡肉");
+    const beef = BASE_FOODS.find((food) => food.id === "beef-round-roasted")!;
+    expect(beef.aliases).not.toContain("牛肉");
+    expect(beef.aliases).toContain("烤瘦牛肉");
 
     const meal: ConfirmedMeal = {
       id: "generic-chicken",
@@ -33,6 +36,8 @@ describe("food data source compatibility audit", () => {
   });
 
   it("牛奶保留克毫升近似来源说明", () => {
-    expect(BASE_FOODS.find((food) => food.id === "milk-whole")?.bookNote).toContain("近似100毫升");
+    const milk = BASE_FOODS.find((food) => food.id === "milk-whole")!;
+    expect(milk.dataCaveats?.join("")).toContain("1克≈1毫升");
+    expect(milk.bookNote).toBeUndefined();
   });
 });

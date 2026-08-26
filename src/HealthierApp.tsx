@@ -12,6 +12,7 @@ import {
   ACTIVITY_LEVELS,
   CATEGORY_LABELS,
   FOOD_CATEGORIES,
+  FOOD_KINDS,
   FOOD_STATES,
   MEAL_LABELS,
   QUANTITY_UNITS,
@@ -31,6 +32,7 @@ import {
   type DailyAssessment,
   type DailyTargets,
   type FoodCategory,
+  type FoodKind,
   type FoodReference,
   type FoodState,
   type HealthFlag,
@@ -72,6 +74,22 @@ const STATE_LABELS: Record<FoodState, string> = {
   PK: "包装标示",
   UN: "未知"
 };
+
+const FOOD_KIND_LABELS: Record<FoodKind, string> = {
+  INGREDIENT: "基础食材",
+  COMPOSITE: "组合成品",
+  PACKAGED: "包装食品"
+};
+
+function resolveFoodKind(food: FoodReference): FoodKind {
+  return food.foodKind ?? "INGREDIENT";
+}
+
+function foodSourceLabel(food: FoodReference): string {
+  if (food.source.kind === "USER") return "我的本地数据";
+  if (food.source.kind === "BOOK") return "书本参考数据";
+  return "美国农业部食物成分资料";
+}
 
 const HEALTH_FLAGS: { value: HealthFlag; label: string }[] = [
   { value: "DISEASE", label: "已确诊疾病" },
@@ -711,6 +729,8 @@ interface FoodFormState {
   id?: string;
   name: string;
   aliases: string;
+  foodKind: FoodKind;
+  tags: string;
   category: FoodCategory;
   states: FoodState[];
   basisUnit: "g" | "ml";
@@ -721,67 +741,157 @@ interface FoodFormState {
   carb: number;
   fiber: number;
   gramsPerPiece?: number;
+  dataCaveat: string;
 }
 
-const EMPTY_FOOD: FoodFormState = { name: "", aliases: "", category: "OT", states: ["EA"], basisUnit: "g", nutritionKnown: false, kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 };
+const EMPTY_FOOD: FoodFormState = {
+  name: "",
+  aliases: "",
+  foodKind: "INGREDIENT",
+  tags: "",
+  category: "OT",
+  states: ["EA"],
+  basisUnit: "g",
+  nutritionKnown: false,
+  kcal: 0,
+  protein: 0,
+  fat: 0,
+  carb: 0,
+  fiber: 0,
+  dataCaveat: ""
+};
 
 function FoodsPage() {
   const foods = useFoodReferences();
   const overrides = useLiveQuery(() => db.foodOverrides.toArray(), [], []);
   const [query, setQuery] = useState("");
+  const [kindFilter, setKindFilter] = useState<"ALL" | FoodKind>("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<"ALL" | FoodCategory>("ALL");
   const [form, setForm] = useState<FoodFormState>(EMPTY_FOOD);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
-  const visible = foods.filter((food) => [food.name, ...food.aliases].join(" ").toLocaleLowerCase("zh-CN").includes(query.trim().toLocaleLowerCase("zh-CN")));
+  const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
+  const visible = foods.filter((food) => {
+    const matchesQuery = !normalizedQuery || [food.name, ...food.aliases, ...(food.tags ?? [])]
+      .join(" ")
+      .toLocaleLowerCase("zh-CN")
+      .includes(normalizedQuery);
+    return matchesQuery
+      && (kindFilter === "ALL" || resolveFoodKind(food) === kindFilter)
+      && (categoryFilter === "ALL" || food.category === categoryFilter);
+  });
 
   const edit = (food: FoodReference) => {
     const nutrients = food.nutrientsPer100 ?? { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 };
-    setForm({ id: food.id, name: food.name, aliases: food.aliases.join("、"), category: food.category, states: food.compatibleStates, basisUnit: food.basisUnit, nutritionKnown: Boolean(food.nutrientsPer100), ...nutrients, gramsPerPiece: food.gramsPerPiece });
+    setForm({
+      id: food.id,
+      name: food.name,
+      aliases: food.aliases.join("、"),
+      foodKind: resolveFoodKind(food),
+      tags: (food.tags ?? []).join("、"),
+      category: food.category,
+      states: food.compatibleStates,
+      basisUnit: food.basisUnit,
+      nutritionKnown: Boolean(food.nutrientsPer100),
+      ...nutrients,
+      gramsPerPiece: food.gramsPerPiece,
+      dataCaveat: (food.dataCaveats ?? []).join("；")
+    });
     setEditing(true);
   };
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
-    if (!form.name.trim() || form.states.length === 0) { setMessage("请填写名称并至少选择一种状态。 "); return; }
+    if (!form.name.trim() || form.states.length === 0) {
+      setMessage("请填写名称并至少选择一种状态。");
+      return;
+    }
     const food: FoodOverride = {
-      id: form.id ?? `user-${crypto.randomUUID()}`,
+      id: form.id ?? "user-" + crypto.randomUUID(),
       name: form.name.trim(),
       aliases: form.aliases.split(/[、,，]/).map((value) => value.trim()).filter(Boolean),
+      foodKind: form.foodKind,
+      tags: form.tags.split(/[、,，]/).map((value) => value.trim()).filter(Boolean),
       category: form.category,
       compatibleStates: form.states,
       basisUnit: form.basisUnit,
       gramsPerPiece: form.gramsPerPiece,
+      dataCaveats: form.dataCaveat.split(/[；;]/).map((value) => value.trim()).filter(Boolean),
       nutrientsPer100: form.nutritionKnown
         ? { kcal: form.kcal, protein: form.protein, fat: form.fat, carb: form.carb, fiber: form.fiber }
         : undefined,
-      source: { kind: "USER", ref: "用户录入", release: localDateKey() },
+      source: { kind: "USER", ref: "用户录入", release: localDateKey(), method: form.foodKind === "PACKAGED" ? "LABEL" : "USER" },
       updatedAt: new Date().toISOString()
     };
     await db.foodOverrides.put(food);
-    setMessage("食物数据已作为本地覆盖保存。 ");
+    setMessage("食物数据已作为本地覆盖保存。");
     setForm(EMPTY_FOOD);
     setEditing(false);
   };
 
   return (
     <div className="page-stack">
-      <PageIntro eyebrow={`${BASE_FOODS.length} 种内置食物`} title="小型、可追溯的食物库" description="内置营养值来自 USDA SR28；用户覆盖单独保存，不改写应用内置数据。" />
+      <PageIntro
+        eyebrow={BASE_FOODS.length + " 种内置食物"}
+        title="小型、可追溯的食物库"
+        description="基础数据来自美国农业部食物成分资料；你添加或修改的内容只保存在本机。"
+      />
       <section className="card">
-        <input className="search-input" type="search" placeholder="搜索食物或别名" value={query} onChange={(event) => setQuery(event.target.value)} />
+        <div className="food-filters">
+          <input className="search-input" type="search" placeholder="搜索名称、别名或标签" value={query} onChange={(event) => setQuery(event.target.value)} />
+          <select aria-label="按食物类型筛选" value={kindFilter} onChange={(event) => setKindFilter(event.target.value as "ALL" | FoodKind)}>
+            <option value="ALL">全部类型</option>
+            {FOOD_KINDS.map((kind) => <option key={kind} value={kind}>{FOOD_KIND_LABELS[kind]}</option>)}
+          </select>
+          <select aria-label="按食物分类筛选" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as "ALL" | FoodCategory)}>
+            <option value="ALL">全部分类</option>
+            {FOOD_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
+          </select>
+        </div>
+        <p className="helper food-result-count">显示 {visible.length} / {foods.length} 条</p>
         <div className="food-list">
           {visible.map((food) => {
             const overridden = overrides.some((item) => item.id === food.id);
-            return <article className="food-row" key={food.id}><div><h3>{food.name}{overridden && <span className="tag">本地覆盖</span>}</h3><p>{CATEGORY_LABELS[food.category]} · {food.nutrientsPer100 ? `每100${food.basisUnit} ${food.nutrientsPer100.kcal.toFixed(0)} kcal · 蛋白质 ${food.nutrientsPer100.protein.toFixed(1)} g` : "仅记录食物组，营养值未知"}</p><small>{food.source.kind === "USER" ? "用户录入" : `${food.source.release} · ${food.source.ref}`}{food.bookNote ? ` · ${food.bookNote}` : ""}</small></div><button className="text-button" type="button" onClick={() => edit(food)}>编辑</button></article>;
+            return (
+              <article className="food-row" key={food.id}>
+                <div>
+                  <h3>
+                    {food.name}
+                    <span className="tag">{FOOD_KIND_LABELS[resolveFoodKind(food)]}</span>
+                    {overridden && <span className="tag">本地覆盖</span>}
+                  </h3>
+                  <p>{CATEGORY_LABELS[food.category]} · {food.nutrientsPer100 ? "每100" + food.basisUnit + " " + food.nutrientsPer100.kcal.toFixed(0) + " kcal · 蛋白质 " + food.nutrientsPer100.protein.toFixed(1) + " g" : "仅记录食物组，营养值未知"}</p>
+                  <small>{foodSourceLabel(food)}</small>
+                  {food.dataCaveats?.map((caveat) => <p className="data-caveat" key={caveat}>{caveat}</p>)}
+                  <details className="source-details"><summary>查看数据来源</summary><p>{food.source.release} · {food.source.ref}</p></details>
+                </div>
+                <button className="text-button" type="button" onClick={() => edit(food)}>编辑</button>
+              </article>
+            );
           })}
+          {visible.length === 0 && <p className="empty-state">没有符合筛选条件的食物。</p>}
         </div>
         <button className="secondary full-width" type="button" onClick={() => { setForm(EMPTY_FOOD); setEditing(!editing); }}>＋ 新增食物</button>
+        <details>
+          <summary>术语与数据来源说明</summary>
+          <p>基础食材是单一食材；组合成品是汉堡、饺子等配方会波动的食物；包装食品按品牌营养标签记录。</p>
+          <p>USDA SR28 是美国农业部 2015 年发布的第 28 版食物成分资料。应用中的分类代码用于 HD1 导入和书本规则计算，界面默认展示中文名称。</p>
+        </details>
       </section>
       {editing && <form className="card" onSubmit={(event) => void save(event)}>
-        <div className="section-heading"><div><span className="eyebrow">本地覆盖</span><h2>{form.id ? `编辑 ${form.name}` : "新增食物"}</h2></div><button className="text-button" type="button" onClick={() => setEditing(false)}>取消</button></div>
-        <div className="form-grid two-columns"><label>名称<input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label><label>别名（顿号分隔）<input value={form.aliases} onChange={(event) => setForm({ ...form, aliases: event.target.value })} /></label><label>分类<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as FoodCategory })}>{FOOD_CATEGORIES.map((category) => <option key={category} value={category}>{category} · {CATEGORY_LABELS[category]}</option>)}</select></label><label>每100单位<select value={form.basisUnit} onChange={(event) => setForm({ ...form, basisUnit: event.target.value as "g" | "ml" })}><option value="g">克</option><option value="ml">毫升</option></select></label></div>
+        <div className="section-heading"><div><span className="eyebrow">本地覆盖</span><h2>{form.id ? "编辑 " + form.name : "新增食物"}</h2></div><button className="text-button" type="button" onClick={() => setEditing(false)}>取消</button></div>
+        <div className="form-grid two-columns">
+          <label>名称<input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
+          <label>别名（顿号分隔）<input value={form.aliases} onChange={(event) => setForm({ ...form, aliases: event.target.value })} /></label>
+          <label>食物类型<select value={form.foodKind} onChange={(event) => setForm({ ...form, foodKind: event.target.value as FoodKind })}>{FOOD_KINDS.map((kind) => <option key={kind} value={kind}>{FOOD_KIND_LABELS[kind]}</option>)}</select></label>
+          <label>分类<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as FoodCategory })}>{FOOD_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}</select></label>
+          <label>标签（顿号分隔）<input value={form.tags} placeholder="例如：早餐、外卖" onChange={(event) => setForm({ ...form, tags: event.target.value })} /></label>
+          <label>每100单位<select value={form.basisUnit} onChange={(event) => setForm({ ...form, basisUnit: event.target.value as "g" | "ml" })}><option value="g">克</option><option value="ml">毫升</option></select></label>
+        </div>
         <fieldset className="health-flags"><legend>适用状态</legend>{FOOD_STATES.filter((state) => state !== "UN").map((state) => <label className="checkbox" key={state}><input type="checkbox" checked={form.states.includes(state)} onChange={(event) => setForm({ ...form, states: event.target.checked ? [...form.states, state] : form.states.filter((value) => value !== state) })} />{STATE_LABELS[state]}</label>)}</fieldset>
         <label className="checkbox"><input type="checkbox" checked={form.nutritionKnown} onChange={(event) => setForm({ ...form, nutritionKnown: event.target.checked })} /><span><b>我有可靠的每100单位营养值</b><small>不勾选时只保存名称、分类和别名，不把空值当作零。</small></span></label>
         <div className="form-grid nutrient-inputs">{(["kcal", "protein", "fat", "carb", "fiber"] as const).map((key) => <label key={key}>{({ kcal: "能量 kcal", protein: "蛋白质 g", fat: "脂肪 g", carb: "碳水 g", fiber: "纤维 g" })[key]}<input required={form.nutritionKnown} disabled={!form.nutritionKnown} type="number" min="0" step="0.01" value={form[key]} onChange={(event) => setForm({ ...form, [key]: number(event.target.value) })} /></label>)}<label>每枚克数（可选）<input type="number" min="0" step="0.1" value={form.gramsPerPiece ?? ""} onChange={(event) => setForm({ ...form, gramsPerPiece: event.target.value ? number(event.target.value) : undefined })} /></label></div>
+        <label>数据限制或换算说明（可选）<textarea rows={2} value={form.dataCaveat} placeholder="例如：数据来自包装标签；不同口味可能不同" onChange={(event) => setForm({ ...form, dataCaveat: event.target.value })} /></label>
         {message && <p className="notice">{message.trim()}</p>}
         <button className="primary full-width" type="submit">保存本地覆盖</button>
         {form.id && overrides.some((food) => food.id === form.id) && <button className="text-button danger full-width" type="button" onClick={async () => { await db.foodOverrides.delete(form.id!); setEditing(false); }}>删除覆盖并恢复内置值</button>}

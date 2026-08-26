@@ -695,7 +695,6 @@ export const BASE_FOODS: FoodReference[] = [
     ],
     "category": "MP",
     "basisUnit": "g",
-    "bookNote": "书中近似：瘦肉100克含蛋白质17～20克。",
     "compatibleStates": [
       "CK",
       "EA"
@@ -718,12 +717,10 @@ export const BASE_FOODS: FoodReference[] = [
     "id": "beef-round-roasted",
     "name": "瘦牛肉",
     "aliases": [
-      "牛肉",
-      "烤牛肉"
+      "烤瘦牛肉"
     ],
     "category": "MP",
     "basisUnit": "g",
-    "bookNote": "书中近似：瘦肉100克含蛋白质17～20克。",
     "compatibleStates": [
       "CK",
       "EA"
@@ -750,7 +747,6 @@ export const BASE_FOODS: FoodReference[] = [
     ],
     "category": "MP",
     "basisUnit": "g",
-    "bookNote": "书中近似：瘦肉100克含蛋白质17～20克。",
     "compatibleStates": [
       "CK",
       "EA"
@@ -778,7 +774,6 @@ export const BASE_FOODS: FoodReference[] = [
     ],
     "category": "FI",
     "basisUnit": "g",
-    "bookNote": "书中近似：鱼100克含蛋白质17～20克。",
     "compatibleStates": [
       "CK",
       "EA"
@@ -805,7 +800,6 @@ export const BASE_FOODS: FoodReference[] = [
     ],
     "category": "FI",
     "basisUnit": "g",
-    "bookNote": "书中近似：鱼100克含蛋白质17～20克。",
     "compatibleStates": [
       "CK",
       "EA"
@@ -861,7 +855,6 @@ export const BASE_FOODS: FoodReference[] = [
     "category": "EG",
     "basisUnit": "g",
     "gramsPerPiece": 50,
-    "bookNote": "书中近似：中等鸡蛋1枚约含蛋白质6～7克。",
     "compatibleStates": [
       "CK",
       "EA"
@@ -889,7 +882,9 @@ export const BASE_FOODS: FoodReference[] = [
     ],
     "category": "DA",
     "basisUnit": "ml",
-    "bookNote": "书中近似：牛奶100毫升约含蛋白质3克；本库按100克数据近似100毫升。",
+    "dataCaveats": [
+      "源数据按每100克提供；应用以1克≈1毫升换算牛奶体积。"
+    ],
     "compatibleStates": [
       "EA",
       "PK"

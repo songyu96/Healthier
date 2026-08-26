@@ -148,10 +148,14 @@ const foodOverrideSchema = z.object({
   basisUnit: z.enum(["g", "ml"]),
   nutrientsPer100: nutrientVectorSchema.optional(),
   gramsPerPiece: finitePositive.optional(),
+  foodKind: z.enum(["INGREDIENT", "COMPOSITE", "PACKAGED"]).optional(),
+  tags: z.array(z.string().trim().min(1)).optional(),
+  dataCaveats: z.array(z.string().trim().min(1)).optional(),
   source: z.object({
     kind: z.enum(["USDA_FDC", "BOOK", "USER"]),
     ref: z.string().min(1),
-    release: z.string().min(1)
+    release: z.string().min(1),
+    method: z.enum(["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"]).optional()
   }).strict(),
   bookNote: z.string().optional(),
   updatedAt: dateTimeSchema

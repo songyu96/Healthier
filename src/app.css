@@ -76,6 +76,12 @@ textarea { resize: vertical; line-height: 1.5; }
 input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(33, 92, 67, 0.1); }
 .hd1-input { background: #1b2922; color: #e6f2e9; font-family: Consolas, monospace; font-size: 13px; }
 .search-input { margin-bottom: 14px; }
+.food-filters { display: grid; grid-template-columns: minmax(0, 1.7fr) 1fr 1fr; gap: 8px; }
+.food-filters .search-input { margin: 0; }
+.food-result-count { margin: 9px 0 4px; }
+.data-caveat { margin-top: 5px !important; color: #735421 !important; font-size: 11px !important; }
+.source-details { margin: 5px 0 0; border: 0; padding: 0; font-size: 10px; }
+.source-details p { margin-top: 5px; }
 .helper, .muted { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .form-grid { display: grid; gap: 0 12px; }
 .two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -163,6 +169,7 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .page-stack { padding-top: 12px; }
   .card { border-radius: 17px; padding: 16px; }
   .two-columns, .nutrient-inputs { grid-template-columns: 1fr; }
+  .food-filters { grid-template-columns: 1fr; }
   .item-editor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .item-editor label:first-of-type, .item-editor label:nth-of-type(2) { grid-column: span 2; }
   .daily-controls { grid-template-columns: 1fr; }

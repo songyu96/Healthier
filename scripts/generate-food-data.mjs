@@ -56,12 +56,15 @@ for (const food of selection) {
 
 const generatedFoods = selection.map(({ ndbNo, states, ...food }) => ({
   ...food,
+  foodKind: food.foodKind ?? "INGREDIENT",
+  tags: food.tags ?? [],
   compatibleStates: states,
   nutrientsPer100: nutrientsByFood.get(ndbNo),
   source: {
     kind: "USDA_FDC",
     ref: `SR28:${ndbNo}`,
-    release: "USDA SR28 (2015)"
+    release: "USDA SR28 (2015)",
+    method: "OFFICIAL_COMPOSITION"
   },
   sourceDescription: descriptions.get(ndbNo)
 }));

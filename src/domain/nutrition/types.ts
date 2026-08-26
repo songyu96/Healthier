@@ -13,6 +13,12 @@ export interface NutrientRange {
   max: NutrientVector;
 }
 
+export const FOOD_KINDS = ["INGREDIENT", "COMPOSITE", "PACKAGED"] as const;
+export type FoodKind = (typeof FOOD_KINDS)[number];
+
+export const FOOD_SOURCE_METHODS = ["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"] as const;
+export type FoodSourceMethod = (typeof FOOD_SOURCE_METHODS)[number];
+
 export interface FoodReference {
   id: string;
   name: string;
@@ -22,11 +28,18 @@ export interface FoodReference {
   basisUnit: Extract<QuantityUnit, "g" | "ml">;
   nutrientsPer100?: NutrientVector;
   gramsPerPiece?: number;
+  /** 旧数据未设置时按基础食材处理。 */
+  foodKind?: FoodKind;
+  tags?: string[];
+  /** 只描述真实的数据限制或换算假设，不承载书本饮食规则。 */
+  dataCaveats?: string[];
   source: {
     kind: "USDA_FDC" | "BOOK" | "USER";
     ref: string;
     release: string;
+    method?: FoodSourceMethod;
   };
+  /** @deprecated 仅为兼容旧备份；新数据请使用 dataCaveats。 */
   bookNote?: string;
 }
 
