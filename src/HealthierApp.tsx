@@ -88,6 +88,18 @@ function resolveFoodKind(food: FoodReference): FoodKind {
   return food.foodKind ?? "INGREDIENT";
 }
 
+export function foodCategoriesForKind(
+  foods: FoodReference[],
+  kind: "ALL" | FoodKind
+): FoodCategory[] {
+  const available = new Set(
+    foods
+      .filter((food) => kind === "ALL" || resolveFoodKind(food) === kind)
+      .map((food) => food.category)
+  );
+  return FOOD_CATEGORIES.filter((category) => available.has(category));
+}
+
 function foodSourceLabel(food: FoodReference): string {
   if (food.source.kind === "USER") return "我的本地数据";
   if (food.source.kind === "BOOK") return "书本参考数据";
@@ -787,6 +799,10 @@ function FoodsPage() {
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
+  const availableCategories = useMemo(
+    () => foodCategoriesForKind(foods, kindFilter),
+    [foods, kindFilter]
+  );
   const visible = foods.filter((food) => {
     const matchesQuery = !normalizedQuery || [food.name, ...food.aliases, ...(food.tags ?? [])]
       .join(" ")
@@ -855,13 +871,22 @@ function FoodsPage() {
       <section className="card">
         <div className="food-filters">
           <input className="search-input" type="search" placeholder="搜索名称、别名或标签" value={query} onChange={(event) => setQuery(event.target.value)} />
-          <select aria-label="按食物类型筛选" value={kindFilter} onChange={(event) => setKindFilter(event.target.value as "ALL" | FoodKind)}>
+          <select aria-label="按食物类型筛选" value={kindFilter} onChange={(event) => {
+            const nextKind = event.target.value as "ALL" | FoodKind;
+            setKindFilter(nextKind);
+            if (
+              categoryFilter !== "ALL"
+              && !foodCategoriesForKind(foods, nextKind).includes(categoryFilter)
+            ) {
+              setCategoryFilter("ALL");
+            }
+          }}>
             <option value="ALL">全部类型</option>
             {FOOD_KINDS.map((kind) => <option key={kind} value={kind}>{FOOD_KIND_LABELS[kind]}</option>)}
           </select>
           <select aria-label="按食物分类筛选" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as "ALL" | FoodCategory)}>
             <option value="ALL">全部分类</option>
-            {FOOD_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
+            {availableCategories.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
           </select>
         </div>
         <p className="helper food-result-count">显示 {visible.length} / {foods.length} 条</p>

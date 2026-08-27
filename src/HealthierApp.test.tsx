@@ -1,7 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { AssessmentPanel, MealRow, WeeklyActionsPanel } from "./HealthierApp";
-import { assessDay, assessWeek, calculateTargets, type ConfirmedMeal, type UserProfile } from "./domain";
+import { AssessmentPanel, MealRow, WeeklyActionsPanel, foodCategoriesForKind } from "./HealthierApp";
+import {
+  assessDay,
+  assessWeek,
+  calculateTargets,
+  type ConfirmedMeal,
+  type FoodReference,
+  type UserProfile
+} from "./domain";
 
 function profile(healthFlags: UserProfile["healthFlags"]): UserProfile {
   return {
@@ -110,5 +117,41 @@ describe("AssessmentPanel safety rendering", () => {
 
     expect(todayHtml).toContain("再记一次");
     expect(historyHtml).not.toContain("再记一次");
+  });
+});
+
+describe("food library filters", () => {
+  const food = (
+    id: string,
+    category: FoodReference["category"],
+    foodKind?: FoodReference["foodKind"]
+  ): FoodReference => ({
+    id,
+    name: id,
+    aliases: [],
+    category,
+    compatibleStates: ["EA"],
+    basisUnit: "g",
+    foodKind,
+    source: { kind: "USER", ref: "test", release: "test" }
+  });
+
+  const foods = [
+    food("rice", "GR"),
+    food("dumpling", "OT", "COMPOSITE"),
+    food("burger", "UP", "COMPOSITE"),
+    food("yogurt", "DA", "PACKAGED"),
+    food("cola", "SD", "PACKAGED"),
+    food("chips", "UP", "PACKAGED")
+  ];
+
+  it("只返回当前食物类型实际包含的分类", () => {
+    expect(foodCategoriesForKind(foods, "INGREDIENT")).toEqual(["GR"]);
+    expect(foodCategoriesForKind(foods, "COMPOSITE")).toEqual(["UP", "OT"]);
+    expect(foodCategoriesForKind(foods, "PACKAGED")).toEqual(["DA", "SD", "UP"]);
+  });
+
+  it("全部类型返回食物库实际存在的分类", () => {
+    expect(foodCategoriesForKind(foods, "ALL")).toEqual(["GR", "DA", "SD", "UP", "OT"]);
   });
 });
