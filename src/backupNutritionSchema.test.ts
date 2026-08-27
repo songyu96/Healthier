@@ -38,7 +38,8 @@ describe("nutrition snapshot backup schema", () => {
         min: { kcal: 130, protein: 2.7, fat: 0.3, carb: 28, fiber: 0.4 },
         max: { kcal: 130, protein: 2.7, fat: 0.3, carb: 28, fiber: 0.4 }
       },
-      sourceRef: "USDA_FDC:SR28:20045"
+      sourceRef: "REFERENCE:RECIPE:rice",
+      calculationBasis: "RECIPE" as const
     };
     const valid = {
       ...emptyFacts,
@@ -59,6 +60,9 @@ describe("nutrition snapshot backup schema", () => {
     }).success).toBe(false);
     expect(nutritionFactsSchema.safeParse({
       ...valid, sourceRefs: ["USDA_FDC:tampered:2026"]
+    }).success).toBe(false);
+    expect(nutritionFactsSchema.safeParse({
+      ...valid, items: [{ ...item, calculationBasis: "GUESSED" }]
     }).success).toBe(false);
   });
 });

@@ -34,6 +34,7 @@ a { color: inherit; }
 .local-badge { padding: 7px 10px; }
 .step-pill { padding: 6px 9px; white-space: nowrap; }
 .tag { margin-left: 7px; padding: 3px 7px; vertical-align: middle; }
+.quality-tag { background: #f0e7cf; color: #725320; }
 .update-banner { width: 100%; border: 0; padding: 10px 16px; color: #173f2e; background: var(--lime); font-weight: 800; }
 
 main { width: min(100% - 28px, 760px); margin: 0 auto; }

@@ -31,7 +31,8 @@ const itemNutritionFactSchema = z.object({
   basisQuantityMin: finiteNonNegative,
   basisQuantityMax: finiteNonNegative,
   nutrients: nutrientRangeSchema,
-  sourceRef: z.string().min(1)
+  sourceRef: z.string().min(1),
+  calculationBasis: z.enum(["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"]).optional()
 }).strict().refine(
   (item) => item.basisQuantityMin <= item.basisQuantityMax,
   "营养事实数量范围倒置"

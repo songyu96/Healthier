@@ -111,7 +111,8 @@ export function calculateNutrition(
         min: scaleVector(food.nutrientsPer100, quantity.min),
         max: scaleVector(food.nutrientsPer100, quantity.max)
       },
-      sourceRef: `${food.source.kind}:${food.source.ref}:${food.source.release}`
+      sourceRef: `${food.source.kind}:${food.source.ref}:${food.source.release}`,
+      calculationBasis: food.source.method
     });
   });
 
@@ -185,7 +186,8 @@ export function isNutritionFacts(value: unknown): value is NutritionFacts {
     isFiniteNonNegative(item.basisQuantityMin) &&
     isFiniteNonNegative(item.basisQuantityMax) &&
     item.basisQuantityMin <= item.basisQuantityMax &&
-    isNutrientRange(item.nutrients) && isNonEmptyString(item.sourceRef));
+    isNutrientRange(item.nutrients) && isNonEmptyString(item.sourceRef) &&
+    (item.calculationBasis === undefined || ["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"].includes(item.calculationBasis as string)));
   const unknownItemsValid = value.unknownItems.every((item) => isRecord(item) &&
     isNonEmptyString(item.tempId) && isNonEmptyString(item.name) && isNonEmptyString(item.reason));
   if (!itemsValid || !unknownItemsValid ||

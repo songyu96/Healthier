@@ -1,9 +1,70 @@
-import type { FoodReference } from "./types";
+import type { FoodReference, NutrientVector } from "./types";
 
 const FNDDS_RELEASE = "USDA FNDDS 2021–2023 (2024-10-31)";
 const FNDDS_CAVEAT = "FNDDS 通用条目采用美国膳食调查口径；实际品牌、门店配方和份量可能不同，仅用于近似记录。";
 const LIQUID_CAVEAT = "FNDDS 原值按100克提供；饮品记录近似按1克≈1毫升换算。";
 const COMMON_FOODS_V2 = "Healthier common-foods-v2";
+const RECIPE_RELEASE = "Healthier representative-recipes-v1";
+
+interface RecipeIngredientSeed {
+  name: string;
+  weightG: number;
+  nutrientsPer100: NutrientVector;
+}
+
+type RecipeSeed = Omit<FoodReference, "nutrientsPer100" | "source" | "dataCaveats" | "recipeEstimate"> & {
+  finalWeightG: number;
+  ingredients: RecipeIngredientSeed[];
+  caveats: string[];
+  confidence?: "MEDIUM" | "LOW";
+};
+
+const ZERO_NUTRIENTS: NutrientVector = { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 };
+const FLOUR: NutrientVector = { kcal: 364, protein: 10.3, fat: 1, carb: 76.3, fiber: 2.7 };
+const OIL: NutrientVector = { kcal: 884, protein: 0, fat: 100, carb: 0, fiber: 0 };
+const EGG: NutrientVector = { kcal: 155, protein: 12.6, fat: 10.6, carb: 1.1, fiber: 0 };
+const TOMATO: NutrientVector = { kcal: 18, protein: 0.9, fat: 0.2, carb: 3.9, fiber: 1.2 };
+const BOK_CHOY: NutrientVector = { kcal: 20.3, protein: 1.02, fat: 0.234, carb: 3.51, fiber: 1.26 };
+const LEAN_PORK: NutrientVector = { kcal: 242, protein: 27.3, fat: 13.9, carb: 0, fiber: 0 };
+const PORK_BELLY: NutrientVector = { kcal: 518, protein: 9.34, fat: 53, carb: 0, fiber: 0 };
+const COOKED_BEEF: NutrientVector = { kcal: 200, protein: 29, fat: 8, carb: 0, fiber: 0 };
+const COOKED_CHICKEN: NutrientVector = { kcal: 165, protein: 31, fat: 3.6, carb: 0, fiber: 0 };
+const COOKED_NOODLES: NutrientVector = { kcal: 138, protein: 4.5, fat: 2.1, carb: 25, fiber: 1.2 };
+const COOKED_RICE: NutrientVector = { kcal: 130, protein: 2.69, fat: 0.28, carb: 28.17, fiber: 0.4 };
+const COOKED_BROCCOLI: NutrientVector = { kcal: 35, protein: 2.38, fat: 0.41, carb: 7.18, fiber: 3.3 };
+const TOFU: NutrientVector = { kcal: 100, protein: 10, fat: 5, carb: 4, fiber: 1 };
+const CABBAGE: NutrientVector = { kcal: 13, protein: 1.5, fat: 0.2, carb: 2.2, fiber: 1 };
+const SUGAR: NutrientVector = { kcal: 387, protein: 0, fat: 0, carb: 100, fiber: 0 };
+
+function recipe(seed: RecipeSeed): FoodReference {
+  const { finalWeightG, ingredients, caveats, confidence = "MEDIUM", ...food } = seed;
+  const totals = ingredients.reduce<NutrientVector>((sum, ingredient) => {
+    const factor = ingredient.weightG / 100;
+    return {
+      kcal: sum.kcal + ingredient.nutrientsPer100.kcal * factor,
+      protein: sum.protein + ingredient.nutrientsPer100.protein * factor,
+      fat: sum.fat + ingredient.nutrientsPer100.fat * factor,
+      carb: sum.carb + ingredient.nutrientsPer100.carb * factor,
+      fiber: sum.fiber + ingredient.nutrientsPer100.fiber * factor
+    };
+  }, { ...ZERO_NUTRIENTS });
+  const per100 = (value: number) => Number((value * 100 / finalWeightG).toFixed(2));
+  return {
+    ...food,
+    nutrientsPer100: {
+      kcal: per100(totals.kcal), protein: per100(totals.protein), fat: per100(totals.fat),
+      carb: per100(totals.carb), fiber: per100(totals.fiber)
+    },
+    dataCaveats: ["按代表性配方和成品重量计算，仅用于个人记录估算。", ...caveats],
+    recipeEstimate: {
+      finalWeightG,
+      ingredients: ingredients.map(({ name, weightG }) => ({ name, weightG })),
+      confidence
+    },
+    source: { kind: "REFERENCE", ref: `RECIPE:${food.id}`, release: RECIPE_RELEASE, method: "RECIPE" },
+    sourceDescription: "应用内代表性配方估值"
+  };
+}
 
 type FnddsSeed = Omit<FoodReference, "source" | "dataCaveats"> & {
   fdcId: string;
@@ -22,6 +83,23 @@ function fndds(seed: FnddsSeed): FoodReference {
       release: FNDDS_RELEASE,
       method: "OFFICIAL_COMPOSITION"
     },
+    sourceDescription
+  };
+}
+
+type UsdaSeed = Omit<FoodReference, "source" | "dataCaveats"> & {
+  fdcId: string;
+  release: string;
+  sourceDescription: string;
+  caveats?: string[];
+};
+
+function usda(seed: UsdaSeed): FoodReference {
+  const { fdcId, release, sourceDescription, caveats = [], ...food } = seed;
+  return {
+    ...food,
+    dataCaveats: caveats,
+    source: { kind: "USDA_FDC", ref: `FDC:${fdcId}`, release, method: "OFFICIAL_COMPOSITION" },
     sourceDescription
   };
 }
@@ -335,7 +413,7 @@ export const COMMON_FOODS: FoodReference[] = [
   }),
   fndds({
     id: "congee-plain-current", name: "白粥（通用）", aliases: ["白米粥", "大米粥", "稀饭"],
-    category: "GR", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["早餐", "粥", "主食"],
+    category: "GR", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["早餐", "粥", "主食", "熟制"],
     nutrientsPer100: { kcal: 39, protein: 0.8, fat: 0.08, carb: 8.4, fiber: 0.1 },
     fdcId: "2708418", sourceDescription: "Congee", caveats: ["稀稠程度会显著影响每100克能量；请尽量按实际熟重记录。"]
   }),
@@ -347,13 +425,13 @@ export const COMMON_FOODS: FoodReference[] = [
   }),
   fndds({
     id: "oatmeal-water-current", name: "原味燕麦粥（水冲）", aliases: ["无糖燕麦粥", "水煮燕麦粥"],
-    category: "WG", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["全谷物", "早餐", "燕麦"],
+    category: "WG", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["全谷物", "早餐", "燕麦", "熟制"],
     nutrientsPer100: { kcal: 68, protein: 2.26, fat: 1.3, carb: 13.2, fiber: 1.9 },
     fdcId: "2708387", sourceDescription: "Oatmeal, instant, plain, made with water, no added fat", caveats: ["不包含牛奶、糖、坚果或水果。"]
   }),
   fndds({
     id: "soy-milk-unsweetened-current", name: "无糖豆浆（通用）", aliases: ["无糖豆奶"],
-    category: "SO", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["早餐", "豆浆", "豆制品", "饮料"],
+    category: "SO", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "INGREDIENT", tags: ["早餐", "豆浆", "豆制品", "饮料"],
     nutrientsPer100: { kcal: 38, protein: 3.55, fat: 2.12, carb: 1.29, fiber: 0 },
     fdcId: "2705405", sourceDescription: "Soy milk, unsweetened", caveats: [LIQUID_CAVEAT, "仅对应无糖豆浆；自制浓度、加糖量和品牌配方会改变营养值。"]
   }),
@@ -453,90 +531,188 @@ export const COMMON_FOODS: FoodReference[] = [
     dataCaveats: ["酒精度和饮用量未知时只记录毫升数；知道约40%vol时可改选“40%vol 烈酒（通用）”。"],
     source: { kind: "REFERENCE", ref: "COMMON:baijiu-unknown", release: "Healthier common-foods-v1" }
   },
-  {
-    id: "pomelo-unknown", name: "柚子（品种未知）", aliases: ["柚子", "蜜柚", "沙田柚"],
+  usda({
+    id: "pomelo-raw", name: "柚子（可食部）", aliases: ["柚子", "蜜柚", "沙田柚"],
     category: "FR", compatibleStates: ["RW", "EA"], basisUnit: "g", tags: ["水果", "鲜果"],
-    dataCaveats: ["不同柚子品种、成熟度和可食部差异较大；先记录可食重量，不用西柚数据替代。"],
-    source: { kind: "REFERENCE", ref: "COMMON:pomelo-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "bok-choy-unknown", name: "小白菜/上海青（品种未知）", aliases: ["小白菜", "上海青", "青菜", "油菜"],
-    category: "LV", compatibleStates: ["RW", "CK", "EA"], basisUnit: "g", tags: ["蔬菜", "叶菜", "家常菜"],
-    dataCaveats: ["这些名称在不同地区可能指不同叶菜；可记录重量，但不套用大白菜营养值。"],
-    source: { kind: "REFERENCE", ref: "COMMON:bok-choy-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "mantou-unknown", name: "馒头（配方未知）", aliases: ["馒头", "白馒头"],
-    category: "GR", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["早餐", "主食", "面点"],
-    dataCaveats: ["大小、含水量以及是否加糖或杂粮未知时只记录重量；有包装标签时请新增本地条目。"],
-    source: { kind: "REFERENCE", ref: "COMMON:mantou-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "youtiao-unknown", name: "油条（配方未知）", aliases: ["油条", "油炸鬼"],
-    category: "UP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["早餐", "面点", "油炸"],
-    dataCaveats: ["面团配方、吸油量和大小差异很大，未固化单一营养值。"],
-    source: { kind: "REFERENCE", ref: "COMMON:youtiao-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "dumpling-boiled-unknown", name: "水煮饺子（馅料未知）", aliases: ["水饺", "煮饺子", "饺子"],
+    nutrientsPer100: { kcal: 38, protein: 0.76, fat: 0.04, carb: 9.62, fiber: 1 },
+    fdcId: "167754", release: "USDA SR Legacy (2018)", sourceDescription: "Pummelo, raw",
+    caveats: ["按去皮、去籽后的可食果肉重量记录；不同品种和成熟度会有差异。"]
+  }),
+  usda({
+    id: "bok-choy-raw", name: "小白菜/上海青（生）", aliases: ["小白菜", "上海青", "青菜", "油菜"],
+    category: "LV", compatibleStates: ["RW"], basisUnit: "g", tags: ["蔬菜", "叶菜", "家常菜"],
+    nutrientsPer100: { kcal: 20.3, protein: 1.02, fat: 0.234, carb: 3.51, fiber: 1.26 },
+    fdcId: "2685572", release: "USDA Foundation Foods (2024-04)", sourceDescription: "Cabbage, bok choy, raw",
+    caveats: ["仅对应生鲜 bok choy；熟重和不同地区俗名所指品种不能直接套用。"]
+  }),
+  recipe({
+    id: "mantou-generic-recipe", name: "白馒头（通用配方）", aliases: ["馒头", "白馒头"],
+    category: "GR", compatibleStates: ["EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["早餐", "主食", "面点", "发酵"],
+    finalWeightG: 150,
+    ingredients: [
+      { name: "小麦粉", weightG: 100, nutrientsPer100: FLOUR },
+      { name: "水", weightG: 49, nutrientsPer100: ZERO_NUTRIENTS },
+      { name: "酵母", weightG: 1, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["未包含糖和杂粮；含水量、大小及蒸制失水会改变结果。"]
+  }),
+  recipe({
+    id: "youtiao-generic-recipe", name: "油条（通用配方）", aliases: ["油条", "油炸鬼"],
+    category: "UP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["早餐", "面点", "油炸", "高脂"],
+    finalWeightG: 150,
+    ingredients: [
+      { name: "小麦粉", weightG: 100, nutrientsPer100: FLOUR },
+      { name: "水和膨松剂", weightG: 60, nutrientsPer100: ZERO_NUTRIENTS },
+      { name: "吸附烹调油", weightG: 20, nutrientsPer100: OIL }
+    ],
+    caveats: ["吸油量是主要误差来源；门店油条可能明显高于或低于该值。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "dumpling-boiled-generic-recipe", name: "猪肉菜水饺（通用配方）", aliases: ["水饺", "煮饺子", "猪肉饺子"],
     category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["饺子", "主食", "家常菜"],
-    dataCaveats: ["面皮、馅料和肥瘦比例未知时只记录总重量；需要食物组评价时请拆分原料。"],
-    source: { kind: "REFERENCE", ref: "COMMON:dumpling-boiled-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "pork-belly-unknown", name: "五花肉（肥瘦未知）", aliases: ["五花肉", "猪五花"],
-    category: "MP", compatibleStates: ["RW", "CK", "EA"], basisUnit: "g", tags: ["畜肉", "猪肉", "家常菜"],
-    dataCaveats: ["肥瘦比例和生熟状态会显著改变每100克能量；可记录重量，但不套用瘦猪肉数据。"],
-    source: { kind: "REFERENCE", ref: "COMMON:pork-belly-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "squid-unknown", name: "鱿鱼（加工状态未知）", aliases: ["鱿鱼", "鲜鱿鱼", "鱿鱼须"],
-    category: "FI", compatibleStates: ["RW", "CK", "EA"], basisUnit: "g", tags: ["海鲜", "水产", "聚餐"],
-    dataCaveats: ["鲜鱿鱼、干制鱿鱼和裹粉油炸制品差异很大，状态不明确时只记录重量。"],
-    source: { kind: "REFERENCE", ref: "COMMON:squid-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "ham-sausage-unknown", name: "火腿肠（品牌未知）", aliases: ["火腿肠", "香肠", "烤肠"],
+    finalWeightG: 110,
+    ingredients: [
+      { name: "小麦粉", weightG: 40, nutrientsPer100: FLOUR },
+      { name: "猪肉", weightG: 35, nutrientsPer100: LEAN_PORK },
+      { name: "白菜", weightG: 35, nutrientsPer100: CABBAGE },
+      { name: "调馅油", weightG: 3, nutrientsPer100: OIL }
+    ],
+    caveats: ["仅代表猪肉菜馅；素馅、牛羊肉馅及肥瘦比例不同应另行记录。"],
+    confidence: "LOW"
+  }),
+  usda({
+    id: "pork-belly-raw", name: "五花肉（生）", aliases: ["生五花肉", "猪五花"],
+    category: "MP", compatibleStates: ["RW"], basisUnit: "g", tags: ["畜肉", "猪肉", "家常菜"],
+    nutrientsPer100: { kcal: 518, protein: 9.34, fat: 53.01, carb: 0, fiber: 0 },
+    fdcId: "167812", release: "USDA SR Legacy (2018)", sourceDescription: "Pork, fresh, belly, raw",
+    caveats: ["肥瘦比例差异很大；仅用于生重，熟五花肉或红烧肉请改选对应条目。"]
+  }),
+  usda({
+    id: "squid-raw", name: "鲜鱿鱼（生）", aliases: ["生鱿鱼", "鲜鱿鱼", "鱿鱼须"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", tags: ["海鲜", "水产", "聚餐"],
+    nutrientsPer100: { kcal: 92, protein: 15.58, fat: 1.38, carb: 3.08, fiber: 0 },
+    fdcId: "174223", release: "USDA SR Legacy (2018)", sourceDescription: "Mollusks, squid, mixed species, raw",
+    caveats: ["仅对应鲜鱿鱼可食部生重；干制、裹粉油炸和调味制品不能使用此条目。"]
+  }),
+  fndds({
+    id: "ham-sausage-generic", name: "猪肉香肠/火腿肠（通用）", aliases: ["火腿肠", "香肠", "烤肠"],
     category: "UP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED", tags: ["加工肉", "便利店", "聚餐"],
-    dataCaveats: ["肉含量、淀粉、脂肪和钠随品牌差异很大；应优先按包装营养标签新增本地条目。"],
-    source: { kind: "REFERENCE", ref: "COMMON:ham-sausage-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "instant-noodles-unknown", name: "方便面（品牌/汤料未知）", aliases: ["方便面", "泡面", "桶面"],
-    category: "UP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED", tags: ["主食", "便利店", "夜宵"],
-    dataCaveats: ["面饼、调料包、是否喝汤和冲泡含水量都会改变结果；包装标签明确时请新增本地条目。"],
-    source: { kind: "REFERENCE", ref: "COMMON:instant-noodles-unknown", release: COMMON_FOODS_V2 }
-  },
+    nutrientsPer100: { kcal: 325, protein: 18.5, fat: 27.2, carb: 1.42, fiber: 0 },
+    fdcId: "2706191", sourceDescription: "Pork sausage",
+    caveats: ["这是美国通用猪肉香肠数据，中国火腿肠的肉含量、淀粉和脂肪可能差异很大，包装标签优先。"]
+  }),
+  fndds({
+    id: "instant-noodles-prepared-generic", name: "方便面（冲泡后通用）", aliases: ["方便面", "泡面", "桶面"],
+    category: "UP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "PACKAGED", tags: ["主食", "便利店", "夜宵"],
+    nutrientsPer100: { kcal: 66, protein: 1.53, fat: 2.64, carb: 9.04, fiber: 0.4 },
+    fdcId: "2709152", sourceDescription: "Soup, ramen noodles, water added",
+    caveats: ["只适用于连汤称量的冲泡后总重；干面饼、少喝汤或不同品牌应优先按包装标签记录。"]
+  }),
   {
     id: "soy-milk-unknown", name: "豆浆（糖量/浓度未知）", aliases: ["豆浆", "豆奶"],
-    category: "SO", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["早餐", "豆浆", "豆制品", "饮料"],
+    category: "SO", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "INGREDIENT", tags: ["早餐", "豆浆", "豆制品", "饮料"],
     dataCaveats: ["自制浓度和加糖量未知时只记录饮用量；确认无糖后可改选“无糖豆浆（通用）”。"],
     source: { kind: "REFERENCE", ref: "COMMON:soy-milk-unknown", release: COMMON_FOODS_V2 }
   },
-  {
-    id: "tomato-scrambled-egg-unknown", name: "番茄炒蛋（配方未知）", aliases: ["西红柿炒鸡蛋", "番茄炒鸡蛋"],
+  recipe({
+    id: "tomato-scrambled-egg-generic-recipe", name: "番茄炒蛋（通用配方）", aliases: ["西红柿炒鸡蛋", "番茄炒鸡蛋"],
     category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "鸡蛋", "番茄"],
-    dataCaveats: ["鸡蛋、番茄、糖和烹调油比例未知时只记录总重量；需要结构评价时请拆分原料。"],
-    source: { kind: "REFERENCE", ref: "COMMON:tomato-scrambled-egg-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "stir-fried-greens-unknown", name: "炒青菜（菜品/用油未知）", aliases: ["炒青菜", "清炒时蔬", "炒时蔬"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "蔬菜", "外卖"],
-    dataCaveats: ["蔬菜品种和烹调油未知时不计算营养，也不自动计入特定蔬菜组；最好拆分蔬菜与油记录。"],
-    source: { kind: "REFERENCE", ref: "COMMON:stir-fried-greens-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "braised-pork-unknown", name: "红烧肉（配方未知）", aliases: ["红烧肉"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "猪肉", "聚餐"],
-    dataCaveats: ["五花肉肥瘦、糖、酱汁和用油差异很大，未固化单一营养值。"],
-    source: { kind: "REFERENCE", ref: "COMMON:braised-pork-unknown", release: COMMON_FOODS_V2 }
-  },
-  {
-    id: "beef-noodle-soup-unknown", name: "牛肉面（配方未知）", aliases: ["牛肉面", "牛肉汤面"],
+    finalWeightG: 250,
+    ingredients: [
+      { name: "鸡蛋", weightG: 100, nutrientsPer100: EGG },
+      { name: "番茄", weightG: 180, nutrientsPer100: TOMATO },
+      { name: "烹调油", weightG: 10, nutrientsPer100: OIL }
+    ],
+    caveats: ["未计入额外糖；家庭和餐馆用油量是主要误差来源。"]
+  }),
+  recipe({
+    id: "stir-fried-greens-generic-recipe", name: "炒青菜（通用配方）", aliases: ["炒青菜", "清炒时蔬", "炒时蔬"],
+    category: "LV", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "蔬菜", "外卖"],
+    finalWeightG: 200,
+    ingredients: [
+      { name: "小白菜/上海青", weightG: 250, nutrientsPer100: BOK_CHOY },
+      { name: "烹调油", weightG: 10, nutrientsPer100: OIL }
+    ],
+    caveats: ["按叶菜估算；蔬菜品种、出水量和用油量会改变结果。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "braised-pork-generic-recipe", name: "红烧肉（通用配方）", aliases: ["红烧肉"],
+    category: "MP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "猪肉", "聚餐"],
+    finalWeightG: 230,
+    ingredients: [
+      { name: "五花肉", weightG: 150, nutrientsPer100: PORK_BELLY },
+      { name: "瘦猪肉", weightG: 50, nutrientsPer100: LEAN_PORK },
+      { name: "糖", weightG: 10, nutrientsPer100: SUGAR },
+      { name: "水和酱汁", weightG: 100, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["肥瘦比例、糖、收汁程度和额外用油差异很大。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "beef-noodle-soup-generic-recipe", name: "牛肉面（通用配方）", aliases: ["牛肉面", "牛肉汤面"],
     category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["主食", "牛肉", "外卖", "汤面"],
-    dataCaveats: ["面量、牛肉、汤底和是否喝汤未知时只记录总重量；需要结构评价时请拆分记录。"],
-    source: { kind: "REFERENCE", ref: "COMMON:beef-noodle-soup-unknown", release: COMMON_FOODS_V2 }
-  },
+    finalWeightG: 520,
+    ingredients: [
+      { name: "熟面条", weightG: 200, nutrientsPer100: COOKED_NOODLES },
+      { name: "熟牛肉", weightG: 60, nutrientsPer100: COOKED_BEEF },
+      { name: "小白菜", weightG: 50, nutrientsPer100: BOK_CHOY },
+      { name: "辣油/香油", weightG: 8, nutrientsPer100: OIL },
+      { name: "汤", weightG: 250, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["是否喝汤、面量、牛肉量和汤面油脂会显著改变结果。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "mixed-meal-meat-estimate", name: "组合餐肉类（估算）", aliases: ["聚餐肉类估算"],
+    category: "MP", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "肉类", "熟重"],
+    finalWeightG: 100,
+    ingredients: [
+      { name: "熟鸡肉", weightG: 50, nutrientsPer100: COOKED_CHICKEN },
+      { name: "熟牛肉", weightG: 50, nutrientsPer100: COOKED_BEEF }
+    ],
+    caveats: ["实际肉类部位和肥瘦差异很大，不包含另加油脂。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "mixed-meal-vegetable-estimate", name: "组合餐蔬菜（估算）", aliases: ["聚餐蔬菜估算"],
+    category: "LV", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "蔬菜", "熟重"],
+    finalWeightG: 100,
+    ingredients: [
+      { name: "熟西兰花", weightG: 50, nutrientsPer100: COOKED_BROCCOLI },
+      { name: "小白菜", weightG: 50, nutrientsPer100: BOK_CHOY }
+    ],
+    caveats: ["不区分深色和其他蔬菜，结构评价统一按其他蔬菜记录。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "mixed-meal-staple-estimate", name: "组合餐主食（估算）", aliases: ["聚餐主食估算"],
+    category: "GR", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "主食", "熟重"],
+    finalWeightG: 100,
+    ingredients: [
+      { name: "熟米饭", weightG: 50, nutrientsPer100: COOKED_RICE },
+      { name: "熟面条", weightG: 50, nutrientsPer100: COOKED_NOODLES }
+    ],
+    caveats: ["薯类、粉丝和油炸主食与该值可能差异较大。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "mixed-meal-soy-estimate", name: "组合餐豆制品（估算）", aliases: ["聚餐豆制品估算"],
+    category: "SO", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "豆制品", "熟重"],
+    finalWeightG: 100,
+    ingredients: [{ name: "豆腐和豆制品代表值", weightG: 100, nutrientsPer100: TOFU }],
+    caveats: ["油豆腐、腐竹和冻豆腐与该代表值差异较大。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "mixed-meal-oil-estimate", name: "组合餐调味油（估算）", aliases: ["聚餐调味油估算"],
+    category: "OI", compatibleStates: ["EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "烹调油", "蘸料"],
+    finalWeightG: 100,
+    ingredients: [{ name: "吸附油、锅底油和蘸料油", weightG: 100, nutrientsPer100: OIL }],
+    caveats: ["只估算油脂，不计算盐、糖、麻酱或汤底固形物。"],
+    confidence: "LOW"
+  }),
   {
     id: "malatang-unknown", name: "麻辣烫（配料未知）", aliases: ["麻辣烫", "冒菜"],
     category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["外卖", "聚餐", "夜宵"],

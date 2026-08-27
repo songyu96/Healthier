@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { AssessmentPanel, MealRow, WeeklyActionsPanel, foodCategoriesForKind } from "./HealthierApp";
+import { AssessmentPanel, MealRow, WeeklyActionsPanel, foodCategoriesForKind, foodQualityLabel } from "./HealthierApp";
 import {
   assessDay,
   assessWeek,
@@ -153,5 +153,18 @@ describe("food library filters", () => {
 
   it("全部类型返回食物库实际存在的分类", () => {
     expect(foodCategoriesForKind(foods, "ALL")).toEqual(["GR", "DA", "SD", "UP", "OT"]);
+  });
+
+  it("旧版USDA数据和配方估值显示正确质量标签", () => {
+    const official = { ...food("official", "GR"), source: { kind: "USDA_FDC" as const, ref: "SR28", release: "2015" } };
+    const estimate = {
+      ...food("estimate", "GR", "INGREDIENT"),
+      nutrientsPer100: { kcal: 200, protein: 5, fat: 2, carb: 40, fiber: 2 },
+      recipeEstimate: { finalWeightG: 100, ingredients: [{ name: "面粉", weightG: 60 }], confidence: "LOW" as const },
+      source: { kind: "REFERENCE" as const, ref: "RECIPE:estimate", release: "v1", method: "RECIPE" as const }
+    };
+
+    expect(foodQualityLabel(official)).toBe("官方通用数据");
+    expect(foodQualityLabel(estimate)).toBe("低置信度估算");
   });
 });

@@ -4,7 +4,7 @@ import { BASE_FOODS } from "./foodData";
 
 describe("common food data", () => {
   it("覆盖水果、家常餐、外卖、零食和聚会酒水", () => {
-    expect(COMMON_FOODS).toHaveLength(88);
+    expect(COMMON_FOODS).toHaveLength(93);
     expect(COMMON_FOODS.map((food) => food.id)).toEqual(expect.arrayContaining([
       "coffee-brewed-current",
       "coffee-unknown",
@@ -22,7 +22,9 @@ describe("common food data", () => {
       "congee-plain-current",
       "soy-milk-unknown",
       "chicken-thigh-roasted-current",
-      "instant-noodles-unknown",
+      "instant-noodles-prepared-generic",
+      "mantou-generic-recipe",
+      "mixed-meal-meat-estimate",
       "hotpot-unknown"
     ]));
   });
@@ -32,18 +34,12 @@ describe("common food data", () => {
     expect(BASE_FOODS.some((food) => food.name === "梨")).toBe(true);
   });
 
-  it("66项可计算数据保留最新版FDC来源和完整五项营养值", () => {
+  it("84项可计算数据均提供完整五项营养值", () => {
     const known = COMMON_FOODS.filter((food) => food.nutrientsPer100);
-    expect(known).toHaveLength(66);
-    expect(new Set(known.map((food) => food.source.ref)).size).toBe(66);
+    expect(known).toHaveLength(84);
+    expect(new Set(known.map((food) => food.source.ref)).size).toBe(84);
 
     known.forEach((food) => {
-      expect(food.source).toMatchObject({
-        kind: "USDA_FDC",
-        release: "USDA FNDDS 2021–2023 (2024-10-31)",
-        method: "OFFICIAL_COMPOSITION"
-      });
-      expect(food.source.ref).toMatch(/^FDC:\d+$/);
       expect(food.nutrientsPer100).toEqual({
         kcal: expect.any(Number),
         protein: expect.any(Number),
@@ -52,19 +48,42 @@ describe("common food data", () => {
         fiber: expect.any(Number)
       });
     });
+
+    const official = known.filter((food) => food.source.method === "OFFICIAL_COMPOSITION");
+    expect(official).toHaveLength(72);
+    official.forEach((food) => {
+      expect(food.source.kind).toBe("USDA_FDC");
+      expect(food.source.ref).toMatch(/^FDC:\d+$/);
+    });
+
+    const estimates = known.filter((food) => food.source.method === "RECIPE");
+    expect(estimates).toHaveLength(12);
+    estimates.forEach((food) => {
+      expect(food.recipeEstimate?.finalWeightG).toBeGreaterThan(0);
+      expect(food.recipeEstimate?.ingredients.length).toBeGreaterThan(0);
+      expect(food.recipeEstimate?.ingredients.every((ingredient) => ingredient.weightG > 0)).toBe(true);
+    });
   });
 
   it("模糊名称只记录事实，不伪造营养值", () => {
     const unknown = COMMON_FOODS.filter((food) => !food.nutrientsPer100);
-    expect(unknown).toHaveLength(22);
+    expect(unknown).toHaveLength(9);
     unknown.forEach((food) => {
       expect(food.source.kind).toBe("REFERENCE");
       expect(food.dataCaveats?.length).toBeGreaterThan(0);
     });
     expect(COMMON_FOODS.find((food) => food.aliases.includes("白酒"))?.nutrientsPer100).toBeUndefined();
     expect(COMMON_FOODS.find((food) => food.aliases.includes("包子"))?.nutrientsPer100).toBeUndefined();
-    expect(COMMON_FOODS.find((food) => food.aliases.includes("豆浆"))?.nutrientsPer100).toBeUndefined();
+    expect(COMMON_FOODS.find((food) => food.id === "soy-milk-unknown")?.nutrientsPer100).toBeUndefined();
     expect(COMMON_FOODS.find((food) => food.aliases.includes("火锅"))?.nutrientsPer100).toBeUndefined();
-    expect(COMMON_FOODS.find((food) => food.aliases.includes("方便面"))?.nutrientsPer100).toBeUndefined();
+    expect(COMMON_FOODS.find((food) => food.aliases.includes("方便面"))?.nutrientsPer100).toBeDefined();
+  });
+
+  it("食物类型按记录方式划分而不是按是否加工划分", () => {
+    for (const id of ["congee-plain-current", "mantou-generic-recipe", "youtiao-generic-recipe", "soy-milk-unsweetened-current", "soy-milk-unknown"]) {
+      expect(COMMON_FOODS.find((food) => food.id === id)?.foodKind, id).toBe("INGREDIENT");
+    }
+    expect(COMMON_FOODS.find((food) => food.id === "dumpling-boiled-generic-recipe")?.foodKind).toBe("COMPOSITE");
+    expect(COMMON_FOODS.find((food) => food.id === "instant-noodles-prepared-generic")?.foodKind).toBe("PACKAGED");
   });
 });

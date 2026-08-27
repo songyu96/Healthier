@@ -16,13 +16,18 @@ import {
   FOOD_STATES,
   MEAL_TEMPLATES,
   MEAL_LABELS,
+  MIXED_MEAL_KINDS,
+  MIXED_MEAL_LABELS,
   QUANTITY_UNITS,
+  SEASONING_LABELS,
+  SEASONING_LEVELS,
   applyCurrentSafetyAdmission,
   assessDay,
   assessWeek,
   calculateNutrition,
   calculateTargets,
   createMealDraftFromTemplate,
+  createMixedMealDraft,
   createRepeatMealDraft,
   nutritionFactsForMeal,
   parseHd1,
@@ -39,8 +44,10 @@ import {
   type FoodState,
   type HealthFlag,
   type MealItemInput,
+  type MixedMealKind,
   type ParsedMeal,
   type QuantityUnit,
+  type SeasoningLevel,
   type UserProfile,
   type WeeklyAssessment
 } from "./domain";
@@ -80,8 +87,8 @@ const STATE_LABELS: Record<FoodState, string> = {
 };
 
 const FOOD_KIND_LABELS: Record<FoodKind, string> = {
-  INGREDIENT: "基础食材",
-  COMPOSITE: "组合成品",
+  INGREDIENT: "常见单品",
+  COMPOSITE: "组合食品",
   PACKAGED: "包装食品"
 };
 
@@ -104,10 +111,21 @@ export function foodCategoriesForKind(
 }
 
 function foodSourceLabel(food: FoodReference): string {
+  if (food.source.method === "RECIPE") return "通用配方估值";
+  if (food.source.method === "LABEL") return "包装营养标签";
   if (food.source.kind === "USER") return "我的本地数据";
   if (food.source.kind === "BOOK") return "书本参考数据";
   if (food.source.kind === "REFERENCE") return "内置常见记录条目";
   return "美国农业部食物成分资料";
+}
+
+export function foodQualityLabel(food: FoodReference): string {
+  if (food.source.method === "RECIPE") return food.recipeEstimate?.confidence === "LOW" ? "低置信度估算" : "配方估算";
+  if (food.source.method === "LABEL") return "包装标签";
+  if (food.source.method === "OFFICIAL_COMPOSITION" || food.source.kind === "USDA_FDC") return "官方通用数据";
+  if (food.source.kind === "BOOK") return "书本近似数据";
+  if (food.source.kind === "USER") return "用户数据";
+  return food.nutrientsPer100 ? "通用参考数据" : "仅记录";
 }
 
 const HEALTH_FLAGS: { value: HealthFlag; label: string }[] = [
@@ -359,6 +377,46 @@ export function AssessmentPanel({ assessment }: { assessment: DailyAssessment })
   );
 }
 
+function MixedMealEstimatorCard({ onCreate }: { onCreate: (draft: ParsedMeal, label: string) => void }) {
+  const [kind, setKind] = useState<MixedMealKind>("HOTPOT");
+  const [mealType, setMealType] = useState<ConfirmedMeal["mealType"]>("D");
+  const [meatG, setMeatG] = useState(150);
+  const [vegetableG, setVegetableG] = useState(200);
+  const [stapleG, setStapleG] = useState(100);
+  const [soyG, setSoyG] = useState(0);
+  const [seasoningLevel, setSeasoningLevel] = useState<SeasoningLevel>("NORMAL");
+  const hasMainFood = meatG > 0 || vegetableG > 0 || stapleG > 0 || soyG > 0;
+
+  return <section className="card">
+    <div className="section-heading">
+      <div><span className="eyebrow">聚餐估算</span><h2>按吃进去的类别重量记录</h2></div>
+      <span className="step-pill">熟重/可食重量</span>
+    </div>
+    <p className="helper">适合无法逐项回忆的火锅、麻辣烫和烧烤。填写大致克数后仍会进入人工确认；调味油按区间估算，盐不估算。</p>
+    <div className="form-grid two-columns">
+      <label>场景<select value={kind} onChange={(event) => setKind(event.target.value as MixedMealKind)}>
+        {MIXED_MEAL_KINDS.map((value) => <option key={value} value={value}>{MIXED_MEAL_LABELS[value]}</option>)}
+      </select></label>
+      <label>餐次<select value={mealType} onChange={(event) => setMealType(event.target.value as ConfirmedMeal["mealType"])}>
+        {Object.entries(MEAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      </select></label>
+      <label>肉、鱼、蛋（g）<input type="number" min="0" step="10" value={meatG} onChange={(event) => setMeatG(number(event.target.value))} /></label>
+      <label>蔬菜（g）<input type="number" min="0" step="10" value={vegetableG} onChange={(event) => setVegetableG(number(event.target.value))} /></label>
+      <label>主食、薯类（g）<input type="number" min="0" step="10" value={stapleG} onChange={(event) => setStapleG(number(event.target.value))} /></label>
+      <label>豆制品（g，可选）<input type="number" min="0" step="10" value={soyG} onChange={(event) => setSoyG(number(event.target.value))} /></label>
+    </div>
+    <label>锅底、刷油和蘸料<select value={seasoningLevel} onChange={(event) => setSeasoningLevel(event.target.value as SeasoningLevel)}>
+      {SEASONING_LEVELS.map((value) => <option key={value} value={value}>{SEASONING_LABELS[value]}</option>)}
+    </select></label>
+    <button className="secondary full-width" type="button" disabled={!hasMainFood} onClick={() => {
+      const draft = createMixedMealDraft({
+        kind, eatenAt: localDateTime(), mealType, meatG, vegetableG, stapleG, soyG, seasoningLevel
+      });
+      onCreate(draft, MIXED_MEAL_LABELS[kind]);
+    }}>生成估算草稿并确认</button>
+  </section>;
+}
+
 function TodayPage() {
   const { profile } = useApp();
   const foods = useFoodReferences();
@@ -459,6 +517,11 @@ function TodayPage() {
           ))}
         </div>
       </section>
+      <MixedMealEstimatorCard onCreate={(nextDraft, label) => {
+        setDraft(nextDraft);
+        setErrors([]);
+        setMessage(`已生成“${label}”估算草稿，请按实际情况修改后保存。`);
+      }} />
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">HD1 导入</span><h2>粘贴一行餐食</h2></div><span className="step-pill">先解析，再确认</span></div>
         <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLine(event.target.value)} spellCheck={false} />
@@ -903,11 +966,18 @@ function FoodsPage() {
                   <h3>
                     {food.name}
                     <span className="tag">{FOOD_KIND_LABELS[resolveFoodKind(food)]}</span>
+                    <span className="tag quality-tag">{foodQualityLabel(food)}</span>
                     {overridden && <span className="tag">本地覆盖</span>}
                   </h3>
-                  <p>{CATEGORY_LABELS[food.category]} · {food.nutrientsPer100 ? "每100" + food.basisUnit + " " + food.nutrientsPer100.kcal.toFixed(0) + " kcal · 蛋白质 " + food.nutrientsPer100.protein.toFixed(1) + " g" : "仅记录食物组，营养值未知"}</p>
+                  <p>{CATEGORY_LABELS[food.category]} · {food.nutrientsPer100
+                    ? `每100${food.basisUnit}：${food.nutrientsPer100.kcal.toFixed(0)} kcal · 蛋白质 ${food.nutrientsPer100.protein.toFixed(1)} g · 脂肪 ${food.nutrientsPer100.fat.toFixed(1)} g · 碳水 ${food.nutrientsPer100.carb.toFixed(1)} g · 纤维 ${food.nutrientsPer100.fiber.toFixed(1)} g`
+                    : "仅记录食物组，营养值未知"}</p>
                   <small>{foodSourceLabel(food)}</small>
                   {food.dataCaveats?.map((caveat) => <p className="data-caveat" key={caveat}>{caveat}</p>)}
+                  {food.recipeEstimate && <details className="source-details">
+                    <summary>查看估算配方和重量</summary>
+                    <p>估算成品 {food.recipeEstimate.finalWeightG} g；{food.recipeEstimate.ingredients.map((ingredient) => `${ingredient.name} ${ingredient.weightG} g`).join("、")}。</p>
+                  </details>}
                   <details className="source-details"><summary>查看数据来源</summary><p>{food.source.release} · {food.source.ref}</p></details>
                 </div>
                 <button className="text-button" type="button" onClick={() => edit(food)}>编辑</button>
@@ -919,7 +989,8 @@ function FoodsPage() {
         <button className="secondary full-width" type="button" onClick={() => { setForm(EMPTY_FOOD); setEditing(!editing); }}>＋ 新增食物</button>
         <details>
           <summary>术语与数据来源说明</summary>
-          <p>基础食材是单一食材；组合成品是汉堡、饺子等配方会波动的食物；包装食品按品牌营养标签记录。</p>
+          <p>常见单品是可直接称重、可使用代表性每100克数据的完整食物，是否经过蒸煮、发酵或油炸不决定分类；组合食品包含需要分别估算的多个主要食材或食物组；包装食品应优先按品牌营养标签记录。</p>
+          <p>类型回答“怎样查找和记录”；主食、蔬菜等分类用于书本规则；油炸、含糖、发酵等只作为加工标签，三者互不替代。</p>
           <p>USDA SR28 是美国农业部 2015 年发布的第 28 版食物成分资料。应用中的分类代码用于 HD1 导入和书本规则计算，界面默认展示中文名称。</p>
         </details>
       </section>

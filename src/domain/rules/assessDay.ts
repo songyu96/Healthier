@@ -194,6 +194,9 @@ export function assessDay(
   if (unknownOil) warnings.push("有餐次油量未知，当前营养数字只是已知小计，脂肪和能量可能被低估。 ");
   if (mealFacts.some(({ meal }) => meal.unknownSalt)) warnings.push("有餐次盐量未知，本应用不估算确定钠摄入。 ");
   if (unknownNutritionCount > 0) warnings.push("部分食物没有可靠营养数据，当前营养数字只是已知小计。 ");
+  if (mealFacts.some(({ facts }) => facts.items.some((item) => item.calculationBasis === "RECIPE"))) {
+    warnings.push("部分食物使用通用配方或组合餐估值，已计入营养区间，但不代表门店或家庭实际配方。 ");
+  }
   if (incomparableGroups.size > 0) warnings.push("部分食物组存在熟重、体积或折算口径问题，相关克数仅显示可比较的已知小计，不判断已达标。 ");
   if (diversityEstimated) warnings.push("部分食材无法确认是否达到5克，多样性只统计明确达到门槛的食材。 ");
 

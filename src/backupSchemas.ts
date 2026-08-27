@@ -151,6 +151,14 @@ const foodOverrideSchema = z.object({
   foodKind: z.enum(["INGREDIENT", "COMPOSITE", "PACKAGED"]).optional(),
   tags: z.array(z.string().trim().min(1)).optional(),
   dataCaveats: z.array(z.string().trim().min(1)).optional(),
+  recipeEstimate: z.object({
+    finalWeightG: finitePositive,
+    ingredients: z.array(z.object({
+      name: z.string().trim().min(1),
+      weightG: finitePositive
+    }).strict()).min(1),
+    confidence: z.enum(["MEDIUM", "LOW"])
+  }).strict().optional(),
   source: z.object({
     kind: z.enum(["USDA_FDC", "BOOK", "REFERENCE", "USER"]),
     ref: z.string().min(1),
