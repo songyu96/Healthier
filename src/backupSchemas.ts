@@ -152,7 +152,7 @@ const foodOverrideSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional(),
   dataCaveats: z.array(z.string().trim().min(1)).optional(),
   source: z.object({
-    kind: z.enum(["USDA_FDC", "BOOK", "USER"]),
+    kind: z.enum(["USDA_FDC", "BOOK", "REFERENCE", "USER"]),
     ref: z.string().min(1),
     release: z.string().min(1),
     method: z.enum(["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"]).optional()

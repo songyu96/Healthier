@@ -34,7 +34,7 @@ export interface FoodReference {
   /** 只描述真实的数据限制或换算假设，不承载书本饮食规则。 */
   dataCaveats?: string[];
   source: {
-    kind: "USDA_FDC" | "BOOK" | "USER";
+    kind: "USDA_FDC" | "BOOK" | "REFERENCE" | "USER";
     ref: string;
     release: string;
     method?: FoodSourceMethod;

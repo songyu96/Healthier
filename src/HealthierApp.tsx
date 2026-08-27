@@ -46,6 +46,7 @@ import {
 } from "./domain";
 import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
 import { FNDDS_FOODS } from "./domain/nutrition/curatedFoodData";
+import { COMMON_FOODS } from "./domain/nutrition/commonFoodData";
 import {
   db,
   deleteMeal,
@@ -84,6 +85,8 @@ const FOOD_KIND_LABELS: Record<FoodKind, string> = {
   PACKAGED: "包装食品"
 };
 
+const BUILT_IN_FOODS = [...BASE_FOODS, ...FNDDS_FOODS, ...COMMON_FOODS];
+
 function resolveFoodKind(food: FoodReference): FoodKind {
   return food.foodKind ?? "INGREDIENT";
 }
@@ -103,6 +106,7 @@ export function foodCategoriesForKind(
 function foodSourceLabel(food: FoodReference): string {
   if (food.source.kind === "USER") return "我的本地数据";
   if (food.source.kind === "BOOK") return "书本参考数据";
+  if (food.source.kind === "REFERENCE") return "内置常见记录条目";
   return "美国农业部食物成分资料";
 }
 
@@ -168,7 +172,7 @@ function defaultProfile(existing?: UserProfile): UserProfile {
 
 function useFoodReferences(): FoodReference[] {
   const overrides = useLiveQuery(() => db.foodOverrides.toArray(), [], []);
-  return useMemo(() => mergeFoodReferences([...BASE_FOODS, ...FNDDS_FOODS], overrides), [overrides]);
+  return useMemo(() => mergeFoodReferences(BUILT_IN_FOODS, overrides), [overrides]);
 }
 
 function mealFacts(meals: ConfirmedMeal[], foods: FoodReference[]) {
@@ -864,7 +868,7 @@ function FoodsPage() {
   return (
     <div className="page-stack">
       <PageIntro
-        eyebrow={BASE_FOODS.length + FNDDS_FOODS.length + " 种内置食物"}
+        eyebrow={BUILT_IN_FOODS.length + " 种内置食物"}
         title="小型、可追溯的食物库"
         description="基础数据来自美国农业部食物成分资料；你添加或修改的内容只保存在本机。"
       />
