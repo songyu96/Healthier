@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { COMMON_FOODS } from "./commonFoodData";
+import { BASE_FOODS } from "./foodData";
 
 describe("common food data", () => {
-  it("覆盖日常饮品、外卖、零食和聚会酒水", () => {
-    expect(COMMON_FOODS).toHaveLength(34);
+  it("覆盖水果、家常餐、外卖、零食和聚会酒水", () => {
+    expect(COMMON_FOODS).toHaveLength(88);
     expect(COMMON_FOODS.map((food) => food.id)).toEqual(expect.arrayContaining([
       "coffee-brewed-current",
       "coffee-unknown",
@@ -15,14 +16,26 @@ describe("common food data", () => {
       "chocolate-cake-bakery-current",
       "beer-current",
       "wine-red-current",
-      "baijiu-unknown"
+      "baijiu-unknown",
+      "watermelon-raw-current",
+      "chinese-cabbage-raw-current",
+      "congee-plain-current",
+      "soy-milk-unknown",
+      "chicken-thigh-roasted-current",
+      "instant-noodles-unknown",
+      "hotpot-unknown"
     ]));
   });
 
-  it("29项可计算数据保留最新版FDC来源和完整五项营养值", () => {
+  it("西瓜和原有的梨均可在内置库中找到", () => {
+    expect(COMMON_FOODS.some((food) => food.name === "西瓜")).toBe(true);
+    expect(BASE_FOODS.some((food) => food.name === "梨")).toBe(true);
+  });
+
+  it("66项可计算数据保留最新版FDC来源和完整五项营养值", () => {
     const known = COMMON_FOODS.filter((food) => food.nutrientsPer100);
-    expect(known).toHaveLength(29);
-    expect(new Set(known.map((food) => food.source.ref)).size).toBe(29);
+    expect(known).toHaveLength(66);
+    expect(new Set(known.map((food) => food.source.ref)).size).toBe(66);
 
     known.forEach((food) => {
       expect(food.source).toMatchObject({
@@ -43,12 +56,15 @@ describe("common food data", () => {
 
   it("模糊名称只记录事实，不伪造营养值", () => {
     const unknown = COMMON_FOODS.filter((food) => !food.nutrientsPer100);
-    expect(unknown).toHaveLength(5);
+    expect(unknown).toHaveLength(22);
     unknown.forEach((food) => {
       expect(food.source.kind).toBe("REFERENCE");
       expect(food.dataCaveats?.length).toBeGreaterThan(0);
     });
     expect(COMMON_FOODS.find((food) => food.aliases.includes("白酒"))?.nutrientsPer100).toBeUndefined();
     expect(COMMON_FOODS.find((food) => food.aliases.includes("包子"))?.nutrientsPer100).toBeUndefined();
+    expect(COMMON_FOODS.find((food) => food.aliases.includes("豆浆"))?.nutrientsPer100).toBeUndefined();
+    expect(COMMON_FOODS.find((food) => food.aliases.includes("火锅"))?.nutrientsPer100).toBeUndefined();
+    expect(COMMON_FOODS.find((food) => food.aliases.includes("方便面"))?.nutrientsPer100).toBeUndefined();
   });
 });
