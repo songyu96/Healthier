@@ -45,6 +45,7 @@ import {
   type WeeklyAssessment
 } from "./domain";
 import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
+import { FNDDS_FOODS } from "./domain/nutrition/curatedFoodData";
 import {
   db,
   deleteMeal,
@@ -155,7 +156,7 @@ function defaultProfile(existing?: UserProfile): UserProfile {
 
 function useFoodReferences(): FoodReference[] {
   const overrides = useLiveQuery(() => db.foodOverrides.toArray(), [], []);
-  return useMemo(() => mergeFoodReferences(BASE_FOODS, overrides), [overrides]);
+  return useMemo(() => mergeFoodReferences([...BASE_FOODS, ...FNDDS_FOODS], overrides), [overrides]);
 }
 
 function mealFacts(meals: ConfirmedMeal[], foods: FoodReference[]) {
@@ -847,7 +848,7 @@ function FoodsPage() {
   return (
     <div className="page-stack">
       <PageIntro
-        eyebrow={BASE_FOODS.length + " 种内置食物"}
+        eyebrow={BASE_FOODS.length + FNDDS_FOODS.length + " 种内置食物"}
         title="小型、可追溯的食物库"
         description="基础数据来自美国农业部食物成分资料；你添加或修改的内容只保存在本机。"
       />
