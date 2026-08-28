@@ -1,5 +1,6 @@
 import type { FoodCategory, MealItemInput } from "../meals/types";
 import type { ItemNutritionFact, NutrientRange, NutrientVector } from "../nutrition/types";
+import { resolveNutritionReliability } from "../nutrition/calculateNutrition";
 import type {
   DailyAssessment,
   DailyTargets,
@@ -190,12 +191,23 @@ export function assessDay(
     0
   );
   const unknownOil = mealFacts.some(({ meal }) => meal.unknownOil);
+  const reliabilityRank = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
+  const nutritionReliability = mealFacts.reduce<DailyAssessment["nutritionReliability"]>(
+    (current, entry) => {
+      const next = resolveNutritionReliability(entry.facts);
+      return reliabilityRank[next] > reliabilityRank[current] ? next : current;
+    },
+    "HIGH"
+  );
   const warnings: string[] = [];
   if (unknownOil) warnings.push("有餐次油量未知，当前营养数字只是已知小计，脂肪和能量可能被低估。 ");
   if (mealFacts.some(({ meal }) => meal.unknownSalt)) warnings.push("有餐次盐量未知，本应用不估算确定钠摄入。 ");
   if (unknownNutritionCount > 0) warnings.push("部分食物没有可靠营养数据，当前营养数字只是已知小计。 ");
   if (mealFacts.some(({ facts }) => facts.items.some((item) => item.calculationBasis === "RECIPE"))) {
     warnings.push("部分食物使用通用配方或组合餐估值，已计入营养区间，但不代表门店或家庭实际配方。 ");
+  }
+  if (nutritionReliability === "LOW") {
+    warnings.push("本日含低置信度组合餐估算，可查看已知小计，但不计入可靠周营养平均。 ");
   }
   if (incomparableGroups.size > 0) warnings.push("部分食物组存在熟重、体积或折算口径问题，相关克数仅显示可比较的已知小计，不判断已达标。 ");
   if (diversityEstimated) warnings.push("部分食材无法确认是否达到5克，多样性只统计明确达到门槛的食材。 ");
@@ -213,6 +225,7 @@ export function assessDay(
     unknownNutritionCount,
     incomparableGroups: [...incomparableGroups],
     nutritionComplete: unknownNutritionCount === 0 && !unknownOil,
+    nutritionReliability,
     nutritionKnownItemCount: mealFacts.reduce((sum, current) => sum + current.facts.knownItemCount, 0),
     nutritionTotalItemCount: mealFacts.reduce((sum, current) => sum + current.facts.totalItemCount, 0),
     unknownOil,

@@ -4,10 +4,24 @@ import type {
   ItemNutritionFact,
   NutrientRange,
   NutrientVector,
-  NutritionFacts
+  NutritionFacts,
+  NutritionReliability
 } from "./types";
 
 const ZERO_VECTOR: NutrientVector = { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 };
+
+function foodReliability(food: FoodReference): NutritionReliability {
+  if (food.source.method !== "RECIPE") return "HIGH";
+  return food.recipeEstimate?.confidence ?? "MEDIUM";
+}
+
+function leastReliable(
+  left: NutritionReliability,
+  right: NutritionReliability
+): NutritionReliability {
+  const rank: Record<NutritionReliability, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  return rank[left] >= rank[right] ? left : right;
+}
 
 function normalizeName(value: string): string {
   return value.trim().toLocaleLowerCase("zh-CN").replace(/[\s（）()]/g, "");
@@ -71,6 +85,7 @@ export function calculateNutrition(
 ): NutritionFacts {
   const facts: ItemNutritionFact[] = [];
   const unknownItems: NutritionFacts["unknownItems"] = [];
+  let reliability: NutritionReliability = "HIGH";
 
   meal.items.forEach((item) => {
     const food = findFood(item, foods);
@@ -98,6 +113,8 @@ export function calculateNutrition(
       unknownItems.push({ tempId: item.tempId, name: item.name, reason: "单位无法可靠换算" });
       return;
     }
+
+    reliability = leastReliable(reliability, foodReliability(food));
 
     facts.push({
       tempId: item.tempId,
@@ -131,6 +148,7 @@ export function calculateNutrition(
     unknownItems,
     sourceRefs: [...new Set(facts.map((fact) => fact.sourceRef))],
     complete: unknownItems.length === 0,
+    reliability,
     knownItemCount: facts.length,
     totalItemCount: meal.items.length
   };
@@ -177,7 +195,8 @@ export function isNutritionFacts(value: unknown): value is NutritionFacts {
       typeof value.complete !== "boolean" || !Number.isInteger(value.knownItemCount) ||
       !Number.isInteger(value.totalItemCount) || !Array.isArray(value.items) ||
       !Array.isArray(value.unknownItems) || !Array.isArray(value.sourceRefs) ||
-      !isNutrientRange(value.totals)) return false;
+      !isNutrientRange(value.totals) ||
+      (value.reliability !== undefined && !["HIGH", "MEDIUM", "LOW"].includes(value.reliability as string))) return false;
 
   const itemsValid = value.items.every((item) => isRecord(item) &&
     isNonEmptyString(item.tempId) && isNonEmptyString(item.foodId) &&
@@ -221,4 +240,10 @@ export function nutritionFactsForMeal(meal: ConfirmedMeal, foods: FoodReference[
   return isNutritionFacts(meal.nutritionSnapshot) && meal.nutritionSnapshot.mealId === meal.id
     ? meal.nutritionSnapshot
     : calculateNutrition(meal, foods);
+}
+
+export function resolveNutritionReliability(facts: NutritionFacts): NutritionReliability {
+  if (facts.reliability) return facts.reliability;
+  if (facts.items.some((item) => item.foodId.startsWith("mixed-meal-"))) return "LOW";
+  return facts.items.some((item) => item.calculationBasis === "RECIPE") ? "MEDIUM" : "HIGH";
 }

@@ -19,6 +19,9 @@ export type FoodKind = (typeof FOOD_KINDS)[number];
 export const FOOD_SOURCE_METHODS = ["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"] as const;
 export type FoodSourceMethod = (typeof FOOD_SOURCE_METHODS)[number];
 
+export const NUTRITION_RELIABILITIES = ["HIGH", "MEDIUM", "LOW"] as const;
+export type NutritionReliability = (typeof NUTRITION_RELIABILITIES)[number];
+
 export interface RecipeIngredientEstimate {
   name: string;
   weightG: number;
@@ -82,6 +85,8 @@ export interface NutritionFacts {
   unknownItems: UnknownNutritionItem[];
   sourceRefs: string[];
   complete: boolean;
+  /** 旧快照可能缺少此字段，读取时按明细保守推断。 */
+  reliability?: NutritionReliability;
   knownItemCount: number;
   totalItemCount: number;
 }

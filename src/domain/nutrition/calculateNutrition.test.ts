@@ -83,6 +83,28 @@ describe("calculateNutrition", () => {
     expect(result.complete).toBe(false);
     expect(result.unknownItems[0].reason).toContain("未提供营养值");
   });
+
+  it("把低置信度配方写入营养事实可靠性", () => {
+    const input = meal();
+    input.items[0] = {
+      ...input.items[0],
+      canonicalFoodId: "low-recipe",
+      category: "GR",
+      state: "CK"
+    };
+    const lowRecipe: FoodReference = {
+      id: "low-recipe",
+      name: "低置信度配方",
+      aliases: [],
+      category: "GR",
+      compatibleStates: ["CK"],
+      basisUnit: "g",
+      nutrientsPer100: { kcal: 100, protein: 2, fat: 1, carb: 20, fiber: 1 },
+      recipeEstimate: { finalWeightG: 100, ingredients: [{ name: "原料", weightG: 100 }], confidence: "LOW" },
+      source: { kind: "REFERENCE", ref: "RECIPE:low", release: "test", method: "RECIPE" }
+    };
+    expect(calculateNutrition(input, [lowRecipe]).reliability).toBe("LOW");
+  });
 });
 
   it("运行时拒绝总计、tempId或来源集合被篡改的快照", () => {
@@ -111,4 +133,3 @@ describe("calculateNutrition", () => {
       sourceRefs: [...valid.sourceRefs, "USER:tampered:2026"]
     })).toBe(false);
   });
-

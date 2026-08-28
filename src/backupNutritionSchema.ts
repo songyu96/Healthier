@@ -51,6 +51,7 @@ export const nutritionFactsSchema = z.object({
   unknownItems: z.array(unknownNutritionItemSchema),
   sourceRefs: z.array(z.string().min(1)),
   complete: z.boolean(),
+  reliability: z.enum(["HIGH", "MEDIUM", "LOW"]).optional(),
   knownItemCount: z.number().int().nonnegative(),
   totalItemCount: z.number().int().nonnegative()
 }).strict().superRefine((facts, context) => {

@@ -81,6 +81,16 @@ describe("assessWeek", () => {
     expect(result.issues.join(" ")).toContain("可靠营养覆盖不足70%");
   });
 
+  it("低置信度估算日不进入可靠周平均", () => {
+    const days = Array.from({ length: 4 }, (_, index) => day(index));
+    days[0].nutritionReliability = "LOW";
+
+    const result = assessWeek("2026-08-19", "2026-08-25", days, []);
+    expect(result.validDays).toBe(4);
+    expect(result.nutritionValidDays).toBe(3);
+    expect(result.issues.join(" ")).not.toContain("能量已知上限仍低于目标80%");
+  });
+
   it("多数完整日能量和蛋白质明显不足时给出问题", () => {
     const days = Array.from({ length: 4 }, (_, index) => day(index));
     days.forEach((current) => {

@@ -48,7 +48,9 @@ export function assessWeek(
   bodyMetrics: { measuredAt: string; weightKg: number }[]
 ): WeeklyAssessment {
   const validDays = days.filter((day) => day.completed);
-  const nutritionDays = validDays.filter((day) => day.nutritionComplete);
+  const nutritionDays = validDays.filter(
+    (day) => day.nutritionComplete && day.nutritionReliability !== "LOW"
+  );
   let averageNutrition: NutrientRange | undefined;
   if (nutritionDays.length > 0) {
     const sum = nutritionDays.reduce<NutrientRange>(
