@@ -41,6 +41,8 @@ const TOFU: NutrientVector = { kcal: 100, protein: 10, fat: 5, carb: 4, fiber: 1
 const CABBAGE: NutrientVector = { kcal: 13, protein: 1.5, fat: 0.2, carb: 2.2, fiber: 1 };
 const SUGAR: NutrientVector = { kcal: 387, protein: 0, fat: 0, carb: 100, fiber: 0 };
 const WHITE_BREAD: NutrientVector = { kcal: 266, protein: 8.85, fat: 3.33, carb: 49.4, fiber: 2.4 };
+const PEANUT: NutrientVector = { kcal: 567, protein: 25.8, fat: 49.2, carb: 16.1, fiber: 8.5 };
+const GREEN_PEPPER: NutrientVector = { kcal: 20, protein: 0.86, fat: 0.17, carb: 4.64, fiber: 1.7 };
 
 function recipe(seed: RecipeSeed): FoodReference {
   const { finalWeightG, ingredients, caveats, confidence = "MEDIUM", ...food } = seed;
@@ -553,25 +555,25 @@ export const COMMON_FOODS: FoodReference[] = [
   }),
   recipe({
     id: "mantou-generic-recipe", name: "白馒头（通用配方）", aliases: ["馒头", "白馒头"],
-    category: "GR", compatibleStates: ["EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["早餐", "主食", "面点", "发酵"],
+    category: "GR", compatibleStates: ["EA"], basisUnit: "g", gramsPerPiece: 160, foodKind: "INGREDIENT", tags: ["早餐", "主食", "面点", "发酵"],
     finalWeightG: 150,
     ingredients: [
       { name: "小麦粉", weightG: 100, nutrientsPer100: FLOUR },
       { name: "水", weightG: 49, nutrientsPer100: ZERO_NUTRIENTS },
       { name: "酵母", weightG: 1, nutrientsPer100: ZERO_NUTRIENTS }
     ],
-    caveats: ["未包含糖和杂粮；含水量、大小及蒸制失水会改变结果。"]
+    caveats: ["未包含糖和杂粮；含水量、大小及蒸制失水会改变结果。", "每个160克采用中国疾控营养小助手的常见份量示例，仅用于按个近似换算。"]
   }),
   recipe({
     id: "youtiao-generic-recipe", name: "油条（通用配方）", aliases: ["油条", "油炸鬼"],
-    category: "UP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["早餐", "面点", "油炸", "高脂"],
+    category: "UP", compatibleStates: ["EA"], basisUnit: "g", gramsPerPiece: 70, foodKind: "INGREDIENT", tags: ["早餐", "面点", "油炸", "高脂"],
     finalWeightG: 150,
     ingredients: [
       { name: "小麦粉", weightG: 100, nutrientsPer100: FLOUR },
       { name: "水和膨松剂", weightG: 60, nutrientsPer100: ZERO_NUTRIENTS },
       { name: "吸附烹调油", weightG: 20, nutrientsPer100: OIL }
     ],
-    caveats: ["吸油量是主要误差来源；门店油条可能明显高于或低于该值。"],
+    caveats: ["吸油量是主要误差来源；门店油条可能明显高于或低于该值。", "每根70克采用中国疾控营养小助手的平均份量示例，仅用于按根近似换算。"],
     confidence: "LOW"
   }),
   recipe({
@@ -708,6 +710,102 @@ export const COMMON_FOODS: FoodReference[] = [
       { name: "烹调油代表量", weightG: 3, nutrientsPer100: OIL }
     ],
     caveats: ["白吉馍大小、夹肉量和肥瘦比例差异很大；这是透明配方估算，不代表某家门店。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "huajuan-generic-recipe", name: "花卷（通用配方）", aliases: ["葱油花卷", "咸花卷"],
+    category: "GR", compatibleStates: ["EA"], basisUnit: "g", gramsPerPiece: 170, foodKind: "INGREDIENT", tags: ["早餐", "主食", "面点", "发酵"],
+    finalWeightG: 170,
+    ingredients: [
+      { name: "小麦粉", weightG: 100, nutrientsPer100: FLOUR },
+      { name: "水、酵母和葱花", weightG: 65, nutrientsPer100: ZERO_NUTRIENTS },
+      { name: "食用油", weightG: 5, nutrientsPer100: OIL }
+    ],
+    caveats: ["盐、油和大小随做法变化；每个170克采用中国疾控营养小助手的常见份量示例。"],
+    confidence: "MEDIUM"
+  }),
+  recipe({
+    id: "jianbing-guozi-generic-recipe", name: "煎饼果子（通用配方）", aliases: ["煎饼馃子", "鸡蛋煎饼果子"],
+    category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["早餐", "小吃", "面点", "外食"],
+    finalWeightG: 240,
+    ingredients: [
+      { name: "杂粮面糊折合面粉", weightG: 70, nutrientsPer100: FLOUR },
+      { name: "薄脆折合面粉", weightG: 20, nutrientsPer100: FLOUR },
+      { name: "鸡蛋", weightG: 50, nutrientsPer100: EGG },
+      { name: "生菜和葱花", weightG: 30, nutrientsPer100: CABBAGE },
+      { name: "摊制和薄脆吸油", weightG: 18, nutrientsPer100: OIL },
+      { name: "酱料和水", weightG: 80, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["是否加薄脆、香肠、油条、酱料和鸡蛋数量会显著改变结果；加料时应另行记录。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "shouzhuabing-plain-generic-recipe", name: "原味手抓饼（通用配方）", aliases: ["手抓饼", "葱抓饼"],
+    category: "UP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["早餐", "主食", "面点", "煎制"],
+    finalWeightG: 170,
+    ingredients: [
+      { name: "小麦粉", weightG: 100, nutrientsPer100: FLOUR },
+      { name: "起酥和煎制用油", weightG: 20, nutrientsPer100: OIL },
+      { name: "水和葱花", weightG: 60, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["这是不加鸡蛋、火腿、培根、芝士和酱料的原味饼估算；加料必须另行记录。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "mapo-tofu-generic-recipe", name: "麻婆豆腐（通用配方）", aliases: ["麻辣豆腐"],
+    category: "SO", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "豆腐", "川菜", "外卖"],
+    finalWeightG: 300,
+    ingredients: [
+      { name: "豆腐", weightG: 220, nutrientsPer100: TOFU },
+      { name: "猪肉末", weightG: 40, nutrientsPer100: LEAN_PORK },
+      { name: "烹调油和红油", weightG: 15, nutrientsPer100: OIL },
+      { name: "糖", weightG: 5, nutrientsPer100: SUGAR },
+      { name: "豆瓣酱、调味料和水", weightG: 50, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["肉末、豆瓣酱、勾芡和红油差异很大；钠未纳入当前五项营养模型。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "kung-pao-chicken-generic-recipe", name: "宫保鸡丁（通用配方）", aliases: ["宫爆鸡丁"],
+    category: "MP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "鸡肉", "川菜", "外卖"],
+    finalWeightG: 300,
+    ingredients: [
+      { name: "熟鸡肉", weightG: 150, nutrientsPer100: COOKED_CHICKEN },
+      { name: "花生", weightG: 30, nutrientsPer100: PEANUT },
+      { name: "蔬菜", weightG: 80, nutrientsPer100: GREEN_PEPPER },
+      { name: "烹调油", weightG: 20, nutrientsPer100: OIL },
+      { name: "糖", weightG: 10, nutrientsPer100: SUGAR },
+      { name: "酱汁和水", weightG: 50, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["鸡肉、花生、糖和用油量差异很大；单条记录不能拆分计入多个食物组。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "yuxiang-shredded-pork-generic-recipe", name: "鱼香肉丝（通用配方）", aliases: ["鱼香猪肉丝"],
+    category: "MP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "猪肉", "川菜", "外卖"],
+    finalWeightG: 300,
+    ingredients: [
+      { name: "熟瘦猪肉", weightG: 150, nutrientsPer100: LEAN_PORK },
+      { name: "青椒等配菜", weightG: 80, nutrientsPer100: GREEN_PEPPER },
+      { name: "木耳、笋等配菜", weightG: 40, nutrientsPer100: CABBAGE },
+      { name: "烹调油", weightG: 20, nutrientsPer100: OIL },
+      { name: "糖", weightG: 12, nutrientsPer100: SUGAR },
+      { name: "酱汁和水", weightG: 40, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["肉量、配菜、糖、勾芡和用油量差异很大；钠未纳入当前五项营养模型。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "stir-fried-shredded-potato-generic-recipe", name: "清炒土豆丝（通用配方）", aliases: ["炒土豆丝", "酸辣土豆丝"],
+    category: "TU", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["家常菜", "土豆", "素菜", "外卖"],
+    finalWeightG: 280,
+    ingredients: [
+      { name: "熟土豆", weightG: 250, nutrientsPer100: COOKED_POTATO },
+      { name: "青椒", weightG: 30, nutrientsPer100: GREEN_PEPPER },
+      { name: "烹调油", weightG: 15, nutrientsPer100: OIL },
+      { name: "醋和调味料", weightG: 20, nutrientsPer100: ZERO_NUTRIENTS }
+    ],
+    caveats: ["焯水会损失部分淀粉；用油量是主要误差来源，酸辣版本的糖和辣油需另行考虑。"],
     confidence: "LOW"
   }),
   recipe({

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { CHINA_FOODS } from "./chinaFoodData";
 
 describe("curated China food composition data", () => {
-  it("只收录九个五项营养值完整且来源可直达的条目", () => {
-    expect(CHINA_FOODS).toHaveLength(9);
-    expect(new Set(CHINA_FOODS.map((food) => food.id)).size).toBe(9);
+  it("只收录十六个五项营养值完整且来源可直达的条目", () => {
+    expect(CHINA_FOODS).toHaveLength(16);
+    expect(new Set(CHINA_FOODS.map((food) => food.id)).size).toBe(16);
 
     CHINA_FOODS.forEach((food) => {
       expect(food.source).toMatchObject({
@@ -28,5 +28,7 @@ describe("curated China food composition data", () => {
       .toEqual({ kcal: 231, protein: 7.3, fat: 10, carb: 28.6, fiber: 1.7 });
     expect(CHINA_FOODS.find((food) => food.id === "china-black-sesame-tangyuan")?.nutrientsPer100)
       .toEqual({ kcal: 315, protein: 4.4, fat: 13.8, carb: 44.2, fiber: 2 });
+    expect(CHINA_FOODS.find((food) => food.id === "china-instant-noodles-braised-beef-dry")?.nutrientsPer100)
+      .toEqual({ kcal: 451, protein: 10.2, fat: 17.9, carb: 62.6, fiber: 1.4 });
   });
 });

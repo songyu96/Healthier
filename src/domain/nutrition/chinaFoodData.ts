@@ -93,5 +93,54 @@ export const CHINA_FOODS: FoodReference[] = [
     tags: ["冲调", "早餐", "甜食", "方便食品"], pageId: "1283", energyKj: 1756,
     nutrients: { protein: 6.9, fat: 7.5, carb: 82.3, fiber: 4.2 },
     caveats: ["这是未冲调粉末的每100克数据；加水后的总重量不能直接套用。"]
+  }),
+  chinaFood({
+    id: "china-fermented-glutinous-rice", name: "醪糟", aliases: ["酒酿", "甜酒酿"],
+    category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE",
+    tags: ["早餐", "甜品", "发酵米制品", "小吃"], pageId: "1221", energyKj: 428,
+    nutrients: { protein: 2.6, fat: 0.2, carb: 22.4, fiber: 0.5 },
+    caveats: ["不包含另加鸡蛋、汤圆、糖或大量水后的整碗重量。"]
+  }),
+  chinaFood({
+    id: "china-instant-cereal", name: "即食营养麦片（中国通用）", aliases: ["营养麦片", "冲调麦片"],
+    category: "UP", compatibleStates: ["PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["早餐", "冲调", "方便食品", "麦片"], pageId: "1284", energyKj: 1708,
+    nutrients: { protein: 6.5, fat: 9.7, carb: 76.3, fiber: 6.5 },
+    caveats: ["官方条目脂肪和钙较高，不能当作纯燕麦片；具体品牌包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-yogurt-with-fruit", name: "果粒酸奶（中国通用）", aliases: ["水果酸奶", "果肉酸奶"],
+    category: "DA", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["酸奶", "乳制品", "早餐", "加餐"], pageId: "961", energyKj: 411,
+    nutrients: { protein: 3.3, fat: 2.9, carb: 14.6, fiber: 0.1 },
+    caveats: ["含糖量和果粒比例随品牌变化；有包装标签时优先录入标签值。"]
+  }),
+  chinaFood({
+    id: "china-sandwich-biscuit", name: "夹心饼干（中国通用）", aliases: ["夹心曲奇", "夹心甜饼干"],
+    category: "UP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["饼干", "零食", "甜食", "方便食品"], pageId: "1325", energyKj: 1928,
+    nutrients: { protein: 6.2, fat: 15.9, carb: 75.3, fiber: 5.1 },
+    caveats: ["夹心种类和品牌差异较大；具体包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-snow-rice-cracker", name: "雪米饼", aliases: ["米饼", "雪饼"],
+    category: "UP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["米饼", "零食", "膨化食品", "方便食品"], pageId: "1340", energyKj: 1968,
+    nutrients: { protein: 5.5, fat: 17.6, carb: 73.5, fiber: 2.9 },
+    caveats: ["不同品牌的油、糖和调味量会改变结果，包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-instant-noodles-braised-beef-dry", name: "红烧牛肉方便面（干制含调料）", aliases: ["红烧牛肉泡面", "红烧牛肉方便面"],
+    category: "UP", compatibleStates: ["PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["方便面", "泡面", "夜宵", "方便食品"], pageId: "1296", energyKj: 1887,
+    nutrients: { protein: 10.2, fat: 17.9, carb: 62.6, fiber: 1.4 },
+    caveats: ["对应干制面饼和调味料合计的每100克数据；冲泡后加水重量不能直接套用，实际品牌标签优先。"]
+  }),
+  chinaFood({
+    id: "china-laoqu-dry-pancake", name: "老区煎饼（干制）", aliases: ["山东干煎饼", "杂粮干煎饼"],
+    category: "WG", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["煎饼", "杂粮", "主食", "干制"], pageId: "1222", energyKj: 1408,
+    nutrients: { protein: 9.5, fat: 3.5, carb: 70, fiber: 8.1 },
+    caveats: ["官方页商品名为“老区煎饼”；这是低水分干煎饼，不能用于煎饼果子或现摊软煎饼。"]
   })
 ];

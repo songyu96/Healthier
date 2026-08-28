@@ -4,7 +4,7 @@ import { BASE_FOODS } from "./foodData";
 
 describe("common food data", () => {
   it("覆盖水果、家常餐、外卖、零食和聚会酒水", () => {
-    expect(COMMON_FOODS).toHaveLength(98);
+    expect(COMMON_FOODS).toHaveLength(105);
     expect(COMMON_FOODS.map((food) => food.id)).toEqual(expect.arrayContaining([
       "coffee-brewed-current",
       "coffee-unknown",
@@ -27,6 +27,13 @@ describe("common food data", () => {
       "hamburger-generic-recipe",
       "fried-chicken-generic-recipe",
       "roujiamo-generic-recipe",
+      "huajuan-generic-recipe",
+      "jianbing-guozi-generic-recipe",
+      "shouzhuabing-plain-generic-recipe",
+      "mapo-tofu-generic-recipe",
+      "kung-pao-chicken-generic-recipe",
+      "yuxiang-shredded-pork-generic-recipe",
+      "stir-fried-shredded-potato-generic-recipe",
       "mixed-meal-meat-estimate",
       "mixed-meal-fish-estimate",
       "mixed-meal-egg-estimate",
@@ -40,10 +47,10 @@ describe("common food data", () => {
     expect(BASE_FOODS.some((food) => food.name === "梨")).toBe(true);
   });
 
-  it("89项可计算数据均提供完整五项营养值", () => {
+  it("96项可计算数据均提供完整五项营养值", () => {
     const known = COMMON_FOODS.filter((food) => food.nutrientsPer100);
-    expect(known).toHaveLength(89);
-    expect(new Set(known.map((food) => food.source.ref)).size).toBe(89);
+    expect(known).toHaveLength(96);
+    expect(new Set(known.map((food) => food.source.ref)).size).toBe(96);
 
     known.forEach((food) => {
       expect(food.nutrientsPer100).toEqual({
@@ -63,7 +70,7 @@ describe("common food data", () => {
     });
 
     const estimates = known.filter((food) => food.source.method === "RECIPE");
-    expect(estimates).toHaveLength(17);
+    expect(estimates).toHaveLength(24);
     estimates.forEach((food) => {
       expect(food.recipeEstimate?.finalWeightG).toBeGreaterThan(0);
       expect(food.recipeEstimate?.ingredients.length).toBeGreaterThan(0);
@@ -91,5 +98,11 @@ describe("common food data", () => {
     }
     expect(COMMON_FOODS.find((food) => food.id === "dumpling-boiled-generic-recipe")?.foodKind).toBe("COMPOSITE");
     expect(COMMON_FOODS.find((food) => food.id === "instant-noodles-prepared-generic")?.foodKind).toBe("PACKAGED");
+  });
+
+  it("馒头、油条和花卷可按官方常见单件重量近似换算", () => {
+    expect(COMMON_FOODS.find((food) => food.id === "mantou-generic-recipe")?.gramsPerPiece).toBe(160);
+    expect(COMMON_FOODS.find((food) => food.id === "youtiao-generic-recipe")?.gramsPerPiece).toBe(70);
+    expect(COMMON_FOODS.find((food) => food.id === "huajuan-generic-recipe")?.gramsPerPiece).toBe(170);
   });
 });
