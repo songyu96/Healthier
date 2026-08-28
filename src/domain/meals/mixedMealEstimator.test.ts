@@ -6,24 +6,27 @@ import { calculateTargets } from "../rules/targets";
 import { createMixedMealDraft } from "./mixedMealEstimator";
 
 describe("mixed meal estimator", () => {
-  it("按肉菜主食和豆制品生成可确认的普通餐食项", () => {
+  it("按畜禽肉、鱼虾、蛋、蔬菜、谷物、薯类和豆制品生成正确分类", () => {
     const draft = createMixedMealDraft({
       kind: "HOTPOT",
       eatenAt: "2026-08-27T19:00:00",
       mealType: "D",
       meatG: 180,
+      fishG: 90,
+      eggG: 50,
       vegetableG: 250,
-      stapleG: 100,
+      grainG: 100,
+      tuberG: 80,
       soyG: 80,
       seasoningLevel: "NORMAL"
     });
 
-    expect(draft.items).toHaveLength(5);
-    expect(draft.items.map((item) => item.category)).toEqual(["MP", "LV", "GR", "SO", "OI"]);
+    expect(draft.items).toHaveLength(7);
+    expect(draft.items.map((item) => item.category)).toEqual(["MP", "FI", "EG", "LV", "GR", "TU", "SO"]);
     expect(draft.items[0]).toMatchObject({ quantityMin: 180, quantityMax: 180, state: "CK" });
-    expect(draft.items.at(-1)).toMatchObject({ quantityMin: 12, quantityMax: 25, state: "EA" });
     expect(draft.rawImportLine).toContain("HD1|20260827-1900|D|");
-    expect(draft.unknownOil).toBe(false);
+    expect(draft.items.some((item) => item.category === "OI")).toBe(false);
+    expect(draft.unknownOil).toBe(true);
     expect(draft.unknownSalt).toBe(true);
   });
 
@@ -33,8 +36,11 @@ describe("mixed meal estimator", () => {
       eatenAt: "2026-08-27T20:00:00",
       mealType: "D",
       meatG: 200,
+      fishG: 0,
+      eggG: 0,
       vegetableG: 100,
-      stapleG: 0,
+      grainG: 0,
+      tuberG: 0,
       soyG: 0,
       seasoningLevel: "HEAVY"
     });
@@ -42,7 +48,7 @@ describe("mixed meal estimator", () => {
 
     expect(facts.complete).toBe(true);
     expect(facts.totals.min.kcal).toBeGreaterThan(0);
-    expect(facts.totals.max.kcal).toBeGreaterThan(facts.totals.min.kcal);
+    expect(facts.totals.max.kcal).toBe(facts.totals.min.kcal);
     expect(facts.items.every((item) => item.calculationBasis === "RECIPE")).toBe(true);
 
     const meal = {

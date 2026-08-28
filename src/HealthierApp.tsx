@@ -380,19 +380,22 @@ export function AssessmentPanel({ assessment }: { assessment: DailyAssessment })
 function MixedMealEstimatorCard({ onCreate }: { onCreate: (draft: ParsedMeal, label: string) => void }) {
   const [kind, setKind] = useState<MixedMealKind>("HOTPOT");
   const [mealType, setMealType] = useState<ConfirmedMeal["mealType"]>("D");
-  const [meatG, setMeatG] = useState(150);
+  const [meatG, setMeatG] = useState(100);
+  const [fishG, setFishG] = useState(0);
+  const [eggG, setEggG] = useState(0);
   const [vegetableG, setVegetableG] = useState(200);
-  const [stapleG, setStapleG] = useState(100);
+  const [grainG, setGrainG] = useState(100);
+  const [tuberG, setTuberG] = useState(0);
   const [soyG, setSoyG] = useState(0);
   const [seasoningLevel, setSeasoningLevel] = useState<SeasoningLevel>("NORMAL");
-  const hasMainFood = meatG > 0 || vegetableG > 0 || stapleG > 0 || soyG > 0;
+  const hasMainFood = meatG > 0 || fishG > 0 || eggG > 0 || vegetableG > 0 || grainG > 0 || tuberG > 0 || soyG > 0;
 
   return <section className="card">
     <div className="section-heading">
       <div><span className="eyebrow">聚餐估算</span><h2>按吃进去的类别重量记录</h2></div>
       <span className="step-pill">熟重/可食重量</span>
     </div>
-    <p className="helper">适合无法逐项回忆的火锅、麻辣烫和烧烤。填写大致克数后仍会进入人工确认；调味油按区间估算，盐不估算。</p>
+    <p className="helper">适合无法逐项回忆的火锅、麻辣烫和烧烤。填写大致克数后仍会进入人工确认；油、盐和汤底默认未知，不自动补数值。</p>
     <div className="form-grid two-columns">
       <label>场景<select value={kind} onChange={(event) => setKind(event.target.value as MixedMealKind)}>
         {MIXED_MEAL_KINDS.map((value) => <option key={value} value={value}>{MIXED_MEAL_LABELS[value]}</option>)}
@@ -400,9 +403,12 @@ function MixedMealEstimatorCard({ onCreate }: { onCreate: (draft: ParsedMeal, la
       <label>餐次<select value={mealType} onChange={(event) => setMealType(event.target.value as ConfirmedMeal["mealType"])}>
         {Object.entries(MEAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select></label>
-      <label>肉、鱼、蛋（g）<input type="number" min="0" step="10" value={meatG} onChange={(event) => setMeatG(number(event.target.value))} /></label>
+      <label>畜禽肉（g）<input type="number" min="0" step="10" value={meatG} onChange={(event) => setMeatG(number(event.target.value))} /></label>
+      <label>鱼虾（g）<input type="number" min="0" step="10" value={fishG} onChange={(event) => setFishG(number(event.target.value))} /></label>
+      <label>蛋（g）<input type="number" min="0" step="10" value={eggG} onChange={(event) => setEggG(number(event.target.value))} /></label>
       <label>蔬菜（g）<input type="number" min="0" step="10" value={vegetableG} onChange={(event) => setVegetableG(number(event.target.value))} /></label>
-      <label>主食、薯类（g）<input type="number" min="0" step="10" value={stapleG} onChange={(event) => setStapleG(number(event.target.value))} /></label>
+      <label>米饭/面食（g）<input type="number" min="0" step="10" value={grainG} onChange={(event) => setGrainG(number(event.target.value))} /></label>
+      <label>薯类（g）<input type="number" min="0" step="10" value={tuberG} onChange={(event) => setTuberG(number(event.target.value))} /></label>
       <label>豆制品（g，可选）<input type="number" min="0" step="10" value={soyG} onChange={(event) => setSoyG(number(event.target.value))} /></label>
     </div>
     <label>锅底、刷油和蘸料<select value={seasoningLevel} onChange={(event) => setSeasoningLevel(event.target.value as SeasoningLevel)}>
@@ -410,7 +416,7 @@ function MixedMealEstimatorCard({ onCreate }: { onCreate: (draft: ParsedMeal, la
     </select></label>
     <button className="secondary full-width" type="button" disabled={!hasMainFood} onClick={() => {
       const draft = createMixedMealDraft({
-        kind, eatenAt: localDateTime(), mealType, meatG, vegetableG, stapleG, soyG, seasoningLevel
+        kind, eatenAt: localDateTime(), mealType, meatG, fishG, eggG, vegetableG, grainG, tuberG, soyG, seasoningLevel
       });
       onCreate(draft, MIXED_MEAL_LABELS[kind]);
     }}>生成估算草稿并确认</button>

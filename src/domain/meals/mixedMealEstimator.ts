@@ -23,17 +23,14 @@ export interface MixedMealEstimateInput {
   eatenAt: string;
   mealType: MealType;
   meatG: number;
+  fishG: number;
+  eggG: number;
   vegetableG: number;
-  stapleG: number;
+  grainG: number;
+  tuberG: number;
   soyG: number;
   seasoningLevel: SeasoningLevel;
 }
-
-const OIL_RANGES: Record<MixedMealKind, Record<SeasoningLevel, [number, number]>> = {
-  HOTPOT: { LIGHT: [5, 12], NORMAL: [12, 25], HEAVY: [25, 45] },
-  MALATANG: { LIGHT: [8, 15], NORMAL: [15, 30], HEAVY: [30, 50] },
-  BARBECUE: { LIGHT: [5, 10], NORMAL: [10, 20], HEAVY: [20, 30] }
-};
 
 function hd1Timestamp(eatenAt: string): string {
   return eatenAt.slice(0, 16).replaceAll("-", "").replace("T", "-").replace(":", "");
@@ -69,14 +66,15 @@ function serializeItems(items: MealItemInput[]): string {
 export function createMixedMealDraft(input: MixedMealEstimateInput): ParsedMeal {
   const label = MIXED_MEAL_LABELS[input.kind];
   const items: MealItemInput[] = [];
-  if (input.meatG > 0) items.push(item(label, "肉类", "MP", "CK", input.meatG, input.meatG, "mixed-meal-meat-estimate"));
+  if (input.meatG > 0) items.push(item(label, "畜禽肉", "MP", "CK", input.meatG, input.meatG, "mixed-meal-meat-estimate"));
+  if (input.fishG > 0) items.push(item(label, "鱼虾", "FI", "CK", input.fishG, input.fishG, "mixed-meal-fish-estimate"));
+  if (input.eggG > 0) items.push(item(label, "蛋", "EG", "CK", input.eggG, input.eggG, "mixed-meal-egg-estimate"));
   if (input.vegetableG > 0) items.push(item(label, "蔬菜", "LV", "CK", input.vegetableG, input.vegetableG, "mixed-meal-vegetable-estimate"));
-  if (input.stapleG > 0) items.push(item(label, "主食", "GR", "CK", input.stapleG, input.stapleG, "mixed-meal-staple-estimate"));
+  if (input.grainG > 0) items.push(item(label, "谷物主食", "GR", "CK", input.grainG, input.grainG, "mixed-meal-staple-estimate"));
+  if (input.tuberG > 0) items.push(item(label, "薯类", "TU", "CK", input.tuberG, input.tuberG, "mixed-meal-tuber-estimate"));
   if (input.soyG > 0) items.push(item(label, "豆制品", "SO", "CK", input.soyG, input.soyG, "mixed-meal-soy-estimate"));
-  const [oilMin, oilMax] = OIL_RANGES[input.kind][input.seasoningLevel];
-  items.push(item(label, "调味油", "OI", "EA", oilMin, oilMax, "mixed-meal-oil-estimate"));
 
-  const note = `${label}组合餐估算；肉菜主食按熟重/可食重量；调味程度：${SEASONING_LABELS[input.seasoningLevel]}；盐和汤底固形物未估算`;
+  const note = `${label}组合餐估算；各类按熟重/可食重量；调味程度：${SEASONING_LABELS[input.seasoningLevel]}；油、盐和汤底固形物未知`;
   return {
     protocolVersion: "HD1",
     eatenAt: input.eatenAt,
@@ -86,7 +84,7 @@ export function createMixedMealDraft(input: MixedMealEstimateInput): ParsedMeal 
     cookingMethod: label,
     note,
     rawImportLine: `HD1|${hd1Timestamp(input.eatenAt)}|${input.mealType}|${serializeItems(items)}|${label}|${note}`,
-    unknownOil: false,
+    unknownOil: true,
     unknownSalt: true
   };
 }

@@ -29,6 +29,11 @@ const LEAN_PORK: NutrientVector = { kcal: 242, protein: 27.3, fat: 13.9, carb: 0
 const PORK_BELLY: NutrientVector = { kcal: 518, protein: 9.34, fat: 53, carb: 0, fiber: 0 };
 const COOKED_BEEF: NutrientVector = { kcal: 200, protein: 29, fat: 8, carb: 0, fiber: 0 };
 const COOKED_CHICKEN: NutrientVector = { kcal: 165, protein: 31, fat: 3.6, carb: 0, fiber: 0 };
+const COOKED_SALMON: NutrientVector = { kcal: 182, protein: 25.44, fat: 8.13, carb: 0, fiber: 0 };
+const COOKED_COD: NutrientVector = { kcal: 105, protein: 22.83, fat: 0.86, carb: 0, fiber: 0 };
+const COOKED_SHRIMP: NutrientVector = { kcal: 119, protein: 22.78, fat: 1.7, carb: 1.52, fiber: 0 };
+const COOKED_POTATO: NutrientVector = { kcal: 86, protein: 1.71, fat: 0.1, carb: 20.01, fiber: 1.8 };
+const COOKED_SWEET_POTATO: NutrientVector = { kcal: 90, protein: 2.01, fat: 0.15, carb: 20.71, fiber: 3.3 };
 const COOKED_NOODLES: NutrientVector = { kcal: 138, protein: 4.5, fat: 2.1, carb: 25, fiber: 1.2 };
 const COOKED_RICE: NutrientVector = { kcal: 130, protein: 2.69, fat: 0.28, carb: 28.17, fiber: 0.4 };
 const COOKED_BROCCOLI: NutrientVector = { kcal: 35, protein: 2.38, fat: 0.41, carb: 7.18, fiber: 3.3 };
@@ -676,6 +681,26 @@ export const COMMON_FOODS: FoodReference[] = [
     confidence: "LOW"
   }),
   recipe({
+    id: "mixed-meal-fish-estimate", name: "组合餐鱼虾（估算）", aliases: ["聚餐鱼虾估算"],
+    category: "FI", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "鱼虾", "熟重"],
+    finalWeightG: 100,
+    ingredients: [
+      { name: "熟三文鱼", weightG: 34, nutrientsPer100: COOKED_SALMON },
+      { name: "熟鳕鱼", weightG: 33, nutrientsPer100: COOKED_COD },
+      { name: "熟虾", weightG: 33, nutrientsPer100: COOKED_SHRIMP }
+    ],
+    caveats: ["鱼种、甲壳类比例和烹调方式差异很大，不包含裹粉、酱汁或额外用油。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "mixed-meal-egg-estimate", name: "组合餐蛋类（估算）", aliases: ["聚餐蛋类估算"],
+    category: "EG", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "蛋", "熟重"],
+    finalWeightG: 100,
+    ingredients: [{ name: "熟鸡蛋", weightG: 100, nutrientsPer100: EGG }],
+    caveats: ["按熟全蛋可食重量估算，不包含煎炒用油、酱汁或蛋制品配料。"],
+    confidence: "LOW"
+  }),
+  recipe({
     id: "mixed-meal-vegetable-estimate", name: "组合餐蔬菜（估算）", aliases: ["聚餐蔬菜估算"],
     category: "LV", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "蔬菜", "熟重"],
     finalWeightG: 100,
@@ -698,19 +723,22 @@ export const COMMON_FOODS: FoodReference[] = [
     confidence: "LOW"
   }),
   recipe({
+    id: "mixed-meal-tuber-estimate", name: "组合餐薯类（估算）", aliases: ["聚餐薯类估算"],
+    category: "TU", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "薯类", "熟重"],
+    finalWeightG: 100,
+    ingredients: [
+      { name: "熟土豆", weightG: 50, nutrientsPer100: COOKED_POTATO },
+      { name: "熟红薯", weightG: 50, nutrientsPer100: COOKED_SWEET_POTATO }
+    ],
+    caveats: ["按无额外用油的熟土豆与熟红薯代表值估算；炸薯条、薯粉和芋类不能套用。"],
+    confidence: "LOW"
+  }),
+  recipe({
     id: "mixed-meal-soy-estimate", name: "组合餐豆制品（估算）", aliases: ["聚餐豆制品估算"],
     category: "SO", compatibleStates: ["CK"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "豆制品", "熟重"],
     finalWeightG: 100,
     ingredients: [{ name: "豆腐和豆制品代表值", weightG: 100, nutrientsPer100: TOFU }],
     caveats: ["油豆腐、腐竹和冻豆腐与该代表值差异较大。"],
-    confidence: "LOW"
-  }),
-  recipe({
-    id: "mixed-meal-oil-estimate", name: "组合餐调味油（估算）", aliases: ["聚餐调味油估算"],
-    category: "OI", compatibleStates: ["EA"], basisUnit: "g", foodKind: "INGREDIENT", tags: ["组合餐估算", "烹调油", "蘸料"],
-    finalWeightG: 100,
-    ingredients: [{ name: "吸附油、锅底油和蘸料油", weightG: 100, nutrientsPer100: OIL }],
-    caveats: ["只估算油脂，不计算盐、糖、麻酱或汤底固形物。"],
     confidence: "LOW"
   }),
   {
