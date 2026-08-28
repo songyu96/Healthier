@@ -3,7 +3,7 @@ import type { FoodReference, NutrientVector } from "./types";
 const FNDDS_RELEASE = "USDA FNDDS 2021–2023 (2024-10-31)";
 const FNDDS_CAVEAT = "FNDDS 通用条目采用美国膳食调查口径；实际品牌、门店配方和份量可能不同，仅用于近似记录。";
 const LIQUID_CAVEAT = "FNDDS 原值按100克提供；饮品记录近似按1克≈1毫升换算。";
-const COMMON_FOODS_V2 = "Healthier common-foods-v2";
+const COMMON_FOODS_V2 = "Healthier common-foods-v3";
 const RECIPE_RELEASE = "Healthier representative-recipes-v1";
 
 interface RecipeIngredientSeed {
@@ -40,6 +40,7 @@ const COOKED_BROCCOLI: NutrientVector = { kcal: 35, protein: 2.38, fat: 0.41, ca
 const TOFU: NutrientVector = { kcal: 100, protein: 10, fat: 5, carb: 4, fiber: 1 };
 const CABBAGE: NutrientVector = { kcal: 13, protein: 1.5, fat: 0.2, carb: 2.2, fiber: 1 };
 const SUGAR: NutrientVector = { kcal: 387, protein: 0, fat: 0, carb: 100, fiber: 0 };
+const WHITE_BREAD: NutrientVector = { kcal: 266, protein: 8.85, fat: 3.33, carb: 49.4, fiber: 2.4 };
 
 function recipe(seed: RecipeSeed): FoodReference {
   const { finalWeightG, ingredients, caveats, confidence = "MEDIUM", ...food } = seed;
@@ -147,7 +148,7 @@ export const COMMON_FOODS: FoodReference[] = [
     fdcId: "2710523", sourceDescription: "Tea, iced, brewed, green, unsweetened", caveats: [LIQUID_CAVEAT, "仅对应不加糖、不加奶的冲泡绿茶。"]
   }),
   fndds({
-    id: "bao-bun-meat-current", name: "肉包（通用）", aliases: ["肉包子", "鲜肉包"],
+    id: "bao-bun-meat-current", name: "肉包（USDA通用）", aliases: ["美式调查肉包"],
     category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["包子", "早餐", "面点"],
     nutrientsPer100: { kcal: 273, protein: 11.2, fat: 7.58, carb: 39.8, fiber: 1.2 },
     fdcId: "2708724", sourceDescription: "Bao bun", caveats: ["对应美国膳食调查中的通用肉馅包；面皮、馅料和含油量可能与本地产品差异较大。"]
@@ -667,6 +668,46 @@ export const COMMON_FOODS: FoodReference[] = [
       { name: "汤", weightG: 250, nutrientsPer100: ZERO_NUTRIENTS }
     ],
     caveats: ["是否喝汤、面量、牛肉量和汤面油脂会显著改变结果。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "hamburger-generic-recipe", name: "普通汉堡（通用配方）", aliases: ["汉堡", "牛肉汉堡"],
+    category: "UP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["汉堡", "快餐", "聚餐"],
+    finalWeightG: 190,
+    ingredients: [
+      { name: "白面包胚", weightG: 70, nutrientsPer100: WHITE_BREAD },
+      { name: "熟牛肉饼", weightG: 80, nutrientsPer100: COOKED_BEEF },
+      { name: "番茄", weightG: 20, nutrientsPer100: TOMATO },
+      { name: "生菜/卷心菜", weightG: 10, nutrientsPer100: CABBAGE },
+      { name: "蛋黄酱和烹调油代表量", weightG: 10, nutrientsPer100: OIL }
+    ],
+    caveats: ["不含芝士；肉饼肥瘦、面包大小和酱料会显著改变结果，门店或包装标签优先。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "fried-chicken-generic-recipe", name: "普通炸鸡（通用配方）", aliases: ["炸鸡", "裹粉炸鸡"],
+    category: "UP", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["炸鸡", "快餐", "聚餐", "油炸"],
+    finalWeightG: 125,
+    ingredients: [
+      { name: "熟鸡肉", weightG: 100, nutrientsPer100: COOKED_CHICKEN },
+      { name: "裹粉", weightG: 20, nutrientsPer100: FLOUR },
+      { name: "吸收的炸油代表量", weightG: 15, nutrientsPer100: OIL }
+    ],
+    caveats: ["鸡肉部位、是否带皮、裹粉厚度和吸油量差异很大；已知是鸡翅时优先选“快餐炸鸡翅”。"],
+    confidence: "LOW"
+  }),
+  recipe({
+    id: "roujiamo-generic-recipe", name: "肉夹馍（通用配方）", aliases: ["腊汁肉夹馍", "猪肉夹馍"],
+    category: "OT", compatibleStates: ["EA"], basisUnit: "g", foodKind: "COMPOSITE", tags: ["肉夹馍", "早餐", "小吃", "中式快餐"],
+    finalWeightG: 180,
+    ingredients: [
+      { name: "白吉馍代表值", weightG: 100, nutrientsPer100: WHITE_BREAD },
+      { name: "熟瘦猪肉", weightG: 40, nutrientsPer100: LEAN_PORK },
+      { name: "熟五花肉", weightG: 30, nutrientsPer100: PORK_BELLY },
+      { name: "肉汁和配菜", weightG: 15, nutrientsPer100: ZERO_NUTRIENTS },
+      { name: "烹调油代表量", weightG: 3, nutrientsPer100: OIL }
+    ],
+    caveats: ["白吉馍大小、夹肉量和肥瘦比例差异很大；这是透明配方估算，不代表某家门店。"],
     confidence: "LOW"
   }),
   recipe({

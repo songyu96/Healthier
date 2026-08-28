@@ -1,6 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { AssessmentPanel, MealRow, WeeklyActionsPanel, foodCategoriesForKind, foodQualityLabel } from "./HealthierApp";
+import {
+  AssessmentPanel,
+  MealRow,
+  WeeklyActionsPanel,
+  filterFoodsForMealEditor,
+  foodCategoriesForKind,
+  foodQualityLabel
+} from "./HealthierApp";
 import {
   assessDay,
   assessWeek,
@@ -166,5 +173,18 @@ describe("food library filters", () => {
 
     expect(foodQualityLabel(official)).toBe("官方通用数据");
     expect(foodQualityLabel(estimate)).toBe("低置信度估算");
+  });
+
+  it("餐食确认可按名称、别名和标签跨分类搜索", () => {
+    const searchable = [
+      { ...food("rice", "GR"), name: "熟米饭", aliases: ["白米饭"], tags: ["主食"] },
+      { ...food("burger", "UP", "COMPOSITE"), name: "普通汉堡", aliases: ["牛肉汉堡"], tags: ["快餐"] },
+      { ...food("milk", "DA"), name: "纯牛奶", aliases: [], tags: ["早餐"] }
+    ];
+
+    expect(filterFoodsForMealEditor(searchable, "牛肉").map((item) => item.id)).toEqual(["burger"]);
+    expect(filterFoodsForMealEditor(searchable, "快餐").map((item) => item.id)).toEqual(["burger"]);
+    expect(filterFoodsForMealEditor(searchable, "早餐").map((item) => item.id)).toEqual(["milk"]);
+    expect(filterFoodsForMealEditor(searchable, "", "burger")[0]?.id).toBe("burger");
   });
 });

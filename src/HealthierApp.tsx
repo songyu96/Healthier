@@ -54,6 +54,7 @@ import {
 import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
 import { FNDDS_FOODS } from "./domain/nutrition/curatedFoodData";
 import { COMMON_FOODS } from "./domain/nutrition/commonFoodData";
+import { CHINA_FOODS } from "./domain/nutrition/chinaFoodData";
 import {
   db,
   deleteMeal,
@@ -92,7 +93,7 @@ const FOOD_KIND_LABELS: Record<FoodKind, string> = {
   PACKAGED: "包装食品"
 };
 
-const BUILT_IN_FOODS = [...BASE_FOODS, ...FNDDS_FOODS, ...COMMON_FOODS];
+const BUILT_IN_FOODS = [...BASE_FOODS, ...FNDDS_FOODS, ...CHINA_FOODS, ...COMMON_FOODS];
 
 function resolveFoodKind(food: FoodReference): FoodKind {
   return food.foodKind ?? "INGREDIENT";
@@ -113,6 +114,9 @@ export function foodCategoriesForKind(
 function foodSourceLabel(food: FoodReference): string {
   if (food.source.method === "RECIPE") return "通用配方估值";
   if (food.source.method === "LABEL") return "包装营养标签";
+  if (food.source.method === "OFFICIAL_COMPOSITION") {
+    return food.source.kind === "USDA_FDC" ? "美国农业部食物成分资料" : "官方食物成分资料";
+  }
   if (food.source.kind === "USER") return "我的本地数据";
   if (food.source.kind === "BOOK") return "书本参考数据";
   if (food.source.kind === "REFERENCE") return "内置常见记录条目";
@@ -126,6 +130,34 @@ export function foodQualityLabel(food: FoodReference): string {
   if (food.source.kind === "BOOK") return "书本近似数据";
   if (food.source.kind === "USER") return "用户数据";
   return food.nutrientsPer100 ? "通用参考数据" : "仅记录";
+}
+
+function normalizedFoodSearch(value: string): string {
+  return value.trim().toLocaleLowerCase("zh-CN").replace(/\s+/g, "");
+}
+
+export function filterFoodsForMealEditor(
+  foods: FoodReference[],
+  query: string,
+  selectedId?: string
+): FoodReference[] {
+  const normalizedQuery = normalizedFoodSearch(query);
+  const ranked = foods
+    .map((food) => {
+      const name = normalizedFoodSearch(food.name);
+      const aliases = food.aliases.map(normalizedFoodSearch);
+      const haystack = [food.name, ...food.aliases, ...(food.tags ?? [])]
+        .map(normalizedFoodSearch)
+        .join(" ");
+      const score = food.id === selectedId ? -2
+        : name === normalizedQuery || aliases.includes(normalizedQuery) ? -1
+          : 0;
+      return { food, score, matches: !normalizedQuery || haystack.includes(normalizedQuery) };
+    })
+    .filter((entry) => entry.matches || entry.food.id === selectedId)
+    .sort((left, right) => left.score - right.score || left.food.name.localeCompare(right.food.name, "zh-CN"));
+
+  return ranked.slice(0, 60).map((entry) => entry.food);
 }
 
 const HEALTH_FLAGS: { value: HealthFlag; label: string }[] = [
@@ -282,18 +314,18 @@ function MealDraftEditor({ draft, foods, onChange, onCancel, onSave, saving }: M
       </div>
       <div className="item-editor-list">
         {draft.items.map((item, index) => {
-          const matches = foods.filter((food) => food.category === item.category);
+          const matches = filterFoodsForMealEditor(foods, item.name, item.canonicalFoodId);
           return (
             <fieldset className="item-editor" key={item.tempId}>
               <legend>食物 {index + 1}</legend>
-              <label>名称<input value={item.name} onChange={(event) => updateItem(index, { name: event.target.value, canonicalFoodId: undefined })} /></label>
-              <label>匹配食物库
+              <label>名称 / 搜索食物库<input type="search" placeholder="输入名称、别名或标签" value={item.name} onChange={(event) => updateItem(index, { name: event.target.value, canonicalFoodId: undefined })} /></label>
+              <label>匹配食物库（跨分类）
                 <select value={item.canonicalFoodId ?? ""} onChange={(event) => {
                   const selected = foods.find((food) => food.id === event.target.value);
                   updateItem(index, selected ? { canonicalFoodId: selected.id, name: selected.name, category: selected.category } : { canonicalFoodId: undefined });
                 }}>
-                  <option value="">按名称自动匹配/未知</option>
-                  {matches.map((food) => <option key={food.id} value={food.id}>{food.name}</option>)}
+                  <option value="">按名称自动匹配 / 保持未知</option>
+                  {matches.map((food) => <option key={food.id} value={food.id}>{food.name} · {CATEGORY_LABELS[food.category]}</option>)}
                 </select>
               </label>
               <label>分类
@@ -939,7 +971,7 @@ function FoodsPage() {
       <PageIntro
         eyebrow={BUILT_IN_FOODS.length + " 种内置食物"}
         title="小型、可追溯的食物库"
-        description="基础数据来自美国农业部食物成分资料；你添加或修改的内容只保存在本机。"
+        description="基础数据来自美国农业部和中国食物成分公开资料；你添加或修改的内容只保存在本机。"
       />
       <section className="card">
         <div className="food-filters">
@@ -984,7 +1016,11 @@ function FoodsPage() {
                     <summary>查看估算配方和重量</summary>
                     <p>估算成品 {food.recipeEstimate.finalWeightG} g；{food.recipeEstimate.ingredients.map((ingredient) => `${ingredient.name} ${ingredient.weightG} g`).join("、")}。</p>
                   </details>}
-                  <details className="source-details"><summary>查看数据来源</summary><p>{food.source.release} · {food.source.ref}</p></details>
+                  <details className="source-details"><summary>查看数据来源</summary><p>
+                    {food.source.release} · {food.source.ref.startsWith("https://")
+                      ? <a href={food.source.ref} target="_blank" rel="noreferrer">打开来源页</a>
+                      : food.source.ref}
+                  </p></details>
                 </div>
                 <button className="text-button" type="button" onClick={() => edit(food)}>编辑</button>
               </article>

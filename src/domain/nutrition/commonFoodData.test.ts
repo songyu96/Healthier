@@ -4,7 +4,7 @@ import { BASE_FOODS } from "./foodData";
 
 describe("common food data", () => {
   it("覆盖水果、家常餐、外卖、零食和聚会酒水", () => {
-    expect(COMMON_FOODS).toHaveLength(95);
+    expect(COMMON_FOODS).toHaveLength(98);
     expect(COMMON_FOODS.map((food) => food.id)).toEqual(expect.arrayContaining([
       "coffee-brewed-current",
       "coffee-unknown",
@@ -24,6 +24,9 @@ describe("common food data", () => {
       "chicken-thigh-roasted-current",
       "instant-noodles-prepared-generic",
       "mantou-generic-recipe",
+      "hamburger-generic-recipe",
+      "fried-chicken-generic-recipe",
+      "roujiamo-generic-recipe",
       "mixed-meal-meat-estimate",
       "mixed-meal-fish-estimate",
       "mixed-meal-egg-estimate",
@@ -37,10 +40,10 @@ describe("common food data", () => {
     expect(BASE_FOODS.some((food) => food.name === "梨")).toBe(true);
   });
 
-  it("86项可计算数据均提供完整五项营养值", () => {
+  it("89项可计算数据均提供完整五项营养值", () => {
     const known = COMMON_FOODS.filter((food) => food.nutrientsPer100);
-    expect(known).toHaveLength(86);
-    expect(new Set(known.map((food) => food.source.ref)).size).toBe(86);
+    expect(known).toHaveLength(89);
+    expect(new Set(known.map((food) => food.source.ref)).size).toBe(89);
 
     known.forEach((food) => {
       expect(food.nutrientsPer100).toEqual({
@@ -60,7 +63,7 @@ describe("common food data", () => {
     });
 
     const estimates = known.filter((food) => food.source.method === "RECIPE");
-    expect(estimates).toHaveLength(14);
+    expect(estimates).toHaveLength(17);
     estimates.forEach((food) => {
       expect(food.recipeEstimate?.finalWeightG).toBeGreaterThan(0);
       expect(food.recipeEstimate?.ingredients.length).toBeGreaterThan(0);
