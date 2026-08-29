@@ -193,14 +193,30 @@ describe("food library filters", () => {
     expect(filterFoodsForMealEditor(searchable, "", "burger")[0]?.id).toBe("burger");
   });
 
-  it("估算器专用占位不进入普通选择，但旧记录仍可编辑", () => {
-    const estimatorOnly = {
-      ...food("hotpot-unknown", "OT", "COMPOSITE"),
-      name: "火锅（配料未知）",
-      aliases: ["火锅"]
+  it("所有内置无营养占位均不进入普通选择，但旧记录和用户自建条目仍可用", () => {
+    const builtInFallbacks: FoodReference[] = [
+      {
+        ...food("hotpot-unknown", "OT", "COMPOSITE"),
+        name: "火锅（配料未知）",
+        aliases: ["火锅"],
+        source: { kind: "REFERENCE", ref: "test", release: "test" }
+      },
+      {
+        ...food("juice-unknown", "SD", "PACKAGED"),
+        name: "果汁饮料（品牌未知）",
+        aliases: ["果汁饮料"],
+        source: { kind: "REFERENCE", ref: "test", release: "test" }
+      }
+    ];
+    const userFallback = {
+      ...food("user-local", "OT"),
+      name: "我的临时记录"
     };
 
-    expect(filterFoodsForMealEditor([estimatorOnly], "火锅")).toEqual([]);
-    expect(filterFoodsForMealEditor([estimatorOnly], "", "hotpot-unknown")).toEqual([estimatorOnly]);
+    expect(filterFoodsForMealEditor([...builtInFallbacks, userFallback], "").map((item) => item.id))
+      .toEqual(["user-local"]);
+    expect(filterFoodsForMealEditor(builtInFallbacks, "果汁饮料")).toEqual([]);
+    expect(filterFoodsForMealEditor(builtInFallbacks, "", "hotpot-unknown"))
+      .toEqual([builtInFallbacks[0]]);
   });
 });

@@ -144,14 +144,12 @@ function normalizedFoodSearch(value: string): string {
   return value.trim().toLocaleLowerCase("zh-CN").replace(/\s+/g, "");
 }
 
-const ESTIMATOR_ONLY_FOOD_IDS = new Set([
-  "malatang-unknown",
-  "hotpot-unknown",
-  "barbecue-skewers-unknown"
-]);
-
-export function isEstimatorOnlyFood(food: FoodReference): boolean {
-  return ESTIMATOR_ONLY_FOOD_IDS.has(food.id);
+export function isHiddenBuiltInFallbackFood(food: FoodReference): boolean {
+  return (
+    food.source.kind !== "USER"
+    && !food.nutrientsPer100
+    && !food.partialNutrientsPer100
+  );
 }
 
 export function filterFoodsForMealEditor(
@@ -161,7 +159,7 @@ export function filterFoodsForMealEditor(
 ): FoodReference[] {
   const normalizedQuery = normalizedFoodSearch(query);
   const ranked = foods
-    .filter((food) => !isEstimatorOnlyFood(food) || food.id === selectedId)
+    .filter((food) => !isHiddenBuiltInFallbackFood(food) || food.id === selectedId)
     .map((food) => {
       const name = normalizedFoodSearch(food.name);
       const aliases = food.aliases.map(normalizedFoodSearch);
@@ -930,17 +928,16 @@ function FoodsPage() {
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
-  const directFoods = useMemo(() => foods.filter((food) => !isEstimatorOnlyFood(food)), [foods]);
+  const selectableFoods = useMemo(() => foods.filter((food) => !isHiddenBuiltInFallbackFood(food)), [foods]);
   const nutritionCounts = useMemo(() => ({
-    complete: directFoods.filter((food) => food.nutrientsPer100).length,
-    partial: directFoods.filter((food) => food.partialNutrientsPer100).length,
-    fallback: directFoods.filter((food) => !food.nutrientsPer100 && !food.partialNutrientsPer100).length
-  }), [directFoods]);
+    complete: selectableFoods.filter((food) => food.nutrientsPer100).length,
+    partial: selectableFoods.filter((food) => food.partialNutrientsPer100).length
+  }), [selectableFoods]);
   const availableCategories = useMemo(
-    () => foodCategoriesForKind(directFoods, kindFilter),
-    [directFoods, kindFilter]
+    () => foodCategoriesForKind(selectableFoods, kindFilter),
+    [selectableFoods, kindFilter]
   );
-  const visible = directFoods.filter((food) => {
+  const visible = selectableFoods.filter((food) => {
     const matchesQuery = !normalizedQuery || [
       food.name,
       ...food.aliases,
@@ -954,6 +951,19 @@ function FoodsPage() {
       && (kindFilter === "ALL" || resolveFoodKind(food) === kindFilter)
       && (categoryFilter === "ALL" || food.category === categoryFilter);
   });
+
+  const scrollToFoodEditor = () => {
+    requestAnimationFrame(() => {
+      document.getElementById("food-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const startAdding = () => {
+    setForm({ ...EMPTY_FOOD, states: [...EMPTY_FOOD.states] });
+    setMessage("");
+    setEditing(true);
+    scrollToFoodEditor();
+  };
 
   const edit = (food: FoodReference) => {
     setForm({
@@ -970,7 +980,9 @@ function FoodsPage() {
       gramsPerPiece: food.gramsPerPiece,
       dataCaveat: (food.dataCaveats ?? []).join("；")
     });
+    setMessage("");
     setEditing(true);
+    scrollToFoodEditor();
   };
 
   const save = async (event: FormEvent) => {
@@ -1004,13 +1016,16 @@ function FoodsPage() {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack foods-page">
       <PageIntro
-        eyebrow={BUILT_IN_FOODS.filter((food) => !isEstimatorOnlyFood(food)).length + " 种可直接选择食物"}
+        eyebrow={BUILT_IN_FOODS.filter((food) => !isHiddenBuiltInFallbackFood(food)).length + " 种可直接选择食物"}
         title="小型、可追溯的食物库"
         description="基础数据来自美国农业部和中国食物成分公开资料；完整与部分营养值都会明确标记，模糊兜底条目不会伪造数值。"
       />
-      <section className="card">
+      <div className="food-page-actions">
+        <button className="primary" type="button" onClick={startAdding}>＋ 新增食物</button>
+      </div>
+      <section className="card food-library-card">
         <div className="food-filters">
           <input className="search-input" type="search" placeholder="搜索名称、别名或标签" value={query} onChange={(event) => setQuery(event.target.value)} />
           <select aria-label="按食物类型筛选" value={kindFilter} onChange={(event) => {
@@ -1018,7 +1033,7 @@ function FoodsPage() {
             setKindFilter(nextKind);
             if (
               categoryFilter !== "ALL"
-              && !foodCategoriesForKind(foods, nextKind).includes(categoryFilter)
+              && !foodCategoriesForKind(selectableFoods, nextKind).includes(categoryFilter)
             ) {
               setCategoryFilter("ALL");
             }
@@ -1031,7 +1046,7 @@ function FoodsPage() {
             {availableCategories.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
           </select>
         </div>
-        <p className="helper food-result-count">显示 {visible.length} / {directFoods.length} 条 · 五项完整 {nutritionCounts.complete} · 部分可计算 {nutritionCounts.partial} · 仅记录兜底 {nutritionCounts.fallback}</p>
+        <p className="helper food-result-count">显示 {visible.length} / {selectableFoods.length} 条 · 五项完整 {nutritionCounts.complete} · 部分可计算 {nutritionCounts.partial}</p>
         <div className="food-list">
           {visible.map((food) => {
             const overridden = overrides.some((item) => item.id === food.id);
@@ -1064,7 +1079,6 @@ function FoodsPage() {
           })}
           {visible.length === 0 && <p className="empty-state">没有符合筛选条件的食物。</p>}
         </div>
-        <button className="secondary full-width" type="button" onClick={() => { setForm(EMPTY_FOOD); setEditing(!editing); }}>＋ 新增食物</button>
         <details>
           <summary>术语与数据来源说明</summary>
           <p>常见单品是可直接称重、可使用代表性每100克数据的完整食物，是否经过蒸煮、发酵或油炸不决定分类；组合食品包含需要分别估算的多个主要食材或食物组；包装食品应优先按品牌营养标签记录。</p>
@@ -1072,7 +1086,7 @@ function FoodsPage() {
           <p>USDA SR28 是美国农业部 2015 年发布的第 28 版食物成分资料。应用中的分类代码用于 HD1 导入和书本规则计算，界面默认展示中文名称。</p>
         </details>
       </section>
-      {editing && <form className="card" onSubmit={(event) => void save(event)}>
+      {editing && <form id="food-editor" className="card food-editor-card" onSubmit={(event) => void save(event)}>
         <div className="section-heading"><div><span className="eyebrow">本地覆盖</span><h2>{form.id ? "编辑 " + form.name : "新增食物"}</h2></div><button className="text-button" type="button" onClick={() => setEditing(false)}>取消</button></div>
         <div className="form-grid two-columns">
           <label>名称<input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
