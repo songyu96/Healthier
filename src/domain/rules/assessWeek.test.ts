@@ -74,11 +74,31 @@ describe("assessWeek", () => {
   it("营养不完整比例过高时周平均只使用完整日", () => {
     const days = Array.from({ length: 4 }, (_, index) => day(index));
     days[0].nutritionComplete = false;
+    days[0].nutritionCoverage = undefined;
     days[1].nutritionComplete = false;
+    days[1].nutritionCoverage = undefined;
 
     const result = assessWeek("2026-08-19", "2026-08-25", days, []);
     expect(result.nutritionValidDays).toBe(2);
     expect(result.issues.join(" ")).toContain("可靠营养覆盖不足70%");
+  });
+
+  it("只缺纤维的完成日仍进入能量和蛋白质周平均", () => {
+    const partialDay = day(0);
+    partialDay.nutritionComplete = false;
+    if (!partialDay.nutritionCoverage) throw new Error("测试日应包含逐项营养覆盖");
+    partialDay.nutritionCoverage.fiber = {
+      knownItemCount: 0,
+      totalItemCount: 1,
+      complete: false
+    };
+
+    const result = assessWeek("2026-08-19", "2026-08-25", [partialDay], []);
+    expect(result.nutritionValidDays).toBe(0);
+    expect(result.nutritionValidDaysByNutrient.kcal).toBe(1);
+    expect(result.nutritionValidDaysByNutrient.protein).toBe(1);
+    expect(result.nutritionValidDaysByNutrient.fiber).toBe(0);
+    expect(result.averageNutrition?.min.kcal).toBe(1800);
   });
 
   it("低置信度估算日不进入可靠周平均", () => {

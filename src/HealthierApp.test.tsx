@@ -170,9 +170,14 @@ describe("food library filters", () => {
       recipeEstimate: { finalWeightG: 100, ingredients: [{ name: "面粉", weightG: 60 }], confidence: "LOW" as const },
       source: { kind: "REFERENCE" as const, ref: "RECIPE:estimate", release: "v1", method: "RECIPE" as const }
     };
+    const partial = {
+      ...food("partial", "FI"),
+      partialNutrientsPer100: { kcal: 100, protein: 18, fat: 2 }
+    };
 
     expect(foodQualityLabel(official)).toBe("官方通用数据");
     expect(foodQualityLabel(estimate)).toBe("低置信度估算");
+    expect(foodQualityLabel(partial)).toBe("部分营养可计算");
   });
 
   it("餐食确认可按名称、别名和标签跨分类搜索", () => {
@@ -186,5 +191,16 @@ describe("food library filters", () => {
     expect(filterFoodsForMealEditor(searchable, "快餐").map((item) => item.id)).toEqual(["burger"]);
     expect(filterFoodsForMealEditor(searchable, "早餐").map((item) => item.id)).toEqual(["milk"]);
     expect(filterFoodsForMealEditor(searchable, "", "burger")[0]?.id).toBe("burger");
+  });
+
+  it("估算器专用占位不进入普通选择，但旧记录仍可编辑", () => {
+    const estimatorOnly = {
+      ...food("hotpot-unknown", "OT", "COMPOSITE"),
+      name: "火锅（配料未知）",
+      aliases: ["火锅"]
+    };
+
+    expect(filterFoodsForMealEditor([estimatorOnly], "火锅")).toEqual([]);
+    expect(filterFoodsForMealEditor([estimatorOnly], "", "hotpot-unknown")).toEqual([estimatorOnly]);
   });
 });

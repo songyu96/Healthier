@@ -1,5 +1,5 @@
 import type { ConfirmedMeal, FoodCategory } from "../meals/types";
-import type { NutrientRange, NutritionFacts, NutritionReliability } from "../nutrition/types";
+import type { NutrientCoverage, NutrientRange, NutritionFacts, NutritionReliability } from "../nutrition/types";
 
 export const ACTIVITY_LEVELS = ["BEDRIDDEN", "LIGHT", "MODERATE", "HEAVY"] as const;
 export type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
@@ -96,6 +96,7 @@ export interface DailyAssessment {
   unknownNutritionCount: number;
   incomparableGroups: FoodGroupKey[];
   nutritionComplete: boolean;
+  nutritionCoverage?: NutrientCoverage;
   nutritionReliability: NutritionReliability;
   nutritionKnownItemCount: number;
   nutritionTotalItemCount: number;
@@ -119,6 +120,7 @@ export interface WeeklyAssessment {
   endDate: string;
   validDays: number;
   nutritionValidDays: number;
+  nutritionValidDaysByNutrient: Record<"kcal" | "protein" | "fat" | "carb" | "fiber", number>;
   averageNutrition?: NutrientRange;
   breakfastPassDays: number;
   animalFoodTotal: RangeValue;

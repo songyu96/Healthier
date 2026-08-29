@@ -50,7 +50,7 @@ export function recommendNextMeal(assessment: DailyAssessment): RecommendedActio
   }
 
   if (
-    assessment.nutritionComplete &&
+    (assessment.nutritionCoverage?.protein.complete ?? assessment.nutritionComplete) &&
     assessment.nutrition.max.protein < assessment.targets.proteinG * 0.8
   ) {
     add({

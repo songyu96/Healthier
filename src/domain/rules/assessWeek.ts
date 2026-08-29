@@ -1,25 +1,6 @@
-import type { NutrientRange, NutrientVector } from "../nutrition/types";
+import { NUTRIENT_KEYS } from "../nutrition/types";
+import type { NutrientKey, NutrientRange } from "../nutrition/types";
 import type { DailyAssessment, FoodGroupKey, RangeValue, WeeklyAssessment } from "./types";
-
-function addVector(left: NutrientVector, right: NutrientVector): NutrientVector {
-  return {
-    kcal: left.kcal + right.kcal,
-    protein: left.protein + right.protein,
-    fat: left.fat + right.fat,
-    carb: left.carb + right.carb,
-    fiber: left.fiber + right.fiber
-  };
-}
-
-function divideVector(vector: NutrientVector, divisor: number): NutrientVector {
-  return {
-    kcal: vector.kcal / divisor,
-    protein: vector.protein / divisor,
-    fat: vector.fat / divisor,
-    carb: vector.carb / divisor,
-    fiber: vector.fiber / divisor
-  };
-}
 
 function sumGroup(days: DailyAssessment[], key: FoodGroupKey): RangeValue {
   return days.reduce<RangeValue>(
@@ -51,21 +32,33 @@ export function assessWeek(
   const nutritionDays = validDays.filter(
     (day) => day.nutritionComplete && day.nutritionReliability !== "LOW"
   );
+  const nutritionDaysByNutrient = Object.fromEntries(NUTRIENT_KEYS.map((key) => [
+    key,
+    validDays.filter((day) =>
+      day.nutritionReliability !== "LOW" && (day.nutritionCoverage?.[key].complete ?? day.nutritionComplete)
+    )
+  ])) as Record<NutrientKey, DailyAssessment[]>;
+  const nutritionValidDaysByNutrient = Object.fromEntries(NUTRIENT_KEYS.map((key) => [
+    key,
+    nutritionDaysByNutrient[key].length
+  ])) as Record<NutrientKey, number>;
   let averageNutrition: NutrientRange | undefined;
-  if (nutritionDays.length > 0) {
-    const sum = nutritionDays.reduce<NutrientRange>(
-      (total, day) => ({
-        min: addVector(total.min, day.nutrition.min),
-        max: addVector(total.max, day.nutrition.max)
-      }),
-      {
-        min: { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 },
-        max: { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 }
-      }
-    );
+  if (NUTRIENT_KEYS.some((key) => nutritionDaysByNutrient[key].length > 0)) {
+    const average = (key: NutrientKey, bound: "min" | "max") => {
+      const nutrientDays = nutritionDaysByNutrient[key];
+      return nutrientDays.length === 0
+        ? 0
+        : nutrientDays.reduce((sum, day) => sum + day.nutrition[bound][key], 0) / nutrientDays.length;
+    };
     averageNutrition = {
-      min: divideVector(sum.min, nutritionDays.length),
-      max: divideVector(sum.max, nutritionDays.length)
+      min: {
+        kcal: average("kcal", "min"), protein: average("protein", "min"),
+        fat: average("fat", "min"), carb: average("carb", "min"), fiber: average("fiber", "min")
+      },
+      max: {
+        kcal: average("kcal", "max"), protein: average("protein", "max"),
+        fat: average("fat", "max"), carb: average("carb", "max"), fiber: average("fiber", "max")
+      }
     };
   }
 
@@ -89,8 +82,11 @@ export function assessWeek(
   const issues: string[] = [];
 
   if (validDays.length < 4) issues.push("本周完整记录不足4天，趋势结论仅供参考。 ");
-  if (validDays.length >= 4 && nutritionDays.length / validDays.length < 0.7) {
-    issues.push("本周可靠营养覆盖不足70%，周平均仅基于营养完整日。 ");
+  if (validDays.length >= 4 && Math.min(
+    nutritionValidDaysByNutrient.kcal,
+    nutritionValidDaysByNutrient.protein
+  ) / validDays.length < 0.7) {
+    issues.push("本周可靠营养覆盖不足70%（能量或蛋白质），各项平均仅使用该营养素完整日。 ");
   }
 
   if (validDays.length === 7) {
@@ -106,16 +102,23 @@ export function assessWeek(
     }
   }
 
-  if (nutritionDays.length >= 4) {
-    const majority = Math.ceil(nutritionDays.length * 0.6);
-    const lowEnergyDays = nutritionDays.filter(
+  const energyDays = nutritionDaysByNutrient.kcal;
+  const proteinDays = nutritionDaysByNutrient.protein;
+  if (energyDays.length >= 4) {
+    const lowEnergyDays = energyDays.filter(
       (day) => day.nutrition.max.kcal < day.targets.energyKcal * 0.8
     ).length;
-    const lowProteinDays = nutritionDays.filter(
+    if (lowEnergyDays >= Math.ceil(energyDays.length * 0.6)) {
+      issues.push("多数能量已知上限仍低于目标80%的数据完整日。 ");
+    }
+  }
+  if (proteinDays.length >= 4) {
+    const lowProteinDays = proteinDays.filter(
       (day) => day.nutrition.max.protein < day.targets.proteinG * 0.8
     ).length;
-    if (lowEnergyDays >= majority) issues.push("多数营养完整日的能量已知上限仍低于目标80%。 ");
-    if (lowProteinDays >= majority) issues.push("多数营养完整日的蛋白质已知上限仍低于目标80%。 ");
+    if (lowProteinDays >= Math.ceil(proteinDays.length * 0.6)) {
+      issues.push("多数蛋白质已知上限仍低于目标80%的数据完整日。 ");
+    }
   }
 
   const comparableDairyDays = validDays.filter((day) => !day.incomparableGroups.includes("dairy"));
@@ -138,6 +141,7 @@ export function assessWeek(
     endDate,
     validDays: validDays.length,
     nutritionValidDays: nutritionDays.length,
+    nutritionValidDaysByNutrient,
     averageNutrition,
     breakfastPassDays,
     animalFoodTotal,

@@ -22,6 +22,20 @@ const nutrientRangeSchema = z.object({
   });
 });
 
+const nutrientKeySchema = z.enum(["kcal", "protein", "fat", "carb", "fiber"]);
+const nutrientCoverageEntrySchema = z.object({
+  knownItemCount: z.number().int().nonnegative(),
+  totalItemCount: z.number().int().nonnegative(),
+  complete: z.boolean()
+}).strict();
+const nutrientCoverageSchema = z.object({
+  kcal: nutrientCoverageEntrySchema,
+  protein: nutrientCoverageEntrySchema,
+  fat: nutrientCoverageEntrySchema,
+  carb: nutrientCoverageEntrySchema,
+  fiber: nutrientCoverageEntrySchema
+}).strict();
+
 const itemNutritionFactSchema = z.object({
   tempId: z.string().min(1),
   foodId: z.string().min(1),
@@ -31,6 +45,7 @@ const itemNutritionFactSchema = z.object({
   basisQuantityMin: finiteNonNegative,
   basisQuantityMax: finiteNonNegative,
   nutrients: nutrientRangeSchema,
+  knownNutrients: z.array(nutrientKeySchema).min(1).optional(),
   sourceRef: z.string().min(1),
   calculationBasis: z.enum(["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"]).optional()
 }).strict().refine(
@@ -53,16 +68,14 @@ export const nutritionFactsSchema = z.object({
   complete: z.boolean(),
   reliability: z.enum(["HIGH", "MEDIUM", "LOW"]).optional(),
   knownItemCount: z.number().int().nonnegative(),
-  totalItemCount: z.number().int().nonnegative()
+  totalItemCount: z.number().int().nonnegative(),
+  nutrientCoverage: nutrientCoverageSchema.optional()
 }).strict().superRefine((facts, context) => {
   if (facts.knownItemCount !== facts.items.length) {
     context.addIssue({ code: "custom", message: "已知营养项计数不一致" });
   }
   if (facts.totalItemCount !== facts.items.length + facts.unknownItems.length) {
     context.addIssue({ code: "custom", message: "营养项总数不一致" });
-  }
-  if (facts.complete !== (facts.unknownItems.length === 0)) {
-    context.addIssue({ code: "custom", message: "营养完整状态与未知项不一致" });
   }
   if (!isNutritionFacts(facts)) {
     context.addIssue({ code: "custom", message: "营养快照计算语义不一致" });

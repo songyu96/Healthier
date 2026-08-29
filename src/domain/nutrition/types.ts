@@ -44,6 +44,18 @@ export interface RecipeIngredientEstimate {
   weightG: number;
 }
 
+export const NUTRIENT_KEYS = ["kcal", "protein", "fat", "carb", "fiber"] as const;
+export type NutrientKey = (typeof NUTRIENT_KEYS)[number];
+export type PartialNutrientVector = Partial<NutrientVector>;
+
+export interface NutrientCoverageEntry {
+  knownItemCount: number;
+  totalItemCount: number;
+  complete: boolean;
+}
+
+export type NutrientCoverage = Record<NutrientKey, NutrientCoverageEntry>;
+
 export interface RecipeEstimate {
   finalWeightG: number;
   ingredients: RecipeIngredientEstimate[];
@@ -58,6 +70,8 @@ export interface FoodReference {
   compatibleStates: FoodState[];
   basisUnit: Extract<QuantityUnit, "g" | "ml">;
   nutrientsPer100?: NutrientVector;
+  /** 官方来源缺少个别字段时保留已知项；缺失字段不得按 0 处理。 */
+  partialNutrientsPer100?: PartialNutrientVector;
   gramsPerPiece?: number;
   /** 旧数据未设置时按常见单品处理。 */
   foodKind?: FoodKind;
@@ -87,6 +101,8 @@ export interface ItemNutritionFact {
   basisQuantityMin: number;
   basisQuantityMax: number;
   nutrients: NutrientRange;
+  /** 旧快照未设置时表示五项营养值均已知。 */
+  knownNutrients?: NutrientKey[];
   sourceRef: string;
   calculationBasis?: FoodSourceMethod;
 }
@@ -108,5 +124,7 @@ export interface NutritionFacts {
   reliability?: NutritionReliability;
   knownItemCount: number;
   totalItemCount: number;
+  /** 旧快照未设置时按 complete 对五项营养作保守推断。 */
+  nutrientCoverage?: NutrientCoverage;
 }
 

@@ -1,11 +1,15 @@
 import type { ConfirmedMeal, MealItemInput } from "../meals/types";
+import { NUTRIENT_KEYS } from "./types";
 import type {
   FoodReference,
   ItemNutritionFact,
+  NutrientCoverage,
+  NutrientKey,
   NutrientRange,
   NutrientVector,
   NutritionFacts,
-  NutritionReliability
+  NutritionReliability,
+  PartialNutrientVector
 } from "./types";
 
 const ZERO_VECTOR: NutrientVector = { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 };
@@ -27,14 +31,14 @@ function normalizeName(value: string): string {
   return value.trim().toLocaleLowerCase("zh-CN").replace(/[\s（）()]/g, "");
 }
 
-function scaleVector(vector: NutrientVector, quantity: number): NutrientVector {
+function scaleVector(vector: PartialNutrientVector, quantity: number): NutrientVector {
   const factor = quantity / 100;
   return {
-    kcal: vector.kcal * factor,
-    protein: vector.protein * factor,
-    fat: vector.fat * factor,
-    carb: vector.carb * factor,
-    fiber: vector.fiber * factor
+    kcal: (vector.kcal ?? 0) * factor,
+    protein: (vector.protein ?? 0) * factor,
+    fat: (vector.fat ?? 0) * factor,
+    carb: (vector.carb ?? 0) * factor,
+    fiber: (vector.fiber ?? 0) * factor
   };
 }
 
@@ -94,7 +98,8 @@ export function calculateNutrition(
       return;
     }
 
-    if (!food.nutrientsPer100) {
+    const nutrientsPer100 = food.nutrientsPer100 ?? food.partialNutrientsPer100;
+    if (!nutrientsPer100 || !NUTRIENT_KEYS.some((key) => nutrientsPer100[key] !== undefined)) {
       unknownItems.push({ tempId: item.tempId, name: item.name, reason: "食物仅配置为食物组记录，未提供营养值" });
       return;
     }
@@ -115,6 +120,7 @@ export function calculateNutrition(
     }
 
     reliability = leastReliable(reliability, foodReliability(food));
+    const knownNutrients = NUTRIENT_KEYS.filter((key) => nutrientsPer100[key] !== undefined);
 
     facts.push({
       tempId: item.tempId,
@@ -125,9 +131,10 @@ export function calculateNutrition(
       basisQuantityMin: quantity.min,
       basisQuantityMax: quantity.max,
       nutrients: {
-        min: scaleVector(food.nutrientsPer100, quantity.min),
-        max: scaleVector(food.nutrientsPer100, quantity.max)
+        min: scaleVector(nutrientsPer100, quantity.min),
+        max: scaleVector(nutrientsPer100, quantity.max)
       },
+      knownNutrients,
       sourceRef: `${food.source.kind}:${food.source.ref}:${food.source.release}`,
       calculationBasis: food.source.method
     });
@@ -140,6 +147,14 @@ export function calculateNutrition(
     }),
     { min: { ...ZERO_VECTOR }, max: { ...ZERO_VECTOR } }
   );
+  const nutrientCoverage = Object.fromEntries(NUTRIENT_KEYS.map((key) => {
+    const knownItemCount = facts.filter((fact) => fact.knownNutrients?.includes(key) ?? true).length;
+    return [key, {
+      knownItemCount,
+      totalItemCount: meal.items.length,
+      complete: knownItemCount === meal.items.length
+    }];
+  })) as NutrientCoverage;
 
   return {
     mealId: meal.id,
@@ -147,14 +162,13 @@ export function calculateNutrition(
     items: facts,
     unknownItems,
     sourceRefs: [...new Set(facts.map((fact) => fact.sourceRef))],
-    complete: unknownItems.length === 0,
+    complete: NUTRIENT_KEYS.every((key) => nutrientCoverage[key].complete),
     reliability,
     knownItemCount: facts.length,
-    totalItemCount: meal.items.length
+    totalItemCount: meal.items.length,
+    nutrientCoverage
   };
 }
-
-const NUTRIENT_KEYS = ["kcal", "protein", "fat", "carb", "fiber"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object";
@@ -190,6 +204,21 @@ function sameNutrientRange(left: NutrientRange, right: NutrientRange): boolean {
   );
 }
 
+function isKnownNutrientList(value: unknown): value is NutrientKey[] {
+  return Array.isArray(value) && value.length > 0 &&
+    value.every((key) => NUTRIENT_KEYS.includes(key as NutrientKey)) &&
+    new Set(value).size === value.length;
+}
+
+function isNutrientCoverage(value: unknown): value is NutrientCoverage {
+  return isRecord(value) && NUTRIENT_KEYS.every((key) => {
+    const entry = value[key];
+    return isRecord(entry) && isFiniteNonNegative(entry.knownItemCount) && Number.isInteger(entry.knownItemCount) &&
+      isFiniteNonNegative(entry.totalItemCount) && Number.isInteger(entry.totalItemCount) &&
+      typeof entry.complete === "boolean";
+  });
+}
+
 export function isNutritionFacts(value: unknown): value is NutritionFacts {
   if (!isRecord(value) || !isNonEmptyString(value.mealId) ||
       typeof value.complete !== "boolean" || !Number.isInteger(value.knownItemCount) ||
@@ -206,6 +235,7 @@ export function isNutritionFacts(value: unknown): value is NutritionFacts {
     isFiniteNonNegative(item.basisQuantityMax) &&
     item.basisQuantityMin <= item.basisQuantityMax &&
     isNutrientRange(item.nutrients) && isNonEmptyString(item.sourceRef) &&
+    (item.knownNutrients === undefined || isKnownNutrientList(item.knownNutrients)) &&
     (item.calculationBasis === undefined || ["OFFICIAL_COMPOSITION", "LABEL", "RECIPE", "USER"].includes(item.calculationBasis as string)));
   const unknownItemsValid = value.unknownItems.every((item) => isRecord(item) &&
     isNonEmptyString(item.tempId) && isNonEmptyString(item.name) && isNonEmptyString(item.reason));
@@ -218,8 +248,23 @@ export function isNutritionFacts(value: unknown): value is NutritionFacts {
   const tempIds = [...items.map((item) => item.tempId), ...unknownItems.map((item) => item.tempId)];
   if (new Set(tempIds).size !== tempIds.length ||
       value.knownItemCount !== items.length ||
-      value.totalItemCount !== tempIds.length ||
-      value.complete !== (unknownItems.length === 0)) return false;
+      value.totalItemCount !== tempIds.length) return false;
+
+  if (value.nutrientCoverage === undefined) {
+    if (items.some((item) => item.knownNutrients !== undefined) ||
+        value.complete !== (unknownItems.length === 0)) return false;
+  } else {
+    if (!isNutrientCoverage(value.nutrientCoverage)) return false;
+    const coverage = value.nutrientCoverage as NutrientCoverage;
+    const coverageValid = NUTRIENT_KEYS.every((key) => {
+      const expectedKnown = items.filter((item) => item.knownNutrients?.includes(key) ?? true).length;
+      const entry = coverage[key];
+      return entry.knownItemCount === expectedKnown &&
+        entry.totalItemCount === value.totalItemCount &&
+        entry.complete === (expectedKnown === value.totalItemCount);
+    });
+    if (!coverageValid || value.complete !== NUTRIENT_KEYS.every((key) => coverage[key].complete)) return false;
+  }
 
   const expectedTotals = items.reduce<NutrientRange>(
     (sum, item) => ({
@@ -246,4 +291,15 @@ export function resolveNutritionReliability(facts: NutritionFacts): NutritionRel
   if (facts.reliability) return facts.reliability;
   if (facts.items.some((item) => item.foodId.startsWith("mixed-meal-"))) return "LOW";
   return facts.items.some((item) => item.calculationBasis === "RECIPE") ? "MEDIUM" : "HIGH";
+}
+
+export function resolveNutrientCoverage(
+  facts: NutritionFacts,
+  key: NutrientKey
+): NutrientCoverage["kcal"] {
+  return facts.nutrientCoverage?.[key] ?? {
+    knownItemCount: facts.knownItemCount,
+    totalItemCount: facts.totalItemCount,
+    complete: facts.complete
+  };
 }

@@ -129,14 +129,33 @@ function foodSourceLabel(food: FoodReference): string {
 export function foodQualityLabel(food: FoodReference): string {
   if (food.source.method === "RECIPE") return food.recipeEstimate?.confidence === "LOW" ? "低置信度估算" : "配方估算";
   if (food.source.method === "LABEL") return "包装标签";
+  if (food.partialNutrientsPer100) return "部分营养可计算";
   if (food.source.method === "OFFICIAL_COMPOSITION" || food.source.kind === "USDA_FDC") return "官方通用数据";
   if (food.source.kind === "BOOK") return "书本近似数据";
   if (food.source.kind === "USER") return "用户数据";
   return food.nutrientsPer100 ? "通用参考数据" : "仅记录";
 }
 
+function formatFoodNutrients(food: FoodReference): string | undefined {
+  const nutrients = food.nutrientsPer100 ?? food.partialNutrientsPer100;
+  if (!nutrients) return undefined;
+  const value = (key: keyof typeof nutrients, digits: number, unit: string) =>
+    nutrients[key] === undefined ? "未知" : `${nutrients[key].toFixed(digits)} ${unit}`;
+  return `每100${food.basisUnit}：${value("kcal", 0, "kcal")} · 蛋白质 ${value("protein", 1, "g")} · 脂肪 ${value("fat", 1, "g")} · 碳水 ${value("carb", 1, "g")} · 纤维 ${value("fiber", 1, "g")}`;
+}
+
 function normalizedFoodSearch(value: string): string {
   return value.trim().toLocaleLowerCase("zh-CN").replace(/\s+/g, "");
+}
+
+const ESTIMATOR_ONLY_FOOD_IDS = new Set([
+  "malatang-unknown",
+  "hotpot-unknown",
+  "barbecue-skewers-unknown"
+]);
+
+export function isEstimatorOnlyFood(food: FoodReference): boolean {
+  return ESTIMATOR_ONLY_FOOD_IDS.has(food.id);
 }
 
 export function filterFoodsForMealEditor(
@@ -146,6 +165,7 @@ export function filterFoodsForMealEditor(
 ): FoodReference[] {
   const normalizedQuery = normalizedFoodSearch(query);
   const ranked = foods
+    .filter((food) => !isEstimatorOnlyFood(food) || food.id === selectedId)
     .map((food) => {
       const name = normalizedFoodSearch(food.name);
       const aliases = food.aliases.map(normalizedFoodSearch);
@@ -375,21 +395,23 @@ function MealDraftEditor({ draft, foods, onChange, onCancel, onSave, saving }: M
 
 export function AssessmentPanel({ assessment }: { assessment: DailyAssessment }) {
   const actions = recommendNextMeal(assessment);
+  const isIncomplete = (key: "kcal" | "protein" | "fat" | "carb") =>
+    !(assessment.nutritionCoverage?.[key].complete ?? assessment.nutritionComplete);
   return (
     <>
       <section className="card hero-assessment">
         <span className="eyebrow">{assessment.nutritionComplete ? "今日摄入区间" : "今日已知摄入小计"}</span>
         {!assessment.nutritionComplete && (
-          <p>已计算 {assessment.nutritionKnownItemCount}/{assessment.nutritionTotalItemCount} 项；未知部分没有上界，以下数字不是完整摄入区间。</p>
+          <p>部分食物或营养素缺少可靠数据；带“已知小计”的数字没有未知部分的上界。</p>
         )}
         <div className="energy-row">
-          <strong>{formatRange(assessment.nutrition.min.kcal, assessment.nutrition.max.kcal, "kcal")}</strong>
+          <strong>{formatRange(assessment.nutrition.min.kcal, assessment.nutrition.max.kcal, "kcal")}{isIncomplete("kcal") ? "（已知小计）" : ""}</strong>
           {!assessment.targets.safetyRestricted && <span>目标 {assessment.targets.energyKcal.toFixed(0)} kcal</span>}
         </div>
         <div className="macro-grid">
-          <div><span>蛋白质</span><b>{formatRange(assessment.nutrition.min.protein, assessment.nutrition.max.protein, "g", 1)}</b></div>
-          <div><span>碳水</span><b>{formatRange(assessment.nutrition.min.carb, assessment.nutrition.max.carb, "g", 1)}</b></div>
-          <div><span>脂肪</span><b>{formatRange(assessment.nutrition.min.fat, assessment.nutrition.max.fat, "g", 1)}</b></div>
+          <div><span>蛋白质</span><b>{formatRange(assessment.nutrition.min.protein, assessment.nutrition.max.protein, "g", 1)}{isIncomplete("protein") ? "（已知小计）" : ""}</b></div>
+          <div><span>碳水</span><b>{formatRange(assessment.nutrition.min.carb, assessment.nutrition.max.carb, "g", 1)}{isIncomplete("carb") ? "（已知小计）" : ""}</b></div>
+          <div><span>脂肪</span><b>{formatRange(assessment.nutrition.min.fat, assessment.nutrition.max.fat, "g", 1)}{isIncomplete("fat") ? "（已知小计）" : ""}</b></div>
         </div>
       </section>
       <section className="card">
@@ -831,14 +853,14 @@ function HistoryPage() {
       <PageIntro eyebrow={`${start} — ${end}`} title="最近 7 天" description="仅“已记录完整”的日期进入平均值和达标统计。" />
       <section className="card weekly-hero">
         <div><span>有效记录</span><strong>{week.validDays}<small> / 7 天</small></strong></div>
-        <div><span>营养有效</span><strong>{week.nutritionValidDays}<small> 天</small></strong></div>
+        <div><span>能量 / 蛋白有效</span><strong>{week.nutritionValidDaysByNutrient.kcal}<small> / {week.nutritionValidDaysByNutrient.protein} 天</small></strong></div>
         <div><span>食物种类</span><strong>{week.uniqueFoodCount}<small> 种</small></strong></div>
         {!currentTargets.safetyRestricted && <div><span>早餐达标</span><strong>{week.breakfastPassDays}<small> 天</small></strong></div>}
       </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">周平均</span><h2>摄入区间</h2></div></div>
-        <p className="helper">{currentTargets.safetyRestricted ? "安全受限时仅展示营养完整完成日的历史事实，不进行目标比较。" : "周平均只使用营养数据完整的完成日；鱼肉蛋目标需7天完整且计量口径可比。"}</p>
-        {week.averageNutrition ? <div className="status-grid"><div><span>能量</span><b>{formatRange(week.averageNutrition.min.kcal, week.averageNutrition.max.kcal, "kcal")}</b></div><div><span>蛋白质</span><b>{formatRange(week.averageNutrition.min.protein, week.averageNutrition.max.protein, "g", 1)}</b></div><div><span>最近体重变化</span><b>{week.weightChangeKg === undefined ? "记录不足" : `${week.weightChangeKg > 0 ? "+" : ""}${week.weightChangeKg.toFixed(1)} kg`}</b></div><div><span>最近腰围变化</span><b>{waistChange === undefined ? "记录不足" : `${waistChange > 0 ? "+" : ""}${waistChange.toFixed(1)} cm`}</b></div></div> : <EmptyState text="还没有营养完整的完成日。" />}
+        <p className="helper">{currentTargets.safetyRestricted ? "安全受限时仅展示各营养素数据完整日的历史事实，不进行目标比较。" : "每项周平均分别使用该营养素数据完整的完成日；鱼肉蛋目标需7天完整且计量口径可比。"}</p>
+        {week.averageNutrition ? <div className="status-grid"><div><span>能量</span><b>{week.nutritionValidDaysByNutrient.kcal ? formatRange(week.averageNutrition.min.kcal, week.averageNutrition.max.kcal, "kcal") : "数据不足"}</b></div><div><span>蛋白质</span><b>{week.nutritionValidDaysByNutrient.protein ? formatRange(week.averageNutrition.min.protein, week.averageNutrition.max.protein, "g", 1) : "数据不足"}</b></div><div><span>最近体重变化</span><b>{week.weightChangeKg === undefined ? "记录不足" : `${week.weightChangeKg > 0 ? "+" : ""}${week.weightChangeKg.toFixed(1)} kg`}</b></div><div><span>最近腰围变化</span><b>{waistChange === undefined ? "记录不足" : `${waistChange > 0 ? "+" : ""}${waistChange.toFixed(1)} cm`}</b></div></div> : <EmptyState text="还没有可用于周平均的营养数据。" />}
         <div className="status-grid"><div><span>鱼虾</span><b>{formatWeeklyGroup(week.fishTotal.min, week.fishTotal.max, week.incomparableAnimalGroups.includes("fish"))}</b></div><div><span>畜禽肉</span><b>{formatWeeklyGroup(week.meatTotal.min, week.meatTotal.max, week.incomparableAnimalGroups.includes("meat"))}</b></div><div><span>蛋类</span><b>{formatWeeklyGroup(week.eggTotal.min, week.eggTotal.max, week.incomparableAnimalGroups.includes("egg"))}</b></div></div>
       </section>
       <WeeklyActionsPanel week={week} targets={currentTargets} />
@@ -914,11 +936,17 @@ function FoodsPage() {
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
+  const directFoods = useMemo(() => foods.filter((food) => !isEstimatorOnlyFood(food)), [foods]);
+  const nutritionCounts = useMemo(() => ({
+    complete: directFoods.filter((food) => food.nutrientsPer100).length,
+    partial: directFoods.filter((food) => food.partialNutrientsPer100).length,
+    fallback: directFoods.filter((food) => !food.nutrientsPer100 && !food.partialNutrientsPer100).length
+  }), [directFoods]);
   const availableCategories = useMemo(
-    () => foodCategoriesForKind(foods, kindFilter),
-    [foods, kindFilter]
+    () => foodCategoriesForKind(directFoods, kindFilter),
+    [directFoods, kindFilter]
   );
-  const visible = foods.filter((food) => {
+  const visible = directFoods.filter((food) => {
     const matchesQuery = !normalizedQuery || [
       food.name,
       ...food.aliases,
@@ -934,7 +962,14 @@ function FoodsPage() {
   });
 
   const edit = (food: FoodReference) => {
-    const nutrients = food.nutrientsPer100 ?? { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 };
+    const partialNutrients = food.nutrientsPer100 ?? food.partialNutrientsPer100;
+    const nutrients = {
+      kcal: partialNutrients?.kcal ?? 0,
+      protein: partialNutrients?.protein ?? 0,
+      fat: partialNutrients?.fat ?? 0,
+      carb: partialNutrients?.carb ?? 0,
+      fiber: partialNutrients?.fiber ?? 0
+    };
     setForm({
       id: food.id,
       name: food.name,
@@ -986,9 +1021,9 @@ function FoodsPage() {
   return (
     <div className="page-stack">
       <PageIntro
-        eyebrow={BUILT_IN_FOODS.length + " 种内置食物"}
+        eyebrow={BUILT_IN_FOODS.filter((food) => !isEstimatorOnlyFood(food)).length + " 种可直接选择食物"}
         title="小型、可追溯的食物库"
-        description="基础数据来自美国农业部和中国食物成分公开资料；你添加或修改的内容只保存在本机。"
+        description="基础数据来自美国农业部和中国食物成分公开资料；完整与部分营养值都会明确标记，模糊兜底条目不会伪造数值。"
       />
       <section className="card">
         <div className="food-filters">
@@ -1011,7 +1046,7 @@ function FoodsPage() {
             {availableCategories.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
           </select>
         </div>
-        <p className="helper food-result-count">显示 {visible.length} / {foods.length} 条</p>
+        <p className="helper food-result-count">显示 {visible.length} / {directFoods.length} 条 · 五项完整 {nutritionCounts.complete} · 部分可计算 {nutritionCounts.partial} · 仅记录兜底 {nutritionCounts.fallback}</p>
         <div className="food-list">
           {visible.map((food) => {
             const overridden = overrides.some((item) => item.id === food.id);
@@ -1025,9 +1060,7 @@ function FoodsPage() {
                     {food.beverageSugarProfile && <span className="tag">{BEVERAGE_SUGAR_PROFILE_LABELS[food.beverageSugarProfile]}</span>}
                     {overridden && <span className="tag">本地覆盖</span>}
                   </h3>
-                  <p>{CATEGORY_LABELS[food.category]} · {food.nutrientsPer100
-                    ? `每100${food.basisUnit}：${food.nutrientsPer100.kcal.toFixed(0)} kcal · 蛋白质 ${food.nutrientsPer100.protein.toFixed(1)} g · 脂肪 ${food.nutrientsPer100.fat.toFixed(1)} g · 碳水 ${food.nutrientsPer100.carb.toFixed(1)} g · 纤维 ${food.nutrientsPer100.fiber.toFixed(1)} g`
-                    : "仅记录食物组，营养值未知"}</p>
+                  <p>{CATEGORY_LABELS[food.category]} · {formatFoodNutrients(food) ?? "仅记录食物组，营养值未知"}</p>
                   <small>{foodSourceLabel(food)}</small>
                   {food.dataCaveats?.map((caveat) => <p className="data-caveat" key={caveat}>{caveat}</p>)}
                   {food.recipeEstimate && <details className="source-details">

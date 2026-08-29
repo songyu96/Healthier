@@ -105,6 +105,35 @@ describe("calculateNutrition", () => {
     };
     expect(calculateNutrition(input, [lowRecipe]).reliability).toBe("LOW");
   });
+
+  it("保留官方来源的已知营养项，不把缺失纤维伪装成零", () => {
+    const input = meal();
+    input.items[0] = {
+      ...input.items[0],
+      canonicalFoodId: "partial-fish",
+      name: "鲫鱼",
+      category: "FI",
+      state: "RW"
+    };
+    const partialFish: FoodReference = {
+      id: "partial-fish",
+      name: "鲫鱼",
+      aliases: [],
+      category: "FI",
+      compatibleStates: ["RW"],
+      basisUnit: "g",
+      partialNutrientsPer100: { kcal: 109, protein: 17.1, fat: 2.7, carb: 3.8 },
+      source: { kind: "REFERENCE", ref: "official:test", release: "test" }
+    };
+
+    const result = calculateNutrition(input, [partialFish]);
+    expect(result.unknownItems).toHaveLength(0);
+    expect(result.totals.min).toEqual({ kcal: 109, protein: 17.1, fat: 2.7, carb: 3.8, fiber: 0 });
+    expect(result.nutrientCoverage?.fiber).toEqual({ knownItemCount: 0, totalItemCount: 1, complete: false });
+    expect(result.nutrientCoverage?.protein.complete).toBe(true);
+    expect(result.complete).toBe(false);
+    expect(isNutritionFacts(result)).toBe(true);
+  });
 });
 
   it("运行时拒绝总计、tempId或来源集合被篡改的快照", () => {

@@ -1,6 +1,7 @@
 import type { FoodCategory, MealItemInput } from "../meals/types";
-import type { ItemNutritionFact, NutrientRange, NutrientVector } from "../nutrition/types";
-import { resolveNutritionReliability } from "../nutrition/calculateNutrition";
+import { NUTRIENT_KEYS } from "../nutrition/types";
+import type { ItemNutritionFact, NutrientCoverage, NutrientRange, NutrientVector } from "../nutrition/types";
+import { resolveNutrientCoverage, resolveNutritionReliability } from "../nutrition/calculateNutrition";
 import type {
   DailyAssessment,
   DailyTargets,
@@ -154,7 +155,10 @@ export function assessDay(
 
   const breakfastFacts = mealFacts.filter(({ meal }) => meal.mealType === "B");
   let breakfastScore: RangeValue | undefined;
-  if (breakfastFacts.length > 0) {
+  const breakfastEnergyComplete = breakfastFacts.every(({ meal, facts }) =>
+    !meal.unknownOil && resolveNutrientCoverage(facts, "kcal").complete
+  );
+  if (breakfastFacts.length > 0 && breakfastEnergyComplete) {
     const breakfastEnergy = breakfastFacts.reduce(
       (sum, current) => ({
         min: sum.min + current.facts.totals.min.kcal,
@@ -191,6 +195,23 @@ export function assessDay(
     0
   );
   const unknownOil = mealFacts.some(({ meal }) => meal.unknownOil);
+  const nutritionCoverage = Object.fromEntries(NUTRIENT_KEYS.map((key) => {
+    const coverage = mealFacts.reduce(
+      (sum, current) => {
+        const entry = resolveNutrientCoverage(current.facts, key);
+        return {
+          knownItemCount: sum.knownItemCount + entry.knownItemCount,
+          totalItemCount: sum.totalItemCount + entry.totalItemCount
+        };
+      },
+      { knownItemCount: 0, totalItemCount: 0 }
+    );
+    const oilMakesIncomplete = unknownOil && (key === "kcal" || key === "fat");
+    return [key, {
+      ...coverage,
+      complete: coverage.knownItemCount === coverage.totalItemCount && !oilMakesIncomplete
+    }];
+  })) as NutrientCoverage;
   const reliabilityRank = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
   const nutritionReliability = mealFacts.reduce<DailyAssessment["nutritionReliability"]>(
     (current, entry) => {
@@ -203,6 +224,11 @@ export function assessDay(
   if (unknownOil) warnings.push("有餐次油量未知，当前营养数字只是已知小计，脂肪和能量可能被低估。 ");
   if (mealFacts.some(({ meal }) => meal.unknownSalt)) warnings.push("有餐次盐量未知，本应用不估算确定钠摄入。 ");
   if (unknownNutritionCount > 0) warnings.push("部分食物没有可靠营养数据，当前营养数字只是已知小计。 ");
+  const missingNutrients = NUTRIENT_KEYS.filter((key) => !nutritionCoverage[key].complete)
+    .map((key) => ({ kcal: "能量", protein: "蛋白质", fat: "脂肪", carb: "碳水", fiber: "膳食纤维" })[key]);
+  if (missingNutrients.length > 0 && unknownNutritionCount === 0) {
+    warnings.push(`部分来源未提供${missingNutrients.join("、")}，对应数字仅为已知小计。 `);
+  }
   if (mealFacts.some(({ facts }) => facts.items.some((item) => item.calculationBasis === "RECIPE"))) {
     warnings.push("部分食物使用通用配方或组合餐估值，已计入营养区间，但不代表门店或家庭实际配方。 ");
   }
@@ -224,7 +250,8 @@ export function assessDay(
     diversityEstimated,
     unknownNutritionCount,
     incomparableGroups: [...incomparableGroups],
-    nutritionComplete: unknownNutritionCount === 0 && !unknownOil,
+    nutritionComplete: NUTRIENT_KEYS.every((key) => nutritionCoverage[key].complete),
+    nutritionCoverage,
     nutritionReliability,
     nutritionKnownItemCount: mealFacts.reduce((sum, current) => sum + current.facts.knownItemCount, 0),
     nutritionTotalItemCount: mealFacts.reduce((sum, current) => sum + current.facts.totalItemCount, 0),
