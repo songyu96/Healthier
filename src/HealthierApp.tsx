@@ -265,6 +265,18 @@ function completedFromSettings(settings: AppSetting[], date: string): boolean {
     completionValue.revision === (typeof revision === "number" ? revision : 0);
 }
 
+export function BrandMark() {
+  return (
+    <span className="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" focusable="false">
+        <path className="brand-h" d="M16 15v34M16 32h29M44 29v20" />
+        <path className="brand-leaf" d="M41 27C41 17 47 10 56 9c0 10-5 17-15 18Z" />
+        <path className="brand-leaf-vein" d="M43 24c3-5 7-9 11-12" />
+      </svg>
+    </span>
+  );
+}
+
 function Layout({ children }: PropsWithChildren) {
   const [update, setUpdate] = useState<(() => Promise<void>) | null>(null);
 
@@ -281,7 +293,7 @@ function Layout({ children }: PropsWithChildren) {
     <div className="app-shell">
       <header className="topbar">
         <NavLink className="brand" to="/" aria-label="回到今日记录">
-          <span className="brand-mark">衡</span>
+          <BrandMark />
           <span><strong>Healthier</strong><small>书本规则饮食记录</small></span>
         </NavLink>
         <span className="local-badge">仅存本机</span>
@@ -1021,10 +1033,11 @@ function FoodsPage() {
         eyebrow={BUILT_IN_FOODS.filter((food) => !isHiddenBuiltInFallbackFood(food)).length + " 种可直接选择食物"}
         title="小型、可追溯的食物库"
         description="基础数据来自美国农业部和中国食物成分公开资料；完整与部分营养值都会明确标记，模糊兜底条目不会伪造数值。"
-      />
-      <div className="food-page-actions">
-        <button className="primary" type="button" onClick={startAdding}>＋ 新增食物</button>
-      </div>
+      >
+        <div className="food-page-actions">
+          <button className="primary" type="button" onClick={startAdding}>＋ 新增食物</button>
+        </div>
+      </PageIntro>
       <section className="card food-library-card">
         <div className="food-filters">
           <input className="search-input" type="search" placeholder="搜索名称、别名或标签" value={query} onChange={(event) => setQuery(event.target.value)} />

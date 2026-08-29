@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   AssessmentPanel,
+  BrandMark,
   MealRow,
   WeeklyActionsPanel,
   filterFoodsForMealEditor,
@@ -32,6 +33,16 @@ function profile(healthFlags: UserProfile["healthFlags"]): UserProfile {
     updatedAt: "2026-08-25T08:00:00.000Z"
   };
 }
+
+describe("brand mark", () => {
+  it("使用 H 与叶片图形，不再显示旧汉字标志", () => {
+    const html = renderToStaticMarkup(<BrandMark />);
+
+    expect(html).toContain("<svg");
+    expect(html).toContain("brand-leaf");
+    expect(html).not.toContain("衡");
+  });
+});
 
 describe("AssessmentPanel safety rendering", () => {
   it("安全门开启时只展示摄入事实和安全提示", () => {
