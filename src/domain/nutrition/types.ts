@@ -22,6 +22,23 @@ export type FoodSourceMethod = (typeof FOOD_SOURCE_METHODS)[number];
 export const NUTRITION_RELIABILITIES = ["HIGH", "MEDIUM", "LOW"] as const;
 export type NutritionReliability = (typeof NUTRITION_RELIABILITIES)[number];
 
+export const BEVERAGE_SUGAR_PROFILES = [
+  "UNSWEETENED",
+  "ZERO_SUGAR_SWEETENED",
+  "NO_ADDED_SUGAR",
+  "SUGAR_SWEETENED",
+  "UNKNOWN"
+] as const;
+export type BeverageSugarProfile = (typeof BEVERAGE_SUGAR_PROFILES)[number];
+
+export const BEVERAGE_SUGAR_PROFILE_LABELS: Record<BeverageSugarProfile, string> = {
+  UNSWEETENED: "无糖原味",
+  ZERO_SUGAR_SWEETENED: "零糖/代糖",
+  NO_ADDED_SUGAR: "无添加糖（含天然糖）",
+  SUGAR_SWEETENED: "含添加糖",
+  UNKNOWN: "糖状态未知"
+};
+
 export interface RecipeIngredientEstimate {
   name: string;
   weightG: number;
@@ -45,6 +62,8 @@ export interface FoodReference {
   /** 旧数据未设置时按常见单品处理。 */
   foodKind?: FoodKind;
   tags?: string[];
+  /** 仅用于饮品；与奶、豆、酒等主分类相互独立。 */
+  beverageSugarProfile?: BeverageSugarProfile;
   /** 只描述真实的数据限制或换算假设，不承载书本饮食规则。 */
   dataCaveats?: string[];
   /** 通用配方的透明估值依据；营养值仍统一折算到每100克成品。 */

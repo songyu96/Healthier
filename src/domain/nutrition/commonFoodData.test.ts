@@ -4,11 +4,15 @@ import { BASE_FOODS } from "./foodData";
 
 describe("common food data", () => {
   it("覆盖水果、家常餐、外卖、零食和聚会酒水", () => {
-    expect(COMMON_FOODS).toHaveLength(105);
+    expect(COMMON_FOODS).toHaveLength(118);
     expect(COMMON_FOODS.map((food) => food.id)).toEqual(expect.arrayContaining([
       "coffee-brewed-current",
       "coffee-unknown",
       "milk-tea-unknown",
+      "tea-bottled-sweetened-unknown",
+      "sports-electrolyte-drink-unknown",
+      "plant-drink-unknown",
+      "fruit-tea-unknown",
       "bao-bun-meat-current",
       "bao-bun-unknown",
       "fried-rice-nfs-current",
@@ -80,7 +84,7 @@ describe("common food data", () => {
 
   it("模糊名称只记录事实，不伪造营养值", () => {
     const unknown = COMMON_FOODS.filter((food) => !food.nutrientsPer100);
-    expect(unknown).toHaveLength(9);
+    expect(unknown).toHaveLength(22);
     unknown.forEach((food) => {
       expect(food.source.kind).toBe("REFERENCE");
       expect(food.dataCaveats?.length).toBeGreaterThan(0);

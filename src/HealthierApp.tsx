@@ -10,6 +10,8 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { registerSW } from "virtual:pwa-register";
 import {
   ACTIVITY_LEVELS,
+  BEVERAGE_SUGAR_PROFILES,
+  BEVERAGE_SUGAR_PROFILE_LABELS,
   CATEGORY_LABELS,
   FOOD_CATEGORIES,
   FOOD_KINDS,
@@ -35,6 +37,7 @@ import {
   resolveDailyTargets,
   validateMealDraft,
   type ActivityLevel,
+  type BeverageSugarProfile,
   type ConfirmedMeal,
   type DailyAssessment,
   type DailyTargets,
@@ -146,7 +149,12 @@ export function filterFoodsForMealEditor(
     .map((food) => {
       const name = normalizedFoodSearch(food.name);
       const aliases = food.aliases.map(normalizedFoodSearch);
-      const haystack = [food.name, ...food.aliases, ...(food.tags ?? [])]
+      const haystack = [
+        food.name,
+        ...food.aliases,
+        ...(food.tags ?? []),
+        ...(food.beverageSugarProfile ? [BEVERAGE_SUGAR_PROFILE_LABELS[food.beverageSugarProfile]] : [])
+      ]
         .map(normalizedFoodSearch)
         .join(" ");
       const score = food.id === selectedId ? -2
@@ -864,6 +872,7 @@ interface FoodFormState {
   aliases: string;
   foodKind: FoodKind;
   tags: string;
+  beverageSugarProfile: "NONE" | BeverageSugarProfile;
   category: FoodCategory;
   states: FoodState[];
   basisUnit: "g" | "ml";
@@ -882,6 +891,7 @@ const EMPTY_FOOD: FoodFormState = {
   aliases: "",
   foodKind: "INGREDIENT",
   tags: "",
+  beverageSugarProfile: "NONE",
   category: "OT",
   states: ["EA"],
   basisUnit: "g",
@@ -909,7 +919,12 @@ function FoodsPage() {
     [foods, kindFilter]
   );
   const visible = foods.filter((food) => {
-    const matchesQuery = !normalizedQuery || [food.name, ...food.aliases, ...(food.tags ?? [])]
+    const matchesQuery = !normalizedQuery || [
+      food.name,
+      ...food.aliases,
+      ...(food.tags ?? []),
+      ...(food.beverageSugarProfile ? [BEVERAGE_SUGAR_PROFILE_LABELS[food.beverageSugarProfile]] : [])
+    ]
       .join(" ")
       .toLocaleLowerCase("zh-CN")
       .includes(normalizedQuery);
@@ -926,6 +941,7 @@ function FoodsPage() {
       aliases: food.aliases.join("、"),
       foodKind: resolveFoodKind(food),
       tags: (food.tags ?? []).join("、"),
+      beverageSugarProfile: food.beverageSugarProfile ?? "NONE",
       category: food.category,
       states: food.compatibleStates,
       basisUnit: food.basisUnit,
@@ -949,6 +965,7 @@ function FoodsPage() {
       aliases: form.aliases.split(/[、,，]/).map((value) => value.trim()).filter(Boolean),
       foodKind: form.foodKind,
       tags: form.tags.split(/[、,，]/).map((value) => value.trim()).filter(Boolean),
+      beverageSugarProfile: form.beverageSugarProfile === "NONE" ? undefined : form.beverageSugarProfile,
       category: form.category,
       compatibleStates: form.states,
       basisUnit: form.basisUnit,
@@ -1005,6 +1022,7 @@ function FoodsPage() {
                     {food.name}
                     <span className="tag">{FOOD_KIND_LABELS[resolveFoodKind(food)]}</span>
                     <span className="tag quality-tag">{foodQualityLabel(food)}</span>
+                    {food.beverageSugarProfile && <span className="tag">{BEVERAGE_SUGAR_PROFILE_LABELS[food.beverageSugarProfile]}</span>}
                     {overridden && <span className="tag">本地覆盖</span>}
                   </h3>
                   <p>{CATEGORY_LABELS[food.category]} · {food.nutrientsPer100
@@ -1043,6 +1061,7 @@ function FoodsPage() {
           <label>别名（顿号分隔）<input value={form.aliases} onChange={(event) => setForm({ ...form, aliases: event.target.value })} /></label>
           <label>食物类型<select value={form.foodKind} onChange={(event) => setForm({ ...form, foodKind: event.target.value as FoodKind })}>{FOOD_KINDS.map((kind) => <option key={kind} value={kind}>{FOOD_KIND_LABELS[kind]}</option>)}</select></label>
           <label>分类<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as FoodCategory })}>{FOOD_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}</select></label>
+          <label>饮品糖状态（可选）<select value={form.beverageSugarProfile} onChange={(event) => setForm({ ...form, beverageSugarProfile: event.target.value as "NONE" | BeverageSugarProfile })}><option value="NONE">不适用</option>{BEVERAGE_SUGAR_PROFILES.map((profile) => <option key={profile} value={profile}>{BEVERAGE_SUGAR_PROFILE_LABELS[profile]}</option>)}</select></label>
           <label>标签（顿号分隔）<input value={form.tags} placeholder="例如：早餐、外卖" onChange={(event) => setForm({ ...form, tags: event.target.value })} /></label>
           <label>每100单位<select value={form.basisUnit} onChange={(event) => setForm({ ...form, basisUnit: event.target.value as "g" | "ml" })}><option value="g">克</option><option value="ml">毫升</option></select></label>
         </div>

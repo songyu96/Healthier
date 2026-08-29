@@ -89,7 +89,7 @@ export const CATEGORY_LABELS: Record<FoodCategory, string> = {
   SO: "大豆及豆制品",
   NS: "坚果和种子",
   OI: "烹调油/显性脂肪",
-  SD: "含糖饮料/果汁",
+  SD: "饮料（非奶/豆/酒）",
   AL: "酒精饮品",
   UP: "高加工食品",
   OT: "其他/待确认"

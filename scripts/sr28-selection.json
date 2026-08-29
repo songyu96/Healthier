@@ -32,7 +32,7 @@
   {"id":"cod-cooked","ndbNo":"15016","name":"鳕鱼","aliases":["熟鳕鱼"],"category":"FI","states":["CK","EA"],"basisUnit":"g"},
   {"id":"shrimp-cooked","ndbNo":"15151","name":"虾","aliases":["熟虾","虾仁"],"category":"FI","states":["CK","EA"],"basisUnit":"g"},
   {"id":"egg-hard-boiled","ndbNo":"01129","name":"鸡蛋","aliases":["水煮蛋","全蛋"],"category":"EG","states":["CK","EA"],"basisUnit":"g","gramsPerPiece":50},
-  {"id":"milk-whole","ndbNo":"01077","name":"牛奶","aliases":["全脂牛奶","纯牛奶"],"category":"DA","states":["EA","PK"],"basisUnit":"ml","dataCaveats":["源数据按每100克提供；应用以1克≈1毫升换算牛奶体积。"]},
+  {"id":"milk-whole","ndbNo":"01077","name":"牛奶","aliases":["全脂牛奶","纯牛奶"],"category":"DA","states":["EA","PK"],"basisUnit":"ml","beverageSugarProfile":"NO_ADDED_SUGAR","dataCaveats":["源数据按每100克提供；应用以1克≈1毫升换算牛奶体积。"]},
   {"id":"yogurt-plain","ndbNo":"01116","name":"原味酸奶","aliases":["酸奶","全脂酸奶"],"category":"DA","states":["EA","PK"],"basisUnit":"g"},
   {"id":"tofu-firm","ndbNo":"16426","name":"北豆腐","aliases":["硬豆腐","豆腐"],"category":"SO","states":["RW"],"basisUnit":"g"},
   {"id":"soybeans-cooked","ndbNo":"16109","name":"煮黄豆","aliases":["熟黄豆","黄豆"],"category":"SO","states":["CK","EA"],"basisUnit":"g"},
@@ -42,4 +42,3 @@
   {"id":"olive-oil","ndbNo":"04053","name":"橄榄油","aliases":[],"category":"OI","states":["EA","PK"],"basisUnit":"g"},
   {"id":"canola-oil","ndbNo":"04582","name":"菜籽油","aliases":["芥花油"],"category":"OI","states":["EA","PK"],"basisUnit":"g"}
 ]
-

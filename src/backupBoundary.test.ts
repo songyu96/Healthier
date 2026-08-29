@@ -17,17 +17,18 @@ describe("backup boundary validation", () => {
     await expect(decryptBackup(JSON.stringify(envelope), "correct-password")).rejects.toThrow();
   });
 
-  it("保留食物类型、标签和数据限制元数据", async () => {
+  it("保留食物类型、标签、饮品糖状态和数据限制元数据", async () => {
     await db.foodOverrides.put({
-      id: "user-packaged-yogurt",
-      name: "包装酸奶",
-      aliases: ["常买酸奶"],
+      id: "user-zero-soda",
+      name: "常买零糖汽水",
+      aliases: ["我的汽水"],
       foodKind: "PACKAGED",
-      tags: ["早餐", "包装食品"],
-      category: "DA",
+      tags: ["无糖饮料", "包装食品"],
+      beverageSugarProfile: "ZERO_SUGAR_SWEETENED",
+      category: "SD",
       compatibleStates: ["PK"],
-      basisUnit: "g",
-      nutrientsPer100: { kcal: 80, protein: 4, fat: 3, carb: 9, fiber: 0 },
+      basisUnit: "ml",
+      nutrientsPer100: { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 },
       dataCaveats: ["数据来自当前包装标签"],
       source: {
         kind: "USER",
@@ -42,7 +43,8 @@ describe("backup boundary validation", () => {
 
     expect(restored.foodOverrides[0]).toMatchObject({
       foodKind: "PACKAGED",
-      tags: ["早餐", "包装食品"],
+      tags: ["无糖饮料", "包装食品"],
+      beverageSugarProfile: "ZERO_SUGAR_SWEETENED",
       dataCaveats: ["数据来自当前包装标签"],
       source: { method: "LABEL" }
     });

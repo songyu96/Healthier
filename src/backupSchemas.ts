@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   ACTIVITY_LEVELS,
+  BEVERAGE_SUGAR_PROFILES,
   FOOD_CATEGORIES,
   FOOD_STATES,
   MEAL_TYPES,
@@ -150,6 +151,7 @@ const foodOverrideSchema = z.object({
   gramsPerPiece: finitePositive.optional(),
   foodKind: z.enum(["INGREDIENT", "COMPOSITE", "PACKAGED"]).optional(),
   tags: z.array(z.string().trim().min(1)).optional(),
+  beverageSugarProfile: z.enum(BEVERAGE_SUGAR_PROFILES).optional(),
   dataCaveats: z.array(z.string().trim().min(1)).optional(),
   recipeEstimate: z.object({
     finalWeightG: finitePositive,

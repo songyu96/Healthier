@@ -79,6 +79,7 @@ export const FNDDS_FOODS: FoodReference[] = [
   {
     id: "soft-drink-cola", name: "含糖可乐", aliases: ["普通可乐", "可乐"], category: "SD",
     compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["含糖饮料", "碳酸饮料", "包装食品"],
+    beverageSugarProfile: "SUGAR_SWEETENED",
     nutrientsPer100: { kcal: 42, protein: 0, fat: 0.25, carb: 10.36, fiber: 0 },
     dataCaveats: [GENERIC_CAVEAT, "FNDDS 原值按100克提供；记录时近似按1克≈1毫升换算，具体包装标签优先。"],
     source: { kind: "USDA_FDC", ref: "FDC:1104310", release: FNDDS_RELEASE, method: "OFFICIAL_COMPOSITION" },

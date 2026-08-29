@@ -882,6 +882,7 @@ export const BASE_FOODS: FoodReference[] = [
     ],
     "category": "DA",
     "basisUnit": "ml",
+    "beverageSugarProfile": "NO_ADDED_SUGAR",
     "dataCaveats": [
       "源数据按每100克提供；应用以1克≈1毫升换算牛奶体积。"
     ],

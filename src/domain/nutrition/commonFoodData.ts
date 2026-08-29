@@ -3,7 +3,7 @@ import type { FoodReference, NutrientVector } from "./types";
 const FNDDS_RELEASE = "USDA FNDDS 2021–2023 (2024-10-31)";
 const FNDDS_CAVEAT = "FNDDS 通用条目采用美国膳食调查口径；实际品牌、门店配方和份量可能不同，仅用于近似记录。";
 const LIQUID_CAVEAT = "FNDDS 原值按100克提供；饮品记录近似按1克≈1毫升换算。";
-const COMMON_FOODS_V2 = "Healthier common-foods-v3";
+const COMMON_FOODS_V2 = "Healthier common-foods-v4";
 const RECIPE_RELEASE = "Healthier representative-recipes-v1";
 
 interface RecipeIngredientSeed {
@@ -115,37 +115,43 @@ function usda(seed: UsdaSeed): FoodReference {
 export const COMMON_FOODS: FoodReference[] = [
   fndds({
     id: "coffee-brewed-current", name: "现煮黑咖啡", aliases: ["黑咖啡", "美式咖啡"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "早餐", "饮料"],
+    category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "早餐", "饮料"],
+    beverageSugarProfile: "UNSWEETENED",
     nutrientsPer100: { kcal: 1, protein: 0.12, fat: 0.02, carb: 0, fiber: 0 },
     fdcId: "2710375", sourceDescription: "Coffee, brewed", caveats: [LIQUID_CAVEAT, "不包含另加的糖、奶或奶精。"]
   }),
   fndds({
     id: "coffee-espresso-current", name: "意式浓缩咖啡", aliases: ["浓缩咖啡", "Espresso"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "饮料"],
+    category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "饮料"],
+    beverageSugarProfile: "UNSWEETENED",
     nutrientsPer100: { kcal: 9, protein: 0.12, fat: 0.18, carb: 1.67, fiber: 0 },
     fdcId: "2710378", sourceDescription: "Coffee, espresso", caveats: [LIQUID_CAVEAT, "不包含另加的糖或奶。"]
   }),
   fndds({
     id: "coffee-latte-current", name: "拿铁咖啡（通用）", aliases: ["拿铁", "咖啡拿铁"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "奶咖", "饮料"],
+    category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "奶咖", "饮料"],
+    beverageSugarProfile: "UNKNOWN",
     nutrientsPer100: { kcal: 43, protein: 2.81, fat: 1.61, carb: 4.35, fiber: 0 },
     fdcId: "2710386", sourceDescription: "Coffee, Latte", caveats: [LIQUID_CAVEAT, "牛奶种类、糖浆和杯型会显著改变营养值。"]
   }),
   fndds({
     id: "coffee-cappuccino-current", name: "卡布奇诺（通用）", aliases: ["卡布奇诺咖啡"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "奶咖", "饮料"],
+    category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "奶咖", "饮料"],
+    beverageSugarProfile: "UNKNOWN",
     nutrientsPer100: { kcal: 27, protein: 1.71, fat: 0.99, carb: 2.75, fiber: 0 },
     fdcId: "2710472", sourceDescription: "Coffee, Cappuccino", caveats: [LIQUID_CAVEAT, "牛奶、奶泡和加糖量会改变营养值。"]
   }),
   fndds({
     id: "tea-black-unsweetened-current", name: "无糖红茶", aliases: ["冰红茶无糖", "不加糖红茶"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["茶", "无糖饮料"],
+    category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["茶", "无糖饮料"],
+    beverageSugarProfile: "UNSWEETENED",
     nutrientsPer100: { kcal: 1, protein: 0, fat: 0, carb: 0.3, fiber: 0 },
     fdcId: "2710517", sourceDescription: "Tea, iced, brewed, black, unsweetened", caveats: [LIQUID_CAVEAT, "仅对应不加糖、不加奶的冲泡红茶。"]
   }),
   fndds({
     id: "tea-green-unsweetened-current", name: "无糖绿茶", aliases: ["冰绿茶无糖", "不加糖绿茶"],
-    category: "OT", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["茶", "无糖饮料"],
+    category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["茶", "无糖饮料"],
+    beverageSugarProfile: "UNSWEETENED",
     nutrientsPer100: { kcal: 1, protein: 0.22, fat: 0, carb: 0, fiber: 0 },
     fdcId: "2710523", sourceDescription: "Tea, iced, brewed, green, unsweetened", caveats: [LIQUID_CAVEAT, "仅对应不加糖、不加奶的冲泡绿茶。"]
   }),
@@ -440,6 +446,7 @@ export const COMMON_FOODS: FoodReference[] = [
   fndds({
     id: "soy-milk-unsweetened-current", name: "无糖豆浆（通用）", aliases: ["无糖豆奶"],
     category: "SO", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "INGREDIENT", tags: ["早餐", "豆浆", "豆制品", "饮料"],
+    beverageSugarProfile: "UNSWEETENED",
     nutrientsPer100: { kcal: 38, protein: 3.55, fat: 2.12, carb: 1.29, fiber: 0 },
     fdcId: "2705405", sourceDescription: "Soy milk, unsweetened", caveats: [LIQUID_CAVEAT, "仅对应无糖豆浆；自制浓度、加糖量和品牌配方会改变营养值。"]
   }),
@@ -487,45 +494,143 @@ export const COMMON_FOODS: FoodReference[] = [
   }),
   fndds({
     id: "cola-diet-current", name: "无糖可乐（通用）", aliases: ["零度可乐", "零糖可乐"],
-    category: "UP", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["无糖饮料", "碳酸饮料", "便利店"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["无糖饮料", "碳酸饮料", "便利店"],
+    beverageSugarProfile: "ZERO_SUGAR_SWEETENED",
     nutrientsPer100: { kcal: 2, protein: 0.11, fat: 0.03, carb: 0.29, fiber: 0 },
     fdcId: "2710542", sourceDescription: "Soft drink, cola, diet", caveats: [LIQUID_CAVEAT, "不同甜味剂和品牌配方存在差异，包装标签优先。"]
   }),
   fndds({
     id: "sparkling-water-plain-current", name: "无糖气泡水", aliases: ["纯气泡水", "无糖苏打水"],
-    category: "OT", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["无糖饮料", "气泡水", "便利店"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["无糖饮料", "气泡水", "便利店"],
+    beverageSugarProfile: "UNSWEETENED",
     nutrientsPer100: { kcal: 0, protein: 0, fat: 0, carb: 0, fiber: 0 },
     fdcId: "2710539", sourceDescription: "Water, carbonated, plain", caveats: [LIQUID_CAVEAT, "仅对应不加糖的碳酸水；含糖或含果汁产品不能使用此条目。"]
   }),
   fndds({
     id: "orange-juice-100-current", name: "100%橙汁（通用）", aliases: ["纯橙汁", "百分百橙汁"],
     category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["果汁", "饮料", "便利店"],
+    beverageSugarProfile: "NO_ADDED_SUGAR",
     nutrientsPer100: { kcal: 47, protein: 0.77, fat: 0.34, carb: 10.2, fiber: 0.3 },
     fdcId: "2709188", sourceDescription: "Orange juice, 100%, canned, bottled or in a carton", caveats: [LIQUID_CAVEAT, "果汁不计入鲜果目标；果汁饮料或加糖橙汁应另行记录。"]
   }),
   fndds({
     id: "coconut-water-unsweetened-current", name: "无糖椰子水", aliases: ["纯椰子水"],
-    category: "OT", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["饮料", "椰子水", "便利店"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["饮料", "椰子水", "便利店"],
+    beverageSugarProfile: "NO_ADDED_SUGAR",
     nutrientsPer100: { kcal: 18, protein: 0.22, fat: 0, carb: 4.24, fiber: 0 },
     fdcId: "2707572", sourceDescription: "Coconut water, unsweetened", caveats: [LIQUID_CAVEAT, "仅对应无糖椰子水；包装标签优先。"]
   }),
   {
     id: "coffee-unknown", name: "咖啡（配料未知）", aliases: ["咖啡"],
-    category: "OT", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "饮料"],
+    beverageSugarProfile: "UNKNOWN",
     dataCaveats: ["是否含糖、牛奶、奶精或糖浆未知时只记录饮用量；确认是黑咖啡、拿铁或卡布奇诺后再选择对应条目。"],
     source: { kind: "REFERENCE", ref: "COMMON:coffee-unknown", release: "Healthier common-foods-v1" }
   },
   {
     id: "milk-tea-unknown", name: "奶茶（配方未知）", aliases: ["奶茶", "港式奶茶", "丝袜奶茶"],
     category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["奶茶", "茶饮", "外卖"],
+    beverageSugarProfile: "UNKNOWN",
     dataCaveats: ["糖、奶、奶精和杯量差异很大，未固化单一营养值；请按门店信息或包装标签新增本地条目。"],
     source: { kind: "REFERENCE", ref: "CFS:RAFS-2009-BEVERAGES", release: "香港食安中心非预包装饮品研究（2009）" }
   },
   {
     id: "bubble-milk-tea-unknown", name: "珍珠奶茶（配方未知）", aliases: ["珍珠奶茶", "波霸奶茶"],
     category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["奶茶", "珍珠", "茶饮", "外卖"],
+    beverageSugarProfile: "UNKNOWN",
     dataCaveats: ["珍珠、糖浆、奶和冰量使营养值波动很大；请使用门店标示或新增本地条目。"],
     source: { kind: "REFERENCE", ref: "CFS:RAFS-2009-BEVERAGES", release: "香港食安中心非预包装饮品研究（2009）" }
+  },
+  {
+    id: "tea-unsweetened-other-unknown", name: "无糖茶（种类未知）", aliases: ["乌龙茶", "普洱茶", "茉莉花茶", "大麦茶"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["茶", "无糖饮料", "现制饮品"],
+    beverageSugarProfile: "UNSWEETENED",
+    dataCaveats: ["已确认不加糖，但茶叶种类、冲泡浓度或包装配方不明确时只记录饮用量；不要套用干茶叶营养值。"],
+    source: { kind: "REFERENCE", ref: "COMMON:tea-unsweetened-other-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "tea-bottled-sweetened-unknown", name: "瓶装茶饮料（含糖，品牌未知）", aliases: ["冰红茶", "绿茶饮料", "柠檬茶饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["茶饮", "含糖饮料", "便利店"],
+    beverageSugarProfile: "SUGAR_SWEETENED",
+    dataCaveats: ["不同品牌含糖量差异明显；只记录饮用量，手边有包装时请按营养标签新增本地条目。"],
+    source: { kind: "REFERENCE", ref: "COMMON:tea-bottled-sweetened-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "soft-drink-sugared-other-unknown", name: "含糖汽水（种类未知）", aliases: ["汽水", "柠檬味汽水", "橙味汽水"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["含糖饮料", "碳酸饮料", "便利店"],
+    beverageSugarProfile: "SUGAR_SWEETENED",
+    dataCaveats: ["未用可乐数据替代其他口味汽水；品牌和配方不明确时只记录饮用量。"],
+    source: { kind: "REFERENCE", ref: "COMMON:soft-drink-sugared-other-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "soft-drink-zero-other-unknown", name: "零糖汽水（种类未知）", aliases: ["无糖汽水", "零糖气泡饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["无糖饮料", "碳酸饮料", "便利店"],
+    beverageSugarProfile: "ZERO_SUGAR_SWEETENED",
+    dataCaveats: ["已确认零糖或使用代糖，但品牌配方不明确时只记录饮用量；包装标签优先。"],
+    source: { kind: "REFERENCE", ref: "COMMON:soft-drink-zero-other-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "fruit-juice-unknown", name: "果汁（种类/浓度未知）", aliases: ["苹果汁", "葡萄汁", "西柚汁", "鲜榨果汁"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["果汁", "饮料", "早餐"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["水果种类、果汁含量和是否加糖未知时只记录饮用量；果汁不计入鲜果目标。"],
+    source: { kind: "REFERENCE", ref: "COMMON:fruit-juice-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "fruit-drink-unknown", name: "果汁饮料（品牌未知）", aliases: ["果味饮料", "果肉饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["果汁饮料", "便利店", "包装食品"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["果汁含量、加糖量和甜味剂不明确时只记录饮用量；不能用100%果汁条目替代。"],
+    source: { kind: "REFERENCE", ref: "COMMON:fruit-drink-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "vegetable-juice-unknown", name: "蔬菜汁（配方未知）", aliases: ["番茄汁", "胡萝卜汁", "混合蔬菜汁"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["蔬菜汁", "饮料", "包装食品"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["蔬菜比例、盐和糖未知时只记录饮用量；蔬菜汁不替代完整蔬菜结构评价。"],
+    source: { kind: "REFERENCE", ref: "COMMON:vegetable-juice-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "sports-electrolyte-drink-unknown", name: "运动/电解质饮料（品牌未知）", aliases: ["运动饮料", "电解质水", "电解质饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["运动饮料", "电解质", "便利店"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["有糖与零糖产品并存，品牌和标签未知时只记录饮用量。"],
+    source: { kind: "REFERENCE", ref: "COMMON:sports-electrolyte-drink-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "energy-drink-unknown", name: "能量饮料（品牌未知）", aliases: ["功能饮料", "提神饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["能量饮料", "功能饮料", "便利店"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["糖、咖啡因和配方随品牌变化明显；营养值只应按实际包装标签录入。"],
+    source: { kind: "REFERENCE", ref: "COMMON:energy-drink-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "coffee-sweetened-unknown", name: "加糖咖啡（配方未知）", aliases: ["咖啡饮料", "罐装咖啡", "三合一咖啡"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["咖啡", "含糖饮料", "便利店"],
+    beverageSugarProfile: "SUGAR_SWEETENED",
+    dataCaveats: ["糖、奶、奶精和冲调浓度差异很大，未固化单一营养值；包装标签或实际配方优先。"],
+    source: { kind: "REFERENCE", ref: "COMMON:coffee-sweetened-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "plant-drink-unknown", name: "植物饮料（品牌未知）", aliases: ["燕麦奶", "燕麦饮", "杏仁露", "杏仁饮", "椰汁", "椰奶饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["植物饮料", "包装食品", "早餐"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["燕麦、杏仁和椰子饮料不是同一种食物，蛋白质与糖差异很大；请按实际包装标签新增本地条目。"],
+    source: { kind: "REFERENCE", ref: "COMMON:plant-drink-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "yogurt-drink-unknown", name: "酸奶/乳酸菌饮料（品牌未知）", aliases: ["酸奶饮料", "乳酸菌饮料", "含乳饮料"],
+    category: "SD", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "PACKAGED", tags: ["含乳饮料", "酸奶饮料", "便利店"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["含乳饮料不按一份奶类计算；蛋白质和糖应以实际包装标签为准。"],
+    source: { kind: "REFERENCE", ref: "COMMON:yogurt-drink-unknown", release: COMMON_FOODS_V2 }
+  },
+  {
+    id: "fruit-tea-unknown", name: "现制水果茶（配方未知）", aliases: ["水果茶", "百香果茶", "柠檬水果茶"],
+    category: "SD", compatibleStates: ["EA"], basisUnit: "ml", foodKind: "COMPOSITE", tags: ["水果茶", "现制茶饮", "外卖"],
+    beverageSugarProfile: "UNKNOWN",
+    dataCaveats: ["糖浆、水果、果酱和冰量差异很大；甜度选择不能可靠换算为克数，未知时只记录饮用量。"],
+    source: { kind: "REFERENCE", ref: "COMMON:fruit-tea-unknown", release: COMMON_FOODS_V2 }
   },
   {
     id: "bao-bun-unknown", name: "包子（馅料未知）", aliases: ["包子"],
@@ -620,6 +725,7 @@ export const COMMON_FOODS: FoodReference[] = [
   {
     id: "soy-milk-unknown", name: "豆浆（糖量/浓度未知）", aliases: ["豆浆", "豆奶"],
     category: "SO", compatibleStates: ["EA", "PK"], basisUnit: "ml", foodKind: "INGREDIENT", tags: ["早餐", "豆浆", "豆制品", "饮料"],
+    beverageSugarProfile: "UNKNOWN",
     dataCaveats: ["自制浓度和加糖量未知时只记录饮用量；确认无糖后可改选“无糖豆浆（通用）”。"],
     source: { kind: "REFERENCE", ref: "COMMON:soy-milk-unknown", release: COMMON_FOODS_V2 }
   },
