@@ -4,6 +4,7 @@ import {
   restoreBackup,
   type BackupPayload
 } from "./backup";
+import { backupPayloadSchema } from "./backupSchemas";
 import { db } from "./db";
 
 afterEach(async () => {
@@ -19,6 +20,12 @@ async function expectRejectedWithoutDataLoss(raw: unknown): Promise<void> {
 }
 
 describe("backup semantic validation", () => {
+  it("v1 Payload通过语义校验后显式迁移为v2", async () => {
+    const current = await readBackupPayload();
+    const migrated = backupPayloadSchema.parse({ ...current, schemaVersion: 1 });
+    expect(migrated.schemaVersion).toBe(2);
+  });
+
   it("拒绝缺字段或非法活动级别的档案", async () => {
     const payload = await readBackupPayload();
     const invalid = {

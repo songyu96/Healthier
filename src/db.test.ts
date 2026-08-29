@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { db, deleteMeal, loadMealsForDate, saveConfirmedMeal } from "./db";
+import { db, deleteMeal, getDayCompletion, loadMealsForDate, saveConfirmedMeal, setDayCompletion } from "./db";
 import { calculateNutrition, type ConfirmedMeal } from "./domain";
-import { BASE_FOODS } from "./domain/nutrition/foodData";
+import { BUILT_IN_FOODS } from "./domain/nutrition/foodRegistry";
 
 function sampleMeal(): ConfirmedMeal {
   return {
@@ -62,7 +62,7 @@ describe("meal persistence", () => {
 
   it("重新确认迁移餐食后把快照来源更新为CONFIRMED", async () => {
     const meal = sampleMeal();
-    const nutritionSnapshot = calculateNutrition(meal, BASE_FOODS);
+    const nutritionSnapshot = calculateNutrition(meal, BUILT_IN_FOODS);
     await saveConfirmedMeal({
       ...meal,
       nutritionSnapshot,
@@ -74,9 +74,36 @@ describe("meal persistence", () => {
       ...meal,
       note: "已重新确认",
       updatedAt: "2026-08-25T09:00:00.000Z",
-      nutritionSnapshot: calculateNutrition(meal, BASE_FOODS),
+      nutritionSnapshot: calculateNutrition(meal, BUILT_IN_FOODS),
       nutritionSnapshotOrigin: "CONFIRMED"
     });
     expect((await db.meals.get(meal.id))?.nutritionSnapshotOrigin).toBe("CONFIRMED");
+  });
+
+  it("拒绝快照餐食ID、餐食项集合或tempId重复且不改写原数据", async () => {
+    const original = sampleMeal();
+    const nutritionSnapshot = calculateNutrition(original, BUILT_IN_FOODS);
+    await saveConfirmedMeal({ ...original, nutritionSnapshot });
+    await setDayCompletion(original.date, true);
+
+    await expect(saveConfirmedMeal({
+      ...original,
+      nutritionSnapshot: { ...nutritionSnapshot, mealId: "other-meal" }
+    })).rejects.toThrow("餐食 ID");
+    await expect(saveConfirmedMeal({
+      ...original,
+      items: [{ ...original.items[0], tempId: "changed" }],
+      nutritionSnapshot
+    })).rejects.toThrow("当前餐食项");
+    await expect(saveConfirmedMeal({
+      ...original,
+      items: [original.items[0], { ...original.items[0] }],
+      nutritionSnapshot: undefined
+    })).rejects.toThrow("tempId");
+
+    const persisted = (await loadMealsForDate(original.date))[0];
+    expect(persisted.items).toHaveLength(1);
+    expect(persisted.items[0]).toMatchObject({ tempId: "egg", name: "鸡蛋" });
+    expect(await getDayCompletion(original.date)).toBe(true);
   });
 });

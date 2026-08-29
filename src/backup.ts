@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { db, materializeMissingNutritionSnapshots } from "./db";
-import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
+import { mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
 import { backupPayloadSchema, type BackupPayload } from "./backupSchemas";
 export type { BackupPayload } from "./backupSchemas";
 
@@ -8,9 +8,7 @@ const ITERATIONS = 310_000;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8", { fatal: true });
 
-const envelopeSchema = z.object({
-  format: z.literal("HD-BACKUP-1"),
-  appSchemaVersion: z.literal(1),
+const envelopeFields = {
   createdAt: z.string(),
   kdf: z.object({
     name: z.literal("PBKDF2"),
@@ -21,7 +19,18 @@ const envelopeSchema = z.object({
   salt: z.string(),
   iv: z.string(),
   ciphertext: z.string()
-});
+};
+const envelopeV1Schema = z.object({
+  format: z.literal("HD-BACKUP-1"),
+  appSchemaVersion: z.literal(1),
+  ...envelopeFields
+}).strict();
+const envelopeV2Schema = z.object({
+  format: z.literal("HD-BACKUP-2"),
+  appSchemaVersion: z.literal(2),
+  ...envelopeFields
+}).strict();
+const envelopeSchema = z.discriminatedUnion("format", [envelopeV1Schema, envelopeV2Schema]);
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -61,7 +70,7 @@ export async function readBackupPayload(): Promise<BackupPayload> {
     "r",
     [db.profiles, db.bodyMetrics, db.meals, db.mealItems, db.foodOverrides, db.settings],
     async () => backupPayloadSchema.parse({
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: new Date().toISOString(),
       profiles: await db.profiles.toArray(),
       bodyMetrics: await db.bodyMetrics.toArray(),
@@ -87,8 +96,8 @@ export async function exportEncryptedBackup(password: string): Promise<string> {
   );
 
   return JSON.stringify({
-    format: "HD-BACKUP-1",
-    appSchemaVersion: 1,
+    format: "HD-BACKUP-2",
+    appSchemaVersion: 2,
     createdAt: payload.exportedAt,
     kdf: { name: "PBKDF2", hash: "SHA-256", iterations: ITERATIONS },
     cipher: { name: "AES-GCM", length: 256 },
@@ -123,7 +132,7 @@ export async function decryptBackup(text: string, password: string): Promise<Bac
 export async function restoreBackup(payload: BackupPayload, rollbackPassword: string): Promise<void> {
   const validated = backupPayloadSchema.parse(payload);
   const rollback = await exportEncryptedBackup(rollbackPassword);
-  const restoredFoods = mergeFoodReferences(BASE_FOODS, validated.foodOverrides);
+  const restoredFoods = mergeFoodRegistry(validated.foodOverrides);
   const restoredMeals = materializeMissingNutritionSnapshots(
     validated.meals,
     validated.mealItems,

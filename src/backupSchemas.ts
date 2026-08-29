@@ -46,6 +46,16 @@ const nutrientVectorSchema = z.object({
   carb: finiteNonNegative,
   fiber: finiteNonNegative
 }).strict();
+const partialNutrientVectorSchema = z.object({
+  kcal: finiteNonNegative.optional(),
+  protein: finiteNonNegative.optional(),
+  fat: finiteNonNegative.optional(),
+  carb: finiteNonNegative.optional(),
+  fiber: finiteNonNegative.optional()
+}).strict().refine(
+  (value) => Object.values(value).some((nutrient) => nutrient !== undefined),
+  "部分营养值至少需要一项"
+);
 
 const dailyTargetsSchema = z.object({
   ruleSetVersion: z.string().min(1),
@@ -148,6 +158,7 @@ const foodOverrideSchema = z.object({
   compatibleStates: z.array(z.enum(FOOD_STATES)).min(1),
   basisUnit: z.enum(["g", "ml"]),
   nutrientsPer100: nutrientVectorSchema.optional(),
+  partialNutrientsPer100: partialNutrientVectorSchema.optional(),
   gramsPerPiece: finitePositive.optional(),
   foodKind: z.enum(["INGREDIENT", "COMPOSITE", "PACKAGED"]).optional(),
   tags: z.array(z.string().trim().min(1)).optional(),
@@ -169,7 +180,10 @@ const foodOverrideSchema = z.object({
   }).strict(),
   bookNote: z.string().optional(),
   updatedAt: dateTimeSchema
-}).strict();
+}).strict().refine(
+  (food) => !(food.nutrientsPer100 && food.partialNutrientsPer100),
+  "完整营养值和部分营养值不能同时存在"
+);
 
 const dayCompletionSchema = z.union([
   z.boolean(),
@@ -216,8 +230,7 @@ function reportDuplicates(
   });
 }
 
-export const backupPayloadSchema = z.object({
-  schemaVersion: z.literal(1),
+const backupPayloadFields = {
   exportedAt: dateTimeSchema,
   profiles: z.array(profileSchema).max(1),
   bodyMetrics: z.array(bodyMetricSchema),
@@ -225,7 +238,19 @@ export const backupPayloadSchema = z.object({
   mealItems: z.array(mealItemSchema),
   foodOverrides: z.array(foodOverrideSchema),
   settings: z.array(settingSchema)
-}).strict().superRefine((payload, context) => {
+};
+
+const backupPayloadV1BaseSchema = z.object({
+  schemaVersion: z.literal(1),
+  ...backupPayloadFields
+}).strict();
+const backupPayloadV2BaseSchema = z.object({
+  schemaVersion: z.literal(2),
+  ...backupPayloadFields
+}).strict();
+type BackupPayloadInput = z.infer<typeof backupPayloadV1BaseSchema> | z.infer<typeof backupPayloadV2BaseSchema>;
+
+function validateBackupPayload(payload: BackupPayloadInput, context: z.RefinementCtx): void {
   reportDuplicates(payload.bodyMetrics.map((item) => item.id), "身体指标ID", context);
   reportDuplicates(payload.meals.map((item) => item.id), "餐食ID", context);
   reportDuplicates(payload.mealItems.map((item) => item.id), "餐食项ID", context);
@@ -267,6 +292,13 @@ export const backupPayloadSchema = z.object({
       context.addIssue({ code: "custom", message: `餐食没有食物项：${meal.id}` });
     }
   });
-});
+}
 
-export type BackupPayload = z.infer<typeof backupPayloadSchema>;
+export const backupPayloadV1Schema = backupPayloadV1BaseSchema.superRefine(validateBackupPayload);
+export const backupPayloadV2Schema = backupPayloadV2BaseSchema.superRefine(validateBackupPayload);
+export const backupPayloadSchema = z.union([backupPayloadV2Schema, backupPayloadV1Schema])
+  .transform((payload) => payload.schemaVersion === 2
+    ? payload
+    : { ...payload, schemaVersion: 2 as const });
+
+export type BackupPayload = z.output<typeof backupPayloadSchema>;

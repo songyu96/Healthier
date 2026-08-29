@@ -16,13 +16,25 @@ describe("encrypted backup", () => {
     expect(encrypted).not.toContain("早餐吃得不错");
     const envelope = JSON.parse(encrypted) as Record<string, unknown>;
     expect(envelope).toMatchObject({
-      format: "HD-BACKUP-1",
+      format: "HD-BACKUP-2",
+      appSchemaVersion: 2,
       kdf: { name: "PBKDF2", hash: "SHA-256", iterations: 310000 },
       cipher: { name: "AES-GCM", length: 256 }
     });
 
     const payload = await decryptBackup(encrypted, "correct-password");
     expect(payload.settings).toContainEqual({ key: "备注", value: "早餐吃得不错" });
+    expect(payload.schemaVersion).toBe(2);
+  });
+
+  it("仍接受旧版v1信封", async () => {
+    const encrypted = await exportEncryptedBackup("correct-password");
+    const envelope = JSON.parse(encrypted) as { format: string; appSchemaVersion: number };
+    envelope.format = "HD-BACKUP-1";
+    envelope.appSchemaVersion = 1;
+
+    await expect(decryptBackup(JSON.stringify(envelope), "correct-password"))
+      .resolves.toMatchObject({ schemaVersion: 2 });
   });
 
   it("错误密码不修改现有数据", async () => {

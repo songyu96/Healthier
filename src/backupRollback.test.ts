@@ -60,6 +60,37 @@ describe("backup migration and rollback boundary", () => {
     expect(isNutritionFacts(restored?.nutritionSnapshot)).toBe(true);
   });
 
+  it("恢复无快照的中国食物记录时使用统一注册表", async () => {
+    await db.meals.put({
+      ...legacyMeal(),
+      id: "legacy-backup-china",
+      rawImportLine: "HD1|20260825-0800|B|鲫鱼~FI~RW~100-100g|BOIL|"
+    });
+    await db.mealItems.put({
+      id: "legacy-backup-china:fish",
+      mealId: "legacy-backup-china",
+      tempId: "fish",
+      name: "鲫鱼（生，可食部）",
+      category: "FI",
+      state: "RW",
+      quantityMin: 100,
+      quantityMax: 100,
+      unit: "g",
+      canonicalFoodId: "china-crucian-carp-raw"
+    });
+    const payload = await readBackupPayload();
+
+    await restoreBackup(payload, "rollback-password");
+
+    const snapshot = (await db.meals.get("legacy-backup-china"))?.nutritionSnapshot;
+    expect(isNutritionFacts(snapshot)).toBe(true);
+    if (isNutritionFacts(snapshot)) {
+      expect(snapshot.totals.min.protein).toBeCloseTo(17.1);
+      expect(snapshot.nutrientCoverage?.fiber.complete).toBe(false);
+      expect(snapshot.unknownItems).toEqual([]);
+    }
+  });
+
   it("连续恢复生成的回滚备份不递归嵌套", async () => {
     await db.settings.put({ key: "phase", value: "A" });
     const payloadA = await readBackupPayload();

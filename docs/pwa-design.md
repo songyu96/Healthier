@@ -377,6 +377,7 @@ totalScoreRange = [energyScoreMin + structureScore, energyScoreMax + structureSc
 - IndexedDB 本地优先，不上传餐食和身体数据。
 - 不保存原始照片。
 - 导出备份使用 PBKDF2-SHA-256 派生密钥，AES-256-GCM 加密。
+- 新导出使用独立于 Dexie 版本的备份格式 v2；恢复时继续解析并迁移 v1 Payload。
 - 密码只用于导出/恢复，不保存明文，也不设置独立应用登录密码。
 - 恢复前校验备份版本、完整性和规则版本。
 - GitHub Pages 仅托管静态资源，不承载私人数据。

@@ -73,4 +73,42 @@ describe("database v2 migration", () => {
     }
     upgraded.close();
   });
+
+  it("旧餐食引用中国食物时使用统一注册表生成部分营养快照", async () => {
+    const name = `healthier-v1-china-${crypto.randomUUID()}`;
+    databaseNames.push(name);
+    const legacy = new Dexie(name);
+    legacy.version(1).stores(STORE_SCHEMA);
+    await legacy.open();
+    await legacy.table<StoredMeal>("meals").put({
+      ...legacyMeal(),
+      id: "legacy-china",
+      rawImportLine: "HD1|20260825-0800|B|鲫鱼~FI~RW~100-100g|BOIL|"
+    });
+    await legacy.table<StoredMealItem>("mealItems").put({
+      id: "legacy-china:fish",
+      mealId: "legacy-china",
+      tempId: "fish",
+      name: "鲫鱼（生，可食部）",
+      category: "FI",
+      state: "RW",
+      quantityMin: 100,
+      quantityMax: 100,
+      unit: "g",
+      canonicalFoodId: "china-crucian-carp-raw"
+    });
+    legacy.close();
+
+    const upgraded = new HealthierDatabase(name);
+    await upgraded.open();
+    const snapshot = (await upgraded.meals.get("legacy-china"))?.nutritionSnapshot;
+
+    expect(isNutritionFacts(snapshot)).toBe(true);
+    if (isNutritionFacts(snapshot)) {
+      expect(snapshot.totals.min.protein).toBeCloseTo(17.1);
+      expect(snapshot.nutrientCoverage?.fiber.complete).toBe(false);
+      expect(snapshot.unknownItems).toEqual([]);
+    }
+    upgraded.close();
+  });
 });

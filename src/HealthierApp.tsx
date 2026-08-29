@@ -54,10 +54,8 @@ import {
   type UserProfile,
   type WeeklyAssessment
 } from "./domain";
-import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
-import { FNDDS_FOODS } from "./domain/nutrition/curatedFoodData";
-import { COMMON_FOODS } from "./domain/nutrition/commonFoodData";
-import { CHINA_FOODS } from "./domain/nutrition/chinaFoodData";
+import { BUILT_IN_FOODS, mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
+import { nutrientsFromFormValues, nutrientsToFormValues, type NutrientFormValue } from "./domain/nutrition/foodOverrides";
 import {
   db,
   deleteMeal,
@@ -95,8 +93,6 @@ const FOOD_KIND_LABELS: Record<FoodKind, string> = {
   COMPOSITE: "组合食品",
   PACKAGED: "包装食品"
 };
-
-const BUILT_IN_FOODS = [...BASE_FOODS, ...FNDDS_FOODS, ...CHINA_FOODS, ...COMMON_FOODS];
 
 function resolveFoodKind(food: FoodReference): FoodKind {
   return food.foodKind ?? "INGREDIENT";
@@ -250,7 +246,7 @@ function defaultProfile(existing?: UserProfile): UserProfile {
 
 function useFoodReferences(): FoodReference[] {
   const overrides = useLiveQuery(() => db.foodOverrides.toArray(), [], []);
-  return useMemo(() => mergeFoodReferences(BUILT_IN_FOODS, overrides), [overrides]);
+  return useMemo(() => mergeFoodRegistry(overrides), [overrides]);
 }
 
 function mealFacts(meals: ConfirmedMeal[], foods: FoodReference[]) {
@@ -898,12 +894,11 @@ interface FoodFormState {
   category: FoodCategory;
   states: FoodState[];
   basisUnit: "g" | "ml";
-  nutritionKnown: boolean;
-  kcal: number;
-  protein: number;
-  fat: number;
-  carb: number;
-  fiber: number;
+  kcal: NutrientFormValue;
+  protein: NutrientFormValue;
+  fat: NutrientFormValue;
+  carb: NutrientFormValue;
+  fiber: NutrientFormValue;
   gramsPerPiece?: number;
   dataCaveat: string;
 }
@@ -917,12 +912,11 @@ const EMPTY_FOOD: FoodFormState = {
   category: "OT",
   states: ["EA"],
   basisUnit: "g",
-  nutritionKnown: false,
-  kcal: 0,
-  protein: 0,
-  fat: 0,
-  carb: 0,
-  fiber: 0,
+  kcal: "",
+  protein: "",
+  fat: "",
+  carb: "",
+  fiber: "",
   dataCaveat: ""
 };
 
@@ -962,14 +956,6 @@ function FoodsPage() {
   });
 
   const edit = (food: FoodReference) => {
-    const partialNutrients = food.nutrientsPer100 ?? food.partialNutrientsPer100;
-    const nutrients = {
-      kcal: partialNutrients?.kcal ?? 0,
-      protein: partialNutrients?.protein ?? 0,
-      fat: partialNutrients?.fat ?? 0,
-      carb: partialNutrients?.carb ?? 0,
-      fiber: partialNutrients?.fiber ?? 0
-    };
     setForm({
       id: food.id,
       name: food.name,
@@ -980,8 +966,7 @@ function FoodsPage() {
       category: food.category,
       states: food.compatibleStates,
       basisUnit: food.basisUnit,
-      nutritionKnown: Boolean(food.nutrientsPer100),
-      ...nutrients,
+      ...nutrientsToFormValues(food),
       gramsPerPiece: food.gramsPerPiece,
       dataCaveat: (food.dataCaveats ?? []).join("；")
     });
@@ -1006,9 +991,9 @@ function FoodsPage() {
       basisUnit: form.basisUnit,
       gramsPerPiece: form.gramsPerPiece,
       dataCaveats: form.dataCaveat.split(/[；;]/).map((value) => value.trim()).filter(Boolean),
-      nutrientsPer100: form.nutritionKnown
-        ? { kcal: form.kcal, protein: form.protein, fat: form.fat, carb: form.carb, fiber: form.fiber }
-        : undefined,
+      ...nutrientsFromFormValues({
+        kcal: form.kcal, protein: form.protein, fat: form.fat, carb: form.carb, fiber: form.fiber
+      }),
       source: { kind: "USER", ref: "用户录入", release: localDateKey(), method: form.foodKind === "PACKAGED" ? "LABEL" : "USER" },
       updatedAt: new Date().toISOString()
     };
@@ -1099,8 +1084,8 @@ function FoodsPage() {
           <label>每100单位<select value={form.basisUnit} onChange={(event) => setForm({ ...form, basisUnit: event.target.value as "g" | "ml" })}><option value="g">克</option><option value="ml">毫升</option></select></label>
         </div>
         <fieldset className="health-flags"><legend>适用状态</legend>{FOOD_STATES.filter((state) => state !== "UN").map((state) => <label className="checkbox" key={state}><input type="checkbox" checked={form.states.includes(state)} onChange={(event) => setForm({ ...form, states: event.target.checked ? [...form.states, state] : form.states.filter((value) => value !== state) })} />{STATE_LABELS[state]}</label>)}</fieldset>
-        <label className="checkbox"><input type="checkbox" checked={form.nutritionKnown} onChange={(event) => setForm({ ...form, nutritionKnown: event.target.checked })} /><span><b>我有可靠的每100单位营养值</b><small>不勾选时只保存名称、分类和别名，不把空值当作零。</small></span></label>
-        <div className="form-grid nutrient-inputs">{(["kcal", "protein", "fat", "carb", "fiber"] as const).map((key) => <label key={key}>{({ kcal: "能量 kcal", protein: "蛋白质 g", fat: "脂肪 g", carb: "碳水 g", fiber: "纤维 g" })[key]}<input required={form.nutritionKnown} disabled={!form.nutritionKnown} type="number" min="0" step="0.01" value={form[key]} onChange={(event) => setForm({ ...form, [key]: number(event.target.value) })} /></label>)}<label>每枚克数（可选）<input type="number" min="0" step="0.1" value={form.gramsPerPiece ?? ""} onChange={(event) => setForm({ ...form, gramsPerPiece: event.target.value ? number(event.target.value) : undefined })} /></label></div>
+        <p className="helper">每100单位营养值可逐项填写；没有可靠数据的字段请留空，应用不会把空值当作零。</p>
+        <div className="form-grid nutrient-inputs">{(["kcal", "protein", "fat", "carb", "fiber"] as const).map((key) => <label key={key}>{({ kcal: "能量 kcal", protein: "蛋白质 g", fat: "脂肪 g", carb: "碳水 g", fiber: "纤维 g" })[key]}<input type="number" min="0" step="0.01" value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value === "" ? "" : number(event.target.value) })} /></label>)}<label>每枚克数（可选）<input type="number" min="0" step="0.1" value={form.gramsPerPiece ?? ""} onChange={(event) => setForm({ ...form, gramsPerPiece: event.target.value ? number(event.target.value) : undefined })} /></label></div>
         <label>数据限制或换算说明（可选）<textarea rows={2} value={form.dataCaveat} placeholder="例如：数据来自包装标签；不同口味可能不同" onChange={(event) => setForm({ ...form, dataCaveat: event.target.value })} /></label>
         {message && <p className="notice">{message.trim()}</p>}
         <button className="primary full-width" type="submit">保存本地覆盖</button>

@@ -8,7 +8,7 @@ import {
   type MealItemInput,
   type UserProfile
 } from "./domain";
-import { BASE_FOODS, mergeFoodReferences } from "./domain/nutrition/foodData";
+import { mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
 
 export interface BodyMetric {
   id: string;
@@ -87,7 +87,7 @@ export class HealthierDatabase extends Dexie {
       const meals = await transaction.table<StoredMeal>("meals").toArray();
       const mealItems = await transaction.table<StoredMealItem>("mealItems").toArray();
       const overrides = await transaction.table<FoodOverride>("foodOverrides").toArray();
-      const foods = mergeFoodReferences(BASE_FOODS, overrides);
+      const foods = mergeFoodRegistry(overrides);
       const migratedMeals = materializeMissingNutritionSnapshots(meals, mealItems, foods);
       if (migratedMeals.length > 0) {
         await transaction.table<StoredMeal>("meals").bulkPut(migratedMeals);
@@ -112,10 +112,33 @@ async function invalidateDay(date: string): Promise<void> {
 }
 
 export async function saveConfirmedMeal(meal: ConfirmedMeal): Promise<void> {
+  if (meal.items.length === 0) throw new Error("餐食至少需要一个食物项。");
+  const tempIds = meal.items.map((item) => item.tempId);
+  if (tempIds.some((tempId) => !tempId.trim()) || new Set(tempIds).size !== tempIds.length) {
+    throw new Error("餐食项 tempId 不能为空或重复。");
+  }
+  if (meal.nutritionSnapshot !== undefined) {
+    if (!isNutritionFacts(meal.nutritionSnapshot)) {
+      throw new Error("营养快照格式或计算语义无效。");
+    }
+    if (meal.nutritionSnapshot.mealId !== meal.id) {
+      throw new Error("营养快照与餐食 ID 不一致。");
+    }
+    const snapshotTempIds = [
+      ...meal.nutritionSnapshot.items.map((item) => item.tempId),
+      ...meal.nutritionSnapshot.unknownItems.map((item) => item.tempId)
+    ];
+    const snapshotSet = new Set(snapshotTempIds);
+    if (snapshotSet.size !== tempIds.length || tempIds.some((tempId) => !snapshotSet.has(tempId))) {
+      throw new Error("营养快照与当前餐食项不一致。");
+    }
+  } else if (meal.nutritionSnapshotOrigin !== undefined) {
+    throw new Error("营养快照来源缺少对应快照。");
+  }
   const { items, ...mealWithoutItems } = meal;
   const storedMeal: StoredMeal = {
     ...mealWithoutItems,
-    nutritionSnapshotOrigin: isNutritionFacts(meal.nutritionSnapshot)
+    nutritionSnapshotOrigin: meal.nutritionSnapshot
       ? meal.nutritionSnapshotOrigin ?? "CONFIRMED"
       : undefined
   };
@@ -202,7 +225,8 @@ export async function loadMealsBetween(startDate: string, endDate: string): Prom
     .where("date")
     .between(startDate, endDate, true, true)
     .sortBy("eatenAt");
-  const items = await db.mealItems.toArray();
+  if (meals.length === 0) return [];
+  const items = await db.mealItems.where("mealId").anyOf(meals.map((meal) => meal.id)).toArray();
   const itemsByMeal = new Map<string, StoredMealItem[]>();
   items.forEach((item) => {
     const current = itemsByMeal.get(item.mealId) ?? [];
