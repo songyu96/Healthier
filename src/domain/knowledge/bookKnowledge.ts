@@ -1,5 +1,6 @@
 export type BookKnowledgeApplicability = "HEALTHY" | "INFORMATION_ONLY" | "SAFETY_ONLY";
 export type BookKnowledgeSourceKind = "BOOK_DIRECT" | "BOOK_CASE" | "APP_DERIVED" | "SAFETY";
+export type BookKnowledgeCategory = "NUTRIENT" | "MICRONUTRIENT" | "FOOD_SELECTION" | "MEAL_PLANNING" | "RECORD_SAFETY";
 
 export interface BookKnowledgeItem {
   text: string;
@@ -21,6 +22,7 @@ export interface BookSourceLocation {
 
 export interface BookChapterKnowledge {
   id: string;
+  category: BookKnowledgeCategory;
   source: BookSourceLocation;
   coreIdea: string;
   coreIdeaSource: BookKnowledgeSourceKind;
@@ -56,6 +58,17 @@ function knowledgeItems(texts: string[], sourceKind: BookKnowledgeSourceKind): B
 }
 
 const BOOK_1_CHAPTERS: ChapterSeed[] = [
+  ["B1-NUTRIENTS", "PART 01", "修复细胞损伤的唯一原料：食物中的营养素", "index_split_007.html", 6,
+    "书中把碳水化合物、蛋白质、脂类、维生素、矿物质、膳食纤维和水归为七大营养素；完整饮食要考虑它们的分工与配合。",
+    [
+      "碳水化合物和脂类首先承担供能，蛋白质也可供能，但更重要的是参与身体结构更新。",
+      "蛋白质和脂类是细胞结构的重要原料，维生素和矿物质参与调节代谢过程。",
+      "膳食纤维主要来自植物性食物，并与肠道环境有关；水既是身体组成，也是代谢媒介。",
+      "任何单一食物都很难提供全部营养素，因此书中反复强调食物多样和合理搭配。",
+      "平衡不是人人使用同一张食谱，而是结合身高、活动、环境和实际消耗安排摄入。"
+    ],
+    ["书中把食物进入人体后的主要作用概括为供给能量、提供结构原料、参与代谢调节和支持肠道菌群。"],
+    ["该主题作为知识库总入口；应用只计算当前食物数据能够可靠支持的营养素，不把未计算项目视为零。"], []],
   ["B1-STRUCT", "PART 01", "防治慢病吃什么：35%动物类食物 + 65%植物类食物", "index_split_009.html", 8,
     "书中把约35%动物类、65%植物类作为整体饮食结构方向，而不是可精确称重的公式。",
     [
@@ -124,6 +137,127 @@ const BOOK_1_CHAPTERS: ChapterSeed[] = [
     ],
     ["185厘米轻体力程序员：标准体重80 kg，总能量2400 kcal，脂肪占30%即720 kcal，折合80 g；书中用约30毫升炒菜油加20克坚果说明部分植物脂肪来源。"],
     ["烹调油未知时应用不自动填数，只提示总脂肪可能被低估。"], ["BR-M-005", "BR-N-004"]],
+  ["B1-VITAMINS", "PART 02", "我们太容易缺维生素了", "index_split_041.html", 40,
+    "理解维生素首先要分清脂溶性和水溶性：它们的食物来源、吸收、储存与烹饪损失并不相同。",
+    [
+      "脂溶性维生素包括A、D、E、K，需要膳食脂肪帮助吸收，也更容易在体内储存。",
+      "水溶性维生素包括B族和C，较容易随清洗、长时间浸泡、久煮和高温加工损失。",
+      "长期偏食、食物种类单一、蔬果和动物性食物不足，是书中反复提到的摄入不足原因。",
+      "消化吸收受影响、特殊生理阶段、疾病和部分药物会改变需要或吸收，不能只靠普通食谱处理。",
+      "日常重点应是让肉蛋奶豆、全谷、蔬菜和水果共同出现，而不是看到一种症状就补一种维生素。"
+    ],
+    ["书中用蔬菜炖煮半小时的案例说明：即使吃了蔬菜，过度加热仍可能造成水溶性维生素损失。"],
+    ["应用只提供食物来源与烹饪知识，不根据症状判断缺乏，也不生成补充剂剂量。"], []],
+  ["B1-VITAMIN-A", "PART 02", "维生素A的需求量从未像现在这么多", "index_split_042.html", 41,
+    "维生素A与正常视觉以及皮肤、眼睛和呼吸道等上皮组织的维护有关，食物来源分为动物性维生素A和植物性类胡萝卜素。",
+    [
+      "书中把暗适应、眼表和上皮组织维护列为维生素A的重要作用。",
+      "动物肝脏、蛋和奶制品可以直接提供维生素A。",
+      "胡萝卜、南瓜和深绿色蔬菜等提供可转化为维生素A的类胡萝卜素。",
+      "类胡萝卜素属于脂溶性成分，和含适量膳食脂肪的正餐搭配通常比完全无油更利于吸收。",
+      "食物来源和补充剂不是同一风险口径，不能因为某种营养素重要就自行长期大剂量服用。"
+    ],
+    ["书中列举胡萝卜炖牛腩、南瓜炖肉、炒西蓝花和炒菠菜，说明植物来源与膳食脂肪的搭配。"],
+    ["应用不使用夜间视物、眼干或皮肤状态自动诊断维生素A缺乏。"], []],
+  ["B1-VITAMIN-D", "PART 02", "维生素D缺乏是现代人的通病", "index_split_043.html", 42,
+    "维生素D与钙磷吸收和骨骼健康密切相关，来源包括少数动物性食物、强化食品以及皮肤在日照条件下的合成。",
+    [
+      "书中强调维生素D不仅是普通食物成分，还要经过肝脏和肾脏等过程转化后发挥作用。",
+      "鱼类、蛋、奶及动物性食物可提供一定维生素D，但普通天然食物来源相对有限。",
+      "日照能够帮助皮肤合成维生素D，但实际效果会受季节、纬度、肤色、衣着和生活方式影响。",
+      "维生素D与钙不能割裂理解：只关注钙摄入而忽略维生素D和整体饮食，不能完整解释骨骼健康。",
+      "是否缺乏以及是否需要补充，应结合可靠检测、个人状态和专业判断。"
+    ],
+    ["书中用长期室内工作、很少户外活动的城市生活解释维生素D来源为什么容易不足。"],
+    ["应用不采用书中的固定日晒时长、血值目标或补充剂建议作为自动规则。"], []],
+  ["B1-VITAMIN-B", "PART 02", "维生素B族平衡需要讲求配比", "index_split_044.html", 43,
+    "B族维生素不是单一营养素，而是一组参与能量代谢、神经功能和细胞更新的水溶性维生素，来源需要多样化。",
+    [
+      "书中重点介绍B1、B2、B6、B12和叶酸，并强调它们在人体内承担不同任务。",
+      "B族维生素参与三大产能营养素代谢，其中叶酸参与DNA合成，B1、B6、B12与神经功能有关。",
+      "全谷和种子外层、瘦肉、蛋奶、豆类、绿叶蔬菜、坚果及动物性食物共同构成主要来源。",
+      "B12主要来自动物性食物；长期严格素食者不能假定普通植物食物能够自然覆盖。",
+      "精制主食占比过高而其他食物过少，会让菜名看似多样、实际营养来源仍然单一。"
+    ],
+    ["书中列出：B1常见于种子外层和瘦肉，B2常见于肝脏、奶蛋豆和绿叶菜，叶酸常见于肝肾、蛋豆、绿叶菜、水果和坚果。"],
+    ["应用不采用书中B1、B2、B6补充剂“1∶1∶1”作为通用配方，也不根据口腔溃疡、疲劳或麻木自行判断缺乏。"], []],
+  ["B1-VITAMIN-C", "PART 02", "维生素C平衡：最好每天吃3种以上水果", "index_split_045.html", 44,
+    "维生素C参与胶原形成和抗氧化过程，主要依靠新鲜蔬菜水果获得，并能帮助植物性非血红素铁吸收。",
+    [
+      "书中把胶原形成、抗氧化和正常免疫功能列为维生素C的重要作用。",
+      "柑橘、柚子、猕猴桃等水果，以及甜椒、花椰菜和深色蔬菜都是书中列举的来源。",
+      "维生素C怕热且溶于水，长时间加热、浸泡或反复冲洗会增加损失。",
+      "新鲜蔬菜和完整水果应共同提供维生素C，不能把果汁饮料当作等价来源。",
+      "和豆类、全谷、绿叶菜等植物铁来源一起安排富含维生素C的食物，有助于非血红素铁吸收。"
+    ],
+    ["书中用中国饮食中蔬菜多经熟制的特点，解释为什么还要稳定安排新鲜水果。"],
+    ["应用沿用鲜果200～350克的记录目标，不直接采用“3种以上、半斤以上”作为强制评分。"], []],
+  ["B1-MINERALS", "PART 02", "矿物质的摄入要遵循适量和天然原则", "index_split_048.html", 47,
+    "矿物质需求量虽小，却参与骨骼、体液平衡、神经肌肉活动、氧运输、激素和酶系统；重点是种类全面、食物优先且不过量。",
+    [
+      "钙、磷、镁参与骨骼和牙齿结构，钠、钾、氯参与体液和渗透压平衡。",
+      "钾、钠、钙、镁共同参与神经和肌肉活动，铁、碘等则参与血红蛋白或激素等特殊物质。",
+      "常量元素和微量元素的需要量不同，不能因为微量元素重要就认为越多越好。",
+      "书中优先建议从多样化食物获得矿物质，而不是跟随他人的化验或补充方案盲目服用。",
+      "居住环境、出汗、饮食、疾病和药物都可能改变矿物质状态，普通饮食知识不能替代个体评估。"
+    ],
+    ["书中用“钢筋水泥、体内压力、酸碱平衡、酶开关”等比喻解释不同矿物质的分工。"],
+    ["应用只提供食物来源与搭配知识，不按非特异症状判断缺哪一种矿物质。"], []],
+  ["B1-CALCIUM", "PART 02", "钙平衡：和维生素D关系最紧密", "index_split_049.html", 48,
+    "钙不仅构成骨骼和牙齿，也参与神经肌肉与凝血等过程；摄入、维生素D、吸收条件和长期骨骼代谢需要一起看。",
+    [
+      "人体大部分钙储存在骨骼和牙齿，少量游离钙参与神经肌肉活动和凝血。",
+      "奶和奶制品是书中优先推荐的日常钙来源，豆类、芝麻、部分绿叶菜和海产品也能提供钙。",
+      "维生素D参与钙磷吸收与骨骼代谢，因此不能把补钙理解成只看食物中的钙含量。",
+      "草酸、植酸、消化吸收能力、部分疾病和药物都可能影响钙的利用。",
+      "一次血钙正常不能直接说明长期骨钙充足；同样，抽筋也不能单独确诊缺钙。"
+    ],
+    ["书中以不喝奶、长期室内工作且很少户外活动的中年人案例，说明钙来源与维生素D需要同时考虑。"],
+    ["应用继续用奶类结构帮助记录，但不依据抽筋、睡眠或血压自动判断缺钙。"], []],
+  ["B1-MAGNESIUM", "PART 02", "镁平衡：马拉松一族最容易出现镁流失", "index_split_050.html", 49,
+    "镁参与多种酶反应、能量代谢和神经肌肉活动，日常主要来源于绿叶蔬菜、坚果、全谷、豆类和部分海产品。",
+    [
+      "书中把镁描述为多种酶系统的参与者，并强调它与钙、钾、钠共同维持神经肌肉活动。",
+      "镁广泛存在于绿叶蔬菜、坚果、粗粮、豆类以及海带、紫菜等食物中。",
+      "大量出汗会增加电解质流失，但是否缺镁不能只根据运动量或抽筋推断。",
+      "把多类天然食物轮换起来，比依赖单一所谓“高镁食物”更符合书中的平衡思路。",
+      "肾功能异常时大剂量镁制剂可能带来风险，需要专业判断。"
+    ],
+    ["书中以长跑和闷热环境中的大量出汗提醒关注镁及其他电解质流失。"],
+    ["应用不把抽筋自动归因于缺镁，也不提供镁补充剂剂量。"], []],
+  ["B1-IRON", "PART 02", "铁平衡：水果是最好的补铁伴侣", "index_split_051.html", 50,
+    "铁参与血红蛋白、肌红蛋白和多种酶；记录饮食时既要看铁来源，也要看血红素铁与非血红素铁的吸收差异。",
+    [
+      "血红蛋白负责运输氧，肌红蛋白在肌肉中储存和利用氧，铁还参与多种代谢酶。",
+      "红肉、动物血和肝脏提供较容易吸收的血红素铁；豆类、全谷和绿叶菜提供非血红素铁。",
+      "维生素C能够帮助植物性非血红素铁吸收，因此豆类或绿叶菜可与新鲜蔬果搭配。",
+      "植酸、草酸、茶和部分药物可能影响非血红素铁吸收，具体影响需结合整餐和用药情况。",
+      "疲劳、头晕或脸色苍白并不能区分缺铁、失血或其他原因，贫血类型需要检查确认。"
+    ],
+    ["书中用长期不吃红肉、月经量多且已有贫血的案例，说明摄入、失血和吸收因素必须一起评估。"],
+    ["应用只展示来源和搭配知识；贫血、月经过多或准备服用铁剂时应先进行医学评估。"], []],
+  ["B1-ZINC", "PART 02", "锌平衡：每日摄取量不要超过15毫克", "index_split_052.html", 51,
+    "锌参与生长发育、组织修复、味觉和免疫等过程，动物性食物通常含量和利用率较高，但补充剂过量同样有风险。",
+    [
+      "书中把生长发育、伤口修复、味觉、食欲和免疫功能列为锌的重要作用。",
+      "牡蛎和其他贝类、动物内脏、牛羊猪肉以及蛋类是书中列举的主要食物来源。",
+      "豆类、粮食和坚果也能提供锌，但植酸等因素可能降低植物来源锌的吸收。",
+      "膳食是否长期缺少动物性或富锌食物，比偶尔吃一次高锌食物更值得观察。",
+      "补锌制剂并非越多越好，过量还可能干扰其他矿物质并产生不良反应。"
+    ],
+    ["书中将牡蛎列为突出食物来源，并比较了动物性与植物性食物中锌的利用差异。"],
+    ["应用不沿用章节标题中的15毫克作为所有人的自动上限，也不根据食欲或伤口情况诊断缺锌。"], []],
+  ["B1-IODINE", "PART 02", "碘平衡：缺乏和过量都致病", "index_split_053.html", 52,
+    "碘是合成甲状腺激素的重要原料，真正关键的是维持适量：长期缺乏和长期过量都可能造成问题。",
+    [
+      "甲状腺激素参与能量代谢和生长发育，碘是其必要原料。",
+      "碘盐是稳定的日常来源，海带、紫菜、贝类和海鱼等海产品也可提供碘。",
+      "海产品之间碘含量差异很大，不能把“海产品”当作固定剂量。",
+      "是否需要限制或增加碘，不能只看有没有甲状腺结节或某一次饮食记录。",
+      "孕产期、甲状腺疾病和正在使用相关药物的人，需要结合专业意见判断。"
+    ],
+    ["书中对比内陆地区长期摄入不足与长期大量摄入高碘食物，强调碘的双向失衡。"],
+    ["应用不根据甲状腺症状或疾病名称自动推荐高碘、低碘饮食。"], []],
   ["B1-FIBER", "PART 02", "膳食纤维摄入平衡靠重视水果和蔬菜", "index_split_058.html", 57,
     "膳食纤维不能只靠“吃了蔬菜”判断，蔬菜种类、鲜干状态、叶菜比例和水果是否带皮都会显著影响摄入。",
     [
@@ -390,11 +524,66 @@ const STRUCTURED_TRIAL_CONTENT: Partial<Record<string, {
   }
 };
 
+const BOOK_KNOWLEDGE_CATEGORY_BY_ID: Record<string, BookKnowledgeCategory> = {
+  "B1-NUTRIENTS": "NUTRIENT",
+  "B1-ENERGY": "NUTRIENT",
+  "B1-PROTEIN": "NUTRIENT",
+  "B1-CARB": "NUTRIENT",
+  "B1-FAT": "NUTRIENT",
+  "B1-FIBER": "NUTRIENT",
+  "B1-WATER": "NUTRIENT",
+  "B1-VITAMINS": "MICRONUTRIENT",
+  "B1-VITAMIN-A": "MICRONUTRIENT",
+  "B1-VITAMIN-D": "MICRONUTRIENT",
+  "B1-VITAMIN-B": "MICRONUTRIENT",
+  "B1-VITAMIN-C": "MICRONUTRIENT",
+  "B1-MINERALS": "MICRONUTRIENT",
+  "B1-CALCIUM": "MICRONUTRIENT",
+  "B1-MAGNESIUM": "MICRONUTRIENT",
+  "B1-IRON": "MICRONUTRIENT",
+  "B1-ZINC": "MICRONUTRIENT",
+  "B1-IODINE": "MICRONUTRIENT",
+  "B1-STRUCT": "FOOD_SELECTION",
+  "B1-DENSITY": "FOOD_SELECTION",
+  "B1-GRAIN": "FOOD_SELECTION",
+  "B1-PLANT": "FOOD_SELECTION",
+  "B1-ANIMAL": "FOOD_SELECTION",
+  "B1-ROTATE": "FOOD_SELECTION",
+  "B1-DIVERSITY": "FOOD_SELECTION",
+  "B1-PROCESS": "FOOD_SELECTION",
+  "B1-HIDDEN-CARB": "FOOD_SELECTION",
+  "B1-VEG": "FOOD_SELECTION",
+  "B1-FRUIT": "FOOD_SELECTION",
+  "B1-BREAKFAST": "MEAL_PLANNING",
+  "B1-LUNCH": "MEAL_PLANNING",
+  "B1-DINNER": "MEAL_PLANNING",
+  "B1-MATCH": "MEAL_PLANNING",
+  "B1-SNACK": "MEAL_PLANNING",
+  "B1-JOB": "MEAL_PLANNING",
+  "B2-FLOW": "RECORD_SAFETY"
+};
+
+const SAFETY_CAUTIONS_BY_ID: Partial<Record<string, string[]>> = {
+  "B1-ENERGY": ["疾病状态下的比例只是书中个案，不进入健康成年人计算。"],
+  "B1-VITAMINS": ["疲劳、口腔溃疡、眼干或麻木等表现都不具有特异性，不能据此自行诊断维生素缺乏。", "脂溶性维生素及部分高剂量补充剂可能蓄积、产生毒性或影响药物，应先核对专业意见。"],
+  "B1-VITAMIN-A": ["高剂量预成维生素A补充剂可能有害；孕产期、吸烟者及使用相关药物者尤其不应自行长期服用。"],
+  "B1-VITAMIN-D": ["日晒效果和维生素D血值存在个体差异；应用不使用固定日晒时长或书中血值作为诊断、治疗目标。"],
+  "B1-VITAMIN-B": ["B族维生素之间作用不同；不要把书中补充剂配比当作所有人的通用剂量。"],
+  "B1-VITAMIN-C": ["水果和蔬菜可以提供维生素C，但不能用高剂量补充剂替代完整饮食或治疗疾病。"],
+  "B1-MINERALS": ["矿物质缺乏与过量都可能有害；疾病、用药、肾功能异常或准备使用补充剂时需要专业评估。"],
+  "B1-CALCIUM": ["抽筋、失眠或血钙正常都不能单独判断长期钙状态；骨骼问题需要结合饮食、维生素D、检查和其他风险。"],
+  "B1-MAGNESIUM": ["抽筋不能自动归因于缺镁；肾功能异常者使用镁制剂尤其需要专业判断。"],
+  "B1-IRON": ["贫血有多种原因，应通过血常规、铁代谢及病因评估确认；铁剂过量可能严重中毒。"],
+  "B1-ZINC": ["食欲、味觉或伤口情况不能单独诊断缺锌；长期大剂量补锌可能造成不良反应和营养素相互干扰。"],
+  "B1-IODINE": ["甲状腺结节或甲状腺疾病不能直接等同于缺碘或碘过量；调整碘摄入前应结合诊断和专业意见。"]
+};
+
 function makeBook1(seed: ChapterSeed): BookChapterKnowledge {
   const [id, part, chapterTitle, epubFile, tocPosition, coreIdea, knowledgePoints, bookExamples, appNotes, relatedRuleIds] = seed;
   const structured = STRUCTURED_TRIAL_CONTENT[id];
   return {
     id,
+    category: BOOK_KNOWLEDGE_CATEGORY_BY_ID[id],
     source: { bookId: "BOOK_1", bookTitle: BOOK_1_TITLE, part, chapterTitle, epubFile, tocPosition, tocTotal: 141, verifiedAt: KNOWLEDGE_VERIFIED_AT, sourceKeywords: structured?.sourceKeywords },
     coreIdea,
     coreIdeaSource: "BOOK_DIRECT",
@@ -405,7 +594,7 @@ function makeBook1(seed: ChapterSeed): BookChapterKnowledge {
     appNotes: appNotes.length ? knowledgeItems(appNotes, "APP_DERIVED") : undefined,
     relatedRuleIds,
     applicability: "HEALTHY",
-    cautions: id === "B1-ENERGY" ? knowledgeItems(["疾病状态下的比例只是书中个案，不进入健康成年人计算。"], "SAFETY") : undefined
+    cautions: SAFETY_CAUTIONS_BY_ID[id] ? knowledgeItems(SAFETY_CAUTIONS_BY_ID[id], "SAFETY") : undefined
   };
 }
 
@@ -413,6 +602,7 @@ export const BOOK_CHAPTERS: BookChapterKnowledge[] = [
   ...BOOK_1_CHAPTERS.map(makeBook1),
   {
     id: "B2-FLOW",
+    category: "RECORD_SAFETY",
     source: {
       bookId: "BOOK_2",
       bookTitle: BOOK_2_TITLE,

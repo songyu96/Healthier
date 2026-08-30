@@ -198,7 +198,7 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .bottom-nav a.active { color: #fff; background: var(--green); }
 .inline-link, .back-link { color: var(--green); font-weight: 800; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .back-link { display: inline-flex; width: fit-content; padding: 4px 2px; text-decoration: none; }
-.book-filters { align-items: end; }
+.book-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
 .book-chapter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .book-chapter-card { min-width: 0; padding: 0; box-shadow: none; }
 .book-chapter-link { display: flex; min-height: 82px; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 22px; color: var(--ink); text-decoration: none; }
@@ -229,6 +229,7 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .page-stack { padding-top: 12px; }
   .card { border-radius: 17px; padding: 16px; }
   .book-chapter-grid { grid-template-columns: 1fr; }
+  .book-filters { grid-template-columns: 1fr; }
   .bottom-nav a { font-size: 10px; }
   .two-columns, .nutrient-inputs { grid-template-columns: 1fr; }
   .food-filters { grid-template-columns: 1fr; }

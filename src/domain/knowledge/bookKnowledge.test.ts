@@ -5,7 +5,7 @@ const itemText = (items: { text: string }[] | undefined) => items?.map((item) =>
 
 describe("book knowledge", () => {
   it("核心章节编号和 EPUB 定位唯一且有效", () => {
-    expect(BOOK_CHAPTERS).toHaveLength(24);
+    expect(BOOK_CHAPTERS).toHaveLength(36);
     expect(new Set(BOOK_CHAPTERS.map((chapter) => chapter.id)).size).toBe(BOOK_CHAPTERS.length);
     expect(new Set(BOOK_CHAPTERS.map((chapter) => `${chapter.source.bookId}:${chapter.source.epubFile}`)).size).toBe(BOOK_CHAPTERS.length);
     for (const chapter of BOOK_CHAPTERS) {
@@ -15,6 +15,7 @@ describe("book knowledge", () => {
       expect(bookProgressPercent(chapter.source)).toBeLessThanOrEqual(100);
       expect(chapter.coreIdea.length).toBeGreaterThan(10);
       expect(chapter.knowledgePoints.length).toBeGreaterThan(0);
+      expect(["NUTRIENT", "MICRONUTRIENT", "FOOD_SELECTION", "MEAL_PLANNING", "RECORD_SAFETY"]).toContain(chapter.category);
       expect(chapter.source.verifiedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       for (const item of [chapter.knowledgePoints, chapter.decisionRules, chapter.bookExamples, chapter.commonMisuses, chapter.appNotes, chapter.cautions].flatMap((items) => items ?? [])) {
         expect(["BOOK_DIRECT", "BOOK_CASE", "APP_DERIVED", "SAFETY"]).toContain(item.sourceKind);
@@ -23,7 +24,8 @@ describe("book knowledge", () => {
   });
 
   it("位置说明使用目录项和百分比，不伪造 EPUB 页码", () => {
-    const label = bookLocationLabel(BOOK_CHAPTERS[0].source);
+    const source = BOOK_CHAPTERS.find((chapter) => chapter.id === "B1-STRUCT")!.source;
+    const label = bookLocationLabel(source);
     expect(label).toContain("EPUB目录第 8/141 项");
     expect(label).toContain("约全书 6% 位置");
     expect(label).not.toContain("页");
@@ -60,5 +62,31 @@ describe("book knowledge", () => {
     expect(breakfast?.bookExamples?.every((item) => item.sourceKind === "BOOK_CASE")).toBe(true);
     expect(breakfast?.appNotes?.every((item) => item.sourceKind === "APP_DERIVED")).toBe(true);
     expect(BOOK_CHAPTERS.find((chapter) => chapter.id === "B2-FLOW")?.cautions?.every((item) => item.sourceKind === "SAFETY")).toBe(true);
+  });
+
+  it("知识分类覆盖营养素、微量营养素、食物、搭配和安全", () => {
+    const counts = BOOK_CHAPTERS.reduce<Record<string, number>>((result, chapter) => {
+      result[chapter.category] = (result[chapter.category] ?? 0) + 1;
+      return result;
+    }, {});
+    expect(counts).toEqual({
+      NUTRIENT: 7,
+      MICRONUTRIENT: 11,
+      FOOD_SELECTION: 11,
+      MEAL_PLANNING: 6,
+      RECORD_SAFETY: 1
+    });
+  });
+
+  it("维生素和矿物质主题保留食物知识与安全边界", () => {
+    for (const id of ["B1-VITAMIN-A", "B1-VITAMIN-D", "B1-VITAMIN-B", "B1-VITAMIN-C", "B1-CALCIUM", "B1-MAGNESIUM", "B1-IRON", "B1-ZINC", "B1-IODINE"]) {
+      const chapter = BOOK_CHAPTERS.find((item) => item.id === id);
+      expect(chapter?.category).toBe("MICRONUTRIENT");
+      expect(chapter?.relatedRuleIds).toEqual([]);
+      expect(chapter?.knowledgePoints.length).toBeGreaterThanOrEqual(5);
+      expect(chapter?.cautions?.some((item) => item.sourceKind === "SAFETY")).toBe(true);
+    }
+    expect(itemText(BOOK_CHAPTERS.find((chapter) => chapter.id === "B1-IRON")?.knowledgePoints)).toContain("维生素C");
+    expect(itemText(BOOK_CHAPTERS.find((chapter) => chapter.id === "B1-VITAMIN-A")?.knowledgePoints)).toContain("膳食脂肪");
   });
 });

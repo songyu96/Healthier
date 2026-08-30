@@ -45,6 +45,7 @@ import {
   type ActivityLevel,
   type BeverageSugarProfile,
   type BookChapterKnowledge,
+  type BookKnowledgeCategory,
   type BookKnowledgeItem,
   type BookKnowledgeSourceKind,
   type ConfirmedMeal,
@@ -937,6 +938,14 @@ const BOOK_SOURCE_KIND_LABELS: Record<BookKnowledgeSourceKind, string> = {
   SAFETY: "安全提示"
 };
 
+const BOOK_KNOWLEDGE_CATEGORY_LABELS: Record<BookKnowledgeCategory, string> = {
+  NUTRIENT: "营养素基础",
+  MICRONUTRIENT: "维生素与矿物质",
+  FOOD_SELECTION: "食物选择",
+  MEAL_PLANNING: "一日搭配",
+  RECORD_SAFETY: "记录与安全"
+};
+
 function KnowledgeSourceChip({ kind }: { kind: BookKnowledgeSourceKind }) {
   return <small className={`knowledge-source-chip source-${kind.toLowerCase()}`}>{BOOK_SOURCE_KIND_LABELS[kind]}</small>;
 }
@@ -959,14 +968,17 @@ export function BookChapterCard({ chapter }: { chapter: BookChapterKnowledge }) 
 function BookKnowledgePage() {
   const [query, setQuery] = useState("");
   const [book, setBook] = useState<"ALL" | "BOOK_1" | "BOOK_2">("ALL");
+  const [category, setCategory] = useState<"ALL" | BookKnowledgeCategory>("ALL");
   const normalizedQuery = normalizedFoodSearch(query);
   const chapters = BOOK_CHAPTERS.filter((chapter) => {
     if (book !== "ALL" && chapter.source.bookId !== book) return false;
+    if (category !== "ALL" && chapter.category !== category) return false;
     if (!normalizedQuery) return true;
     return normalizedFoodSearch([
       chapter.source.chapterTitle,
       chapter.source.part,
       chapter.coreIdea,
+      BOOK_KNOWLEDGE_CATEGORY_LABELS[chapter.category],
       chapter.id,
       ...chapter.knowledgePoints.map((item) => item.text),
       ...(chapter.decisionRules ?? []).map((item) => item.text),
@@ -979,7 +991,7 @@ function BookKnowledgePage() {
 
   return (
     <div className="page-stack">
-      <PageIntro eyebrow="与当前应用相关" title="核心饮食知识" description="首批收录24个与计算器、日评和周总结直接相关的主题，并非两本书的完整章节整理；每条内容区分书中结论、案例、应用推导和安全提示。" />
+      <PageIntro eyebrow="两本书的核心内容" title="核心饮食知识" description="从七大营养素、维生素与矿物质，到食物选择和一日搭配；内容以书中真正有用的知识为主，计算规则只是其中一部分。" />
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">章节查找</span><h2>核心知识目录</h2></div><span className="count-badge">{chapters.length} 章</span></div>
         <div className="compact-grid book-filters">
@@ -988,6 +1000,10 @@ function BookKnowledgePage() {
             <option value="ALL">两本书</option>
             <option value="BOOK_1">你是你吃出来的</option>
             <option value="BOOK_2">你是你吃出来的2</option>
+          </select></label>
+          <label>知识分类<select value={category} onChange={(event) => setCategory(event.target.value as typeof category)}>
+            <option value="ALL">全部分类</option>
+            {Object.entries(BOOK_KNOWLEDGE_CATEGORY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select></label>
         </div>
         <p className="helper">这两本 EPUB 没有纸书页码映射，因此应用显示目录序号和约全书百分比，不伪造“第几页”。</p>
