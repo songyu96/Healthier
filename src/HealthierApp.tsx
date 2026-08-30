@@ -5,13 +5,14 @@ import {
   type FormEvent,
   type PropsWithChildren
 } from "react";
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { registerSW } from "virtual:pwa-register";
 import {
   ACTIVITY_LEVELS,
   BEVERAGE_SUGAR_PROFILES,
   BEVERAGE_SUGAR_PROFILE_LABELS,
+  BOOK_CHAPTERS,
   CATEGORY_LABELS,
   FOOD_CATEGORIES,
   FOOD_KINDS,
@@ -27,12 +28,14 @@ import {
   assessDay,
   assessWeek,
   appendQuickMealFood,
+  bookLocationLabel,
   calculateNutrition,
   calculateTargets,
   createMealDraftFromTemplate,
   createMixedMealDraft,
   createQuickMealDraft,
   createRepeatMealDraft,
+  findBookChapter,
   nutritionFactsForMeal,
   parseHd1,
   recentFoodIds,
@@ -41,6 +44,7 @@ import {
   validateMealDraft,
   type ActivityLevel,
   type BeverageSugarProfile,
+  type BookChapterKnowledge,
   type ConfirmedMeal,
   type DailyAssessment,
   type DailyTargets,
@@ -318,6 +322,7 @@ function Layout({ children }: PropsWithChildren) {
         <NavLink to="/calculator">计算器</NavLink>
         <NavLink to="/history">周总结</NavLink>
         <NavLink to="/foods">食物库</NavLink>
+        <NavLink to="/book">书本</NavLink>
         <NavLink to="/settings">设置</NavLink>
       </nav>
     </div>
@@ -906,16 +911,103 @@ function CalculatorPage() {
           <section className="card">
             <div className="section-heading"><div><span className="eyebrow">来源追踪</span><h2>采用的书本规则</h2></div></div>
             <ul className="rule-list">
-              <li><b>BR-E-001</b><span>第一册“能量平衡的方法因人而异”：标准体重 = 身高 − 105</span></li>
-              <li><b>BR-E-002</b><span>同章：按劳动/活动强度选择每公斤能量系数</span></li>
-              <li><b>BR-E-003</b><span>同章：超重且轻体力时可手动把系数从30调整为25</span></li>
-              <li><b>BR-M-001</b><span>同章：碳水、蛋白质、脂肪按 55% / 15% / 30% 分配</span></li>
-              <li><b>BR-M-002</b><span>第一册“早餐一定要吃够100分”的175厘米案例：每公斤1～1.2克蛋白质交叉检查</span></li>
+              <li><b>BR-E-001</b><span>第一册“能量平衡的方法因人而异”：标准体重 = 身高 − 105 · <NavLink className="inline-link" to="/book/B1-ENERGY">查看章节</NavLink></span></li>
+              <li><b>BR-E-002</b><span>同章：按劳动/活动强度选择每公斤能量系数 · <NavLink className="inline-link" to="/book/B1-ENERGY">查看章节</NavLink></span></li>
+              <li><b>BR-E-003</b><span>同章：超重且轻体力时可手动把系数从30调整为25 · <NavLink className="inline-link" to="/book/B1-ENERGY">查看章节</NavLink></span></li>
+              <li><b>BR-M-001</b><span>同章：碳水、蛋白质、脂肪按 55% / 15% / 30% 分配 · <NavLink className="inline-link" to="/book/B1-ENERGY">查看章节</NavLink></span></li>
+              <li><b>BR-M-002</b><span>第一册“早餐一定要吃够100分”的175厘米案例：每公斤1～1.2克蛋白质交叉检查 · <NavLink className="inline-link" to="/book/B1-BREAKFAST">查看章节</NavLink></span></li>
             </ul>
             <details><summary>书中案例验算</summary><p>175 cm 轻体力：70 × 30 = 2100 kcal；178 cm 电脑工作：73 × 30 = 2190 kcal；185 cm 程序员：80 × 30 = 2400 kcal。</p></details>
           </section>
         </>
       )}
+    </div>
+  );
+}
+
+const BOOK_APPLICABILITY_LABELS: Record<BookChapterKnowledge["applicability"], string> = {
+  HEALTHY: "健康饮食",
+  INFORMATION_ONLY: "知识参考",
+  SAFETY_ONLY: "安全与流程"
+};
+
+export function BookChapterCard({ chapter }: { chapter: BookChapterKnowledge }) {
+  return (
+    <article className="card book-chapter-card">
+      <div className="book-card-meta">
+        <span className="food-chip">{chapter.source.bookId === "BOOK_1" ? "第一册" : "第二册"}</span>
+        <span className="food-chip">{chapter.source.part}</span>
+        <span className="food-chip">{BOOK_APPLICABILITY_LABELS[chapter.applicability]}</span>
+      </div>
+      <h2><NavLink to={`/book/${chapter.id}`}>{chapter.source.chapterTitle}</NavLink></h2>
+      <p>{chapter.summary}</p>
+      <p className="book-location">{bookLocationLabel(chapter.source)}</p>
+      <div className="book-rule-links">{chapter.relatedRuleIds.map((ruleId) => <code key={ruleId}>{ruleId}</code>)}</div>
+    </article>
+  );
+}
+
+function BookKnowledgePage() {
+  const [query, setQuery] = useState("");
+  const [book, setBook] = useState<"ALL" | "BOOK_1" | "BOOK_2">("ALL");
+  const normalizedQuery = normalizedFoodSearch(query);
+  const chapters = BOOK_CHAPTERS.filter((chapter) => {
+    if (book !== "ALL" && chapter.source.bookId !== book) return false;
+    if (!normalizedQuery) return true;
+    return normalizedFoodSearch([
+      chapter.source.chapterTitle,
+      chapter.source.part,
+      chapter.summary,
+      chapter.id,
+      ...chapter.keyPoints,
+      ...chapter.relatedRuleIds
+    ].join(" ")).includes(normalizedQuery);
+  });
+
+  return (
+    <div className="page-stack">
+      <PageIntro eyebrow="书本知识" title="边记录，边理解为什么" description="目前先收录24个与计算器、日评和周总结直接相关的核心章节；每条内容都保留书名、章节、EPUB目录位置和规则编号。" />
+      <section className="card">
+        <div className="section-heading"><div><span className="eyebrow">章节查找</span><h2>核心知识目录</h2></div><span className="count-badge">{chapters.length} 章</span></div>
+        <div className="compact-grid book-filters">
+          <label>搜索章节或规则<input value={query} placeholder="如：早餐、饮水、BR-F-003" onChange={(event) => setQuery(event.target.value)} /></label>
+          <label>书籍<select value={book} onChange={(event) => setBook(event.target.value as typeof book)}>
+            <option value="ALL">两本书</option>
+            <option value="BOOK_1">你是你吃出来的</option>
+            <option value="BOOK_2">你是你吃出来的2</option>
+          </select></label>
+        </div>
+        <p className="helper">这两本 EPUB 没有纸书页码映射，因此应用显示目录序号和约全书百分比，不伪造“第几页”。</p>
+      </section>
+      <div className="book-chapter-grid">
+        {chapters.map((chapter) => <BookChapterCard chapter={chapter} key={chapter.id} />)}
+      </div>
+      {chapters.length === 0 && <EmptyState text="没有找到匹配章节。" />}
+    </div>
+  );
+}
+
+function BookChapterPage() {
+  const { chapterId = "" } = useParams();
+  const chapter = findBookChapter(chapterId);
+  if (!chapter) return <Navigate replace to="/book" />;
+
+  return (
+    <div className="page-stack">
+      <NavLink className="back-link" to="/book">← 返回书本知识</NavLink>
+      <PageIntro eyebrow={`${chapter.source.bookId === "BOOK_1" ? "第一册" : "第二册"} · ${chapter.source.part}`} title={chapter.source.chapterTitle} description={chapter.summary} />
+      <section className="card book-source-card">
+        <span className="eyebrow">引用位置</span>
+        <h2>{chapter.source.bookTitle}</h2>
+        <p>{bookLocationLabel(chapter.source)}</p>
+        <p className="helper">内部定位：<code>{chapter.source.epubFile}</code> · 纸书页码：该 EPUB 未提供</p>
+      </section>
+      <section className="card book-detail-grid">
+        <div><span className="eyebrow">本章重点</span><ul>{chapter.keyPoints.map((point) => <li key={point}>{point}</li>)}</ul></div>
+        <div><span className="eyebrow">可以怎么做</span><ol>{chapter.actions.map((action) => <li key={action}>{action}</li>)}</ol></div>
+      </section>
+      {chapter.cautions && <section className="card"><span className="eyebrow">适用边界</span>{chapter.cautions.map((caution) => <p className="notice warning" key={caution}>{caution}</p>)}</section>}
+      <section className="card"><span className="eyebrow">关联规则</span><div className="book-rule-links">{chapter.relatedRuleIds.map((ruleId) => <code key={ruleId}>{ruleId}</code>)}</div></section>
     </div>
   );
 }
@@ -1373,6 +1465,8 @@ export default function HealthierApp() {
           <Route path="/calculator" element={<CalculatorPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/foods" element={<FoodsPage />} />
+          <Route path="/book" element={<BookKnowledgePage />} />
+          <Route path="/book/:chapterId" element={<BookChapterPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate replace to="/" />} />
         </Routes>

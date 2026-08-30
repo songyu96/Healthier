@@ -2,6 +2,8 @@
 
 个人使用的本地优先健康饮食 PWA。应用以仓库内两本《你是你吃出来的》为主要规则来源，支持快速记餐、HD1 餐食确认、每日目标计算、营养区间、下一餐建议、七日总结和加密备份。
 
+应用还提供书本知识中心：首批收录24个与现有规则直接相关的核心章节，可按关键词检索并查看重点、行动建议、关联规则和 EPUB 目录位置。由于源 EPUB 没有纸书页码映射，界面使用目录序号与全书百分比定位，不显示虚假页码。
+
 ## 本地运行
 
 ```powershell
@@ -58,6 +60,7 @@ HD1|20260825-1230|L|米饭~GR~CK~120-180g;西兰花~DV~CK~80-120g;鸡胸肉~MP~C
 - [书本规则规格](docs/book-rules-spec.md)
 - [PWA 设计](docs/pwa-design.md)
 - [规则验算案例](docs/rule-fixtures.md)
+- [书本章节知识规格](docs/book-knowledge-spec.md)
 - [食物库规则规格](docs/food-library-spec.md)
 - [日常食物覆盖审计](docs/food-coverage-audit.md)
 

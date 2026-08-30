@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import {
   AssessmentPanel,
+  BookChapterCard,
   BrandMark,
   MealRow,
   QuickMealCard,
@@ -14,6 +16,7 @@ import {
 import {
   assessDay,
   assessWeek,
+  BOOK_CHAPTERS,
   calculateTargets,
   type ConfirmedMeal,
   type FoodReference,
@@ -43,6 +46,22 @@ describe("brand mark", () => {
     expect(html).toContain("<svg");
     expect(html).toContain("brand-leaf");
     expect(html).not.toContain("衡");
+  });
+});
+
+describe("book knowledge rendering", () => {
+  it("章节卡展示书名位置、进度和关联规则", () => {
+    const chapter = BOOK_CHAPTERS.find((item) => item.id === "B1-BREAKFAST");
+    expect(chapter).toBeDefined();
+    const html = renderToStaticMarkup(
+      <MemoryRouter><BookChapterCard chapter={chapter!} /></MemoryRouter>
+    );
+
+    expect(html).toContain("早餐一定要吃够100分");
+    expect(html).toContain("EPUB目录第 75/141 项");
+    expect(html).toContain("约全书 53% 位置");
+    expect(html).toContain("BR-B-002");
+    expect(html).toContain("/book/B1-BREAKFAST");
   });
 });
 
