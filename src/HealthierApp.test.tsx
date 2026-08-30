@@ -50,7 +50,7 @@ describe("brand mark", () => {
 });
 
 describe("book knowledge rendering", () => {
-  it("章节卡展示书名位置、进度和关联规则", () => {
+  it("目录卡只展示主题入口，不重复详情与审计信息", () => {
     const chapter = BOOK_CHAPTERS.find((item) => item.id === "B1-BREAKFAST");
     expect(chapter).toBeDefined();
     const html = renderToStaticMarkup(
@@ -58,10 +58,12 @@ describe("book knowledge rendering", () => {
     );
 
     expect(html).toContain("早餐一定要吃够100分");
-    expect(html).toContain("EPUB目录第 75/141 项");
-    expect(html).toContain("约全书 53% 位置");
-    expect(html).toContain("BR-B-002");
     expect(html).toContain("/book/B1-BREAKFAST");
+    expect(html).not.toContain("第一册");
+    expect(html).not.toContain("PART 03");
+    expect(html).not.toContain(chapter!.coreIdea);
+    expect(html).not.toContain("EPUB目录");
+    expect(html).not.toContain("BR-B-002");
   });
 });
 

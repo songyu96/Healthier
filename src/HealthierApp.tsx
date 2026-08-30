@@ -930,12 +930,6 @@ function CalculatorPage() {
   );
 }
 
-const BOOK_APPLICABILITY_LABELS: Record<BookChapterKnowledge["applicability"], string> = {
-  HEALTHY: "健康饮食",
-  INFORMATION_ONLY: "知识参考",
-  SAFETY_ONLY: "安全与流程"
-};
-
 const BOOK_SOURCE_KIND_LABELS: Record<BookKnowledgeSourceKind, string> = {
   BOOK_DIRECT: "书中明确",
   BOOK_CASE: "书中案例",
@@ -954,15 +948,10 @@ function KnowledgeList({ items }: { items: BookKnowledgeItem[] }) {
 export function BookChapterCard({ chapter }: { chapter: BookChapterKnowledge }) {
   return (
     <article className="card book-chapter-card">
-      <div className="book-card-meta">
-        <span className="food-chip">{chapter.source.bookId === "BOOK_1" ? "第一册" : "第二册"}</span>
-        <span className="food-chip">{chapter.source.part}</span>
-        <span className="food-chip">{BOOK_APPLICABILITY_LABELS[chapter.applicability]}</span>
-      </div>
-      <h2><NavLink to={`/book/${chapter.id}`}>{chapter.source.chapterTitle}</NavLink></h2>
-      <p>{chapter.coreIdea}</p>
-      <p className="book-location">{bookLocationLabel(chapter.source)}</p>
-      <div className="book-rule-links">{chapter.relatedRuleIds.map((ruleId) => <code key={ruleId}>{ruleId}</code>)}</div>
+      <NavLink className="book-chapter-link" to={`/book/${chapter.id}`}>
+        <h2>{chapter.source.chapterTitle}</h2>
+        <span aria-hidden="true">→</span>
+      </NavLink>
     </article>
   );
 }

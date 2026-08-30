@@ -200,13 +200,12 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .back-link { display: inline-flex; width: fit-content; padding: 4px 2px; text-decoration: none; }
 .book-filters { align-items: end; }
 .book-chapter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.book-chapter-card { display: flex; min-width: 0; flex-direction: column; gap: 12px; box-shadow: none; }
-.book-chapter-card h2 { margin: 0; font-size: 21px; line-height: 1.35; }
-.book-chapter-card h2 a { color: var(--ink); text-decoration: none; }
-.book-chapter-card h2 a:hover { color: var(--green); }
-.book-chapter-card p { margin: 0; color: var(--muted); line-height: 1.6; }
-.book-card-meta, .book-rule-links { display: flex; flex-wrap: wrap; gap: 7px; }
-.book-location { margin-top: auto !important; padding-top: 4px; font-size: 12px; }
+.book-chapter-card { min-width: 0; padding: 0; box-shadow: none; }
+.book-chapter-link { display: flex; min-height: 82px; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 22px; color: var(--ink); text-decoration: none; }
+.book-chapter-link:hover { color: var(--green); }
+.book-chapter-link h2 { margin: 0; font-size: 20px; line-height: 1.42; }
+.book-chapter-link > span { flex: 0 0 auto; color: var(--green); font-size: 22px; font-weight: 900; }
+.book-rule-links { display: flex; flex-wrap: wrap; gap: 7px; }
 .book-rule-links code { border-radius: 999px; padding: 5px 9px; color: var(--green-dark); background: rgba(31, 96, 72, 0.1); font-size: 11px; font-weight: 800; }
 .book-source-card p { line-height: 1.65; }
 .knowledge-core-source { margin-top: -18px; }
