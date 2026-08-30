@@ -16,8 +16,10 @@ import {
 import {
   assessDay,
   assessWeek,
+  appendQuickMealFood,
   BOOK_CHAPTERS,
   calculateTargets,
+  createQuickMealDraft,
   type ConfirmedMeal,
   type FoodReference,
   type UserProfile
@@ -227,27 +229,37 @@ describe("food library filters", () => {
     expect(filterFoodsForMealEditor(searchable, "", "burger")[0]?.id).toBe("burger");
   });
 
-  it("快速记餐展示收藏、最近使用和当前草稿状态", () => {
+  it("快速记餐清楚展示同一餐中的多项食物", () => {
     const rice = { ...food("rice", "GR"), name: "熟米饭" };
     const milk = { ...food("milk", "DA"), name: "纯牛奶", basisUnit: "ml" as const };
+    const draft = appendQuickMealFood(
+      createQuickMealDraft(rice, "2026-08-30T12:00:00", "L", true, true),
+      milk
+    );
     const html = renderToStaticMarkup(
       <QuickMealCard
         foods={[rice, milk]}
         favoriteFoodIds={["rice"]}
         favoriteFoods={[rice]}
         recentFoods={[milk]}
-        hasDraft
+        draft={draft}
         onAdd={() => undefined}
         onToggleFavorite={() => undefined}
+        onRemoveDraftItem={() => undefined}
+        onClearDraft={() => undefined}
         onReviewDraft={() => undefined}
       />
     );
 
-    expect(html).toContain("快速记一餐");
-    expect(html).toContain("加入当前草稿");
+    expect(html).toContain("把这一餐逐项加进来");
+    expect(html).toContain("本餐已选 2 项");
     expect(html).toContain("★ 熟米饭");
     expect(html).toContain("纯牛奶");
-    expect(html).toContain("核对份量并保存");
+    expect(html).toContain("100g");
+    expect(html).toContain("250ml");
+    expect(html).toContain("移除熟米饭");
+    expect(html).toContain("核对 2 项并保存");
+    expect(html).not.toContain("餐次<select");
   });
 
   it("按单位提供简洁的常用份量", () => {

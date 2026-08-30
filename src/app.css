@@ -107,6 +107,21 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 .compact-grid { margin-top: 14px; }
 .nutrient-inputs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .quick-meal-card .compact-grid { margin-top: 0; }
+.today-page > .page-intro { padding-bottom: 2px; }
+.today-page > .page-intro h1 { font-size: clamp(30px, 7vw, 42px); }
+.quick-draft-tray { display: grid; gap: 12px; margin: 4px 0 18px; padding: 14px; border: 1px solid #b9d0bf; border-radius: 18px; background: #f1f7ef; }
+.quick-draft-heading, .quick-draft-items > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.quick-draft-heading b, .quick-draft-heading small, .quick-draft-items b, .quick-draft-items small { display: block; }
+.quick-draft-heading small, .quick-draft-items small { margin-top: 3px; color: var(--muted); }
+.quick-draft-items { display: grid; }
+.quick-draft-items > div { padding: 9px 0; border-top: 1px solid rgba(30, 89, 63, 0.14); }
+.today-more-tools summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; list-style: none; }
+.today-more-tools summary::-webkit-details-marker { display: none; }
+.today-more-tools summary b, .today-more-tools summary small { display: block; }
+.today-more-tools summary b { font-size: 19px; }
+.today-more-tools summary small { margin-top: 4px; color: var(--muted); }
+.today-more-tools-body { display: grid; gap: 24px; margin-top: 22px; }
+.today-tool-section + .today-tool-section { padding-top: 24px; border-top: 1px solid var(--line); }
 .quick-food-group { display: grid; gap: 8px; margin: 4px 0 16px; }
 .quick-food-group > b { color: var(--muted); font-size: 11px; }
 .food-chip-list { display: flex; flex-wrap: wrap; gap: 7px; }

@@ -429,7 +429,7 @@ interface QuickMealCardProps {
   favoriteFoodIds: string[];
   favoriteFoods: FoodReference[];
   recentFoods: FoodReference[];
-  hasDraft: boolean;
+  draft?: ParsedMeal | ConfirmedMeal;
   onAdd: (
     food: FoodReference,
     eatenAt: string,
@@ -438,6 +438,8 @@ interface QuickMealCardProps {
     unknownSalt: boolean
   ) => void;
   onToggleFavorite: (foodId: string) => void;
+  onRemoveDraftItem: (tempId: string) => void;
+  onClearDraft: () => void;
   onReviewDraft: () => void;
 }
 
@@ -454,9 +456,11 @@ export function QuickMealCard({
   favoriteFoodIds,
   favoriteFoods,
   recentFoods,
-  hasDraft,
+  draft,
   onAdd,
   onToggleFavorite,
+  onRemoveDraftItem,
+  onClearDraft,
   onReviewDraft
 }: QuickMealCardProps) {
   const [query, setQuery] = useState("");
@@ -468,15 +472,19 @@ export function QuickMealCard({
     () => query.trim() ? filterFoodsForMealEditor(foods, query).slice(0, 8) : [],
     [foods, query]
   );
-  const add = (food: FoodReference) => onAdd(food, eatenAt, mealType, unknownOil, unknownSalt);
+  const add = (food: FoodReference) => {
+    onAdd(food, eatenAt, mealType, unknownOil, unknownSalt);
+    setQuery("");
+  };
+  const draftItemCount = draft?.items.length ?? 0;
 
   return (
     <section className="card quick-meal-card">
       <div className="section-heading">
-        <div><span className="eyebrow">最快入口</span><h2>快速记一餐</h2></div>
-        <span className="step-pill">{hasDraft ? "加入当前草稿" : "新建草稿"}</span>
+        <div><span className="eyebrow">最快入口</span><h2>把这一餐逐项加进来</h2></div>
+        <span className="step-pill">{draftItemCount > 0 ? `已选 ${draftItemCount} 项` : "新建一餐"}</span>
       </div>
-      <div className="form-grid two-columns">
+      {!draft && <><div className="form-grid two-columns">
         <label>餐次<select value={mealType} onChange={(event) => setMealType(event.target.value as ConfirmedMeal["mealType"])}>
           {Object.entries(MEAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select></label>
@@ -485,7 +493,20 @@ export function QuickMealCard({
       <div className="form-grid two-columns compact-grid">
         <label className="checkbox"><input type="checkbox" checked={unknownOil} onChange={(event) => setUnknownOil(event.target.checked)} />油量未知</label>
         <label className="checkbox"><input type="checkbox" checked={unknownSalt} onChange={(event) => setUnknownSalt(event.target.checked)} />盐量未知</label>
-      </div>
+      </div></>}
+      {draft && <div className="quick-draft-tray">
+        <div className="quick-draft-heading">
+          <div><b>本餐已选 {draftItemCount} 项</b><small>{MEAL_LABELS[draft.mealType]} · {draft.eatenAt.slice(11, 16)} · 还可以继续添加</small></div>
+          <button className="text-button danger" type="button" onClick={onClearDraft}>取消本餐</button>
+        </div>
+        <div className="quick-draft-items">
+          {draft.items.map((item) => <div key={item.tempId}>
+            <span><b>{item.name || "未命名食物"}</b><small>{item.quantityMin === item.quantityMax ? item.quantityMin : `${item.quantityMin}～${item.quantityMax}`}{item.unit}</small></span>
+            <button className="text-button danger" type="button" aria-label={`移除${item.name || "未命名食物"}`} onClick={() => onRemoveDraftItem(item.tempId)}>移除</button>
+          </div>)}
+        </div>
+        <button className="primary full-width" type="button" onClick={onReviewDraft}>核对 {draftItemCount} 项并保存</button>
+      </div>}
       {favoriteFoods.length > 0 && <div className="quick-food-group">
         <b>我的收藏</b>
         <div className="food-chip-list">
@@ -498,7 +519,7 @@ export function QuickMealCard({
           {recentFoods.map((food) => <button className="food-chip" type="button" key={food.id} onClick={() => add(food)}>{food.name}</button>)}
         </div>
       </div>}
-      <label>搜索食物库<input type="search" placeholder="例如：鸡蛋、牛奶、米饭" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+      <label>搜索并加入本餐<input type="search" placeholder="例如：鸡蛋、牛奶、米饭" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
       {query.trim() && <div className="quick-food-results">
         {results.map((food) => {
           const favorite = favoriteFoodIds.includes(food.id);
@@ -507,14 +528,13 @@ export function QuickMealCard({
             <div><b>{food.name}</b><small>{CATEGORY_LABELS[food.category]} · 默认 {defaultPortion}</small></div>
             <div className="quick-food-actions">
               <button className="text-button" type="button" aria-pressed={favorite} onClick={() => onToggleFavorite(food.id)}>{favorite ? "★ 已收藏" : "☆ 收藏"}</button>
-              <button className="secondary" type="button" onClick={() => add(food)}>加入</button>
+              <button className="secondary" type="button" onClick={() => add(food)}>加入本餐</button>
             </div>
           </article>;
         })}
         {results.length === 0 && <p className="empty-state">没有可计算的匹配食物；可前往食物库新增本地数据。</p>}
       </div>}
-      <p className="helper">默认份量只是记录起点。加入后请在确认区核对实际重量、状态和油盐；一餐可连续加入多种食物。</p>
-      {hasDraft && <button className="primary full-width" type="button" onClick={onReviewDraft}>核对份量并保存</button>}
+      <p className="helper">每找到一种食物就点“加入本餐”，全部加入后再统一核对份量并保存。</p>
     </section>
   );
 }
@@ -568,7 +588,7 @@ export function AssessmentPanel({ assessment }: { assessment: DailyAssessment })
   );
 }
 
-function MixedMealEstimatorCard({ onCreate }: { onCreate: (draft: ParsedMeal, label: string) => void }) {
+function MixedMealEstimatorCard({ onCreate, embedded = false }: { onCreate: (draft: ParsedMeal, label: string) => void; embedded?: boolean }) {
   const [kind, setKind] = useState<MixedMealKind>("HOTPOT");
   const [mealType, setMealType] = useState<ConfirmedMeal["mealType"]>("D");
   const [meatG, setMeatG] = useState(100);
@@ -581,7 +601,7 @@ function MixedMealEstimatorCard({ onCreate }: { onCreate: (draft: ParsedMeal, la
   const [seasoningLevel, setSeasoningLevel] = useState<SeasoningLevel>("NORMAL");
   const hasMainFood = meatG > 0 || fishG > 0 || eggG > 0 || vegetableG > 0 || grainG > 0 || tuberG > 0 || soyG > 0;
 
-  return <section className="card">
+  return <section className={embedded ? "today-tool-section" : "card"}>
     <div className="section-heading">
       <div><span className="eyebrow">聚餐估算</span><h2>按吃进去的类别重量记录</h2></div>
       <span className="step-pill">熟重/可食重量</span>
@@ -729,21 +749,21 @@ function TodayPage() {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack today-page">
       <PageIntro eyebrow={today} title={`今天，${profile.name || "给自己吃好一点"}`} description="记录事实，看到缺口，再决定下一餐。所有数据只保存在这台设备。" />
       <QuickMealCard
         foods={foods}
         favoriteFoodIds={favoriteFoodIds}
         favoriteFoods={favoriteFoods}
         recentFoods={recentFoods}
-        hasDraft={Boolean(draft)}
+        draft={draft}
         onAdd={(food, eatenAt, mealType, unknownOil, unknownSalt) => {
-          setDraft((current) => current
-            ? appendQuickMealFood(current, food)
-            : createQuickMealDraft(food, eatenAt, mealType, unknownOil, unknownSalt)
-          );
+          const nextDraft = draft
+            ? appendQuickMealFood(draft, food)
+            : createQuickMealDraft(food, eatenAt, mealType, unknownOil, unknownSalt);
+          setDraft(nextDraft);
           setErrors([]);
-          setMessage(`已加入“${food.name}”，请核对份量后保存。`);
+          setMessage(`已加入“${food.name}”，本餐共 ${nextDraft.items.length} 项。`);
         }}
         onToggleFavorite={(foodId) => {
           const next = favoriteFoodIds.includes(foodId)
@@ -751,34 +771,26 @@ function TodayPage() {
             : [...favoriteFoodIds, foodId];
           void setSetting("favoriteFoodIds", next).catch((error) => setMessage(errorMessage(error)));
         }}
+        onRemoveDraftItem={(tempId) => {
+          setDraft((current) => {
+            if (!current) return undefined;
+            const items = current.items.filter((item) => item.tempId !== tempId);
+            return items.length > 0 ? { ...current, items } : undefined;
+          });
+          setErrors([]);
+          setMessage("");
+        }}
+        onClearDraft={() => {
+          setDraft(undefined);
+          setErrors([]);
+          setMessage("");
+        }}
         onReviewDraft={scrollToMealEditor}
       />
       {draft && <MealDraftEditor draft={draft} foods={foods} onChange={setDraft} onCancel={() => setDraft(undefined)} onSave={() => void save()} saving={saving} />}
       {message && <p className="notice success">{message}</p>}
-      {assessment && <AssessmentPanel assessment={assessment} />}
       <section className="card">
-        <div className="section-heading"><div><span className="eyebrow">常用搭配</span><h2>点一下生成可编辑草稿</h2></div><span className="step-pill">示例份量</span></div>
-        <p className="helper">模板只提供记录起点，不是书本目标或个性化推荐；保存前请确认实际食物、重量和油盐。</p>
-        <div className="template-grid">
-          {MEAL_TEMPLATES.map((template) => (
-            <button className="template-button" type="button" key={template.id} onClick={() => {
-              openDraft(createMealDraftFromTemplate(template, localDateTime()), "已生成“" + template.name + "”草稿，请按实际情况修改后保存。");
-            }}><strong>{template.name}</strong><span>{template.description}</span></button>
-          ))}
-        </div>
-      </section>
-      <MixedMealEstimatorCard onCreate={(nextDraft, label) => {
-        openDraft(nextDraft, `已生成“${label}”估算草稿，请按实际情况修改后保存。`);
-      }} />
-      <section className="card">
-        <div className="section-heading"><div><span className="eyebrow">HD1 导入</span><h2>粘贴一行餐食</h2></div><span className="step-pill">先解析，再确认</span></div>
-        <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLine(event.target.value)} spellCheck={false} />
-        <p className="helper">格式：HD1|日期时间|餐次|名称~分类~状态~重量范围|烹调|备注</p>
-        {errors.map((error) => <p className="notice error" key={error}>{error}</p>)}
-        <button className="primary full-width" type="button" onClick={parse}>解析并人工确认</button>
-      </section>
-      <section className="card">
-        <div className="section-heading"><div><span className="eyebrow">今日记录</span><h2>{meals.length} 个餐次</h2></div></div>
+        <div className="section-heading"><div><span className="eyebrow">今日记录</span><h2>{meals.length} 餐 · {meals.reduce((sum, meal) => sum + meal.items.length, 0)} 项食物</h2></div></div>
         {meals.length === 0 ? <EmptyState text="还没有餐食记录。" /> : (
           <div className="meal-list">
             {meals.map((meal) => <MealRow
@@ -809,6 +821,33 @@ function TodayPage() {
           /><span><b>今天已记录完整</b><small>餐食发生变化后会自动取消，需重新确认</small></span></label>
         </div>
       </section>
+      {assessment && meals.length > 0 && <AssessmentPanel assessment={assessment} />}
+      <details className="card today-more-tools">
+        <summary><span><b>其他记餐方式</b><small>常用搭配、组合餐估算与 HD1 导入</small></span><span className="step-pill">按需展开</span></summary>
+        <div className="today-more-tools-body">
+      <section className="today-tool-section">
+        <div className="section-heading"><div><span className="eyebrow">常用搭配</span><h2>点一下生成可编辑草稿</h2></div><span className="step-pill">示例份量</span></div>
+        <p className="helper">模板只提供记录起点，不是书本目标或个性化推荐；保存前请确认实际食物、重量和油盐。</p>
+        <div className="template-grid">
+          {MEAL_TEMPLATES.map((template) => (
+            <button className="template-button" type="button" key={template.id} onClick={() => {
+              openDraft(createMealDraftFromTemplate(template, localDateTime()), "已生成“" + template.name + "”草稿，请按实际情况修改后保存。");
+            }}><strong>{template.name}</strong><span>{template.description}</span></button>
+          ))}
+        </div>
+      </section>
+      <MixedMealEstimatorCard embedded onCreate={(nextDraft, label) => {
+        openDraft(nextDraft, `已生成“${label}”估算草稿，请按实际情况修改后保存。`);
+      }} />
+      <section className="today-tool-section">
+        <div className="section-heading"><div><span className="eyebrow">HD1 导入</span><h2>粘贴一行餐食</h2></div><span className="step-pill">先解析，再确认</span></div>
+        <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLine(event.target.value)} spellCheck={false} />
+        <p className="helper">格式：HD1|日期时间|餐次|名称~分类~状态~重量范围|烹调|备注</p>
+        {errors.map((error) => <p className="notice error" key={error}>{error}</p>)}
+        <button className="primary full-width" type="button" onClick={parse}>解析并人工确认</button>
+      </section>
+        </div>
+      </details>
     </div>
   );
 }
