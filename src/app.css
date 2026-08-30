@@ -106,6 +106,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 .two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .compact-grid { margin-top: 14px; }
 .nutrient-inputs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.quick-meal-card .compact-grid { margin-top: 0; }
+.quick-food-group { display: grid; gap: 8px; margin: 4px 0 16px; }
+.quick-food-group > b { color: var(--muted); font-size: 11px; }
+.food-chip-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.food-chip, .portion-button { min-height: 36px; border: 1px solid #bdd0bf; border-radius: 999px; padding: 7px 11px; color: var(--green-dark); background: #edf3ed; font-size: 12px; font-weight: 800; }
+.food-chip:hover, .portion-button:hover { border-color: var(--green); background: #e2ede3; }
+.quick-food-results { display: grid; gap: 8px; margin: -5px 0 14px; }
+.quick-food-results article { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 13px; padding: 10px 12px; background: #fbfaf5; }
+.quick-food-results b, .quick-food-results small { display: block; }
+.quick-food-results small { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.quick-food-actions { display: flex; align-items: center; gap: 5px; }
+.quick-food-actions .secondary { min-height: 36px; padding: 7px 12px; font-size: 12px; }
 .checkbox { display: flex; align-items: flex-start; gap: 9px; font-weight: 500; }
 .checkbox input { flex: 0 0 auto; width: 18px; min-height: 18px; margin-top: 2px; accent-color: var(--green); }
 .checkbox b, .checkbox small { display: block; }
@@ -132,6 +144,8 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 .item-editor { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 9px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
 .item-editor legend { padding: 0 4px; color: var(--green); font-size: 11px; font-weight: 800; }
 .item-editor label:first-of-type, .item-editor label:nth-of-type(2) { grid-column: span 2; }
+.quick-portions { display: flex; grid-column: 1 / -1; align-items: center; flex-wrap: wrap; gap: 7px; margin: -3px 0 10px; }
+.quick-portions > span { margin-right: 2px; color: var(--muted); font-size: 11px; font-weight: 700; }
 .meal-list, .food-list { display: grid; gap: 2px; }
 .meal-row { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .meal-row:last-child { border-bottom: 0; }
@@ -192,6 +206,8 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .foods-page > .page-intro { grid-template-columns: 1fr; }
   .foods-page > .page-intro > .food-page-actions { grid-column: 1; grid-row: auto; }
   .food-page-actions .primary { width: 100%; }
+  .quick-food-results article { grid-template-columns: 1fr; }
+  .quick-food-actions { justify-content: space-between; }
   .template-grid { grid-template-columns: 1fr; }
   .item-editor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .item-editor label:first-of-type, .item-editor label:nth-of-type(2) { grid-column: span 2; }

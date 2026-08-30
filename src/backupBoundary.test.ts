@@ -72,4 +72,19 @@ describe("backup boundary validation", () => {
     });
     expect(restored?.partialNutrientsPer100?.fiber).toBeUndefined();
   });
+
+  it("快速记餐收藏食物会进入加密备份", async () => {
+    await db.settings.put({
+      key: "favoriteFoodIds",
+      value: ["rice-cooked", "milk-whole"]
+    });
+
+    const payload = await decryptBackup(
+      await exportEncryptedBackup("correct-password"),
+      "correct-password"
+    );
+
+    expect(payload.settings.find((setting) => setting.key === "favoriteFoodIds")?.value)
+      .toEqual(["rice-cooked", "milk-whole"]);
+  });
 });

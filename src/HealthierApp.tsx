@@ -26,13 +26,16 @@ import {
   applyCurrentSafetyAdmission,
   assessDay,
   assessWeek,
+  appendQuickMealFood,
   calculateNutrition,
   calculateTargets,
   createMealDraftFromTemplate,
   createMixedMealDraft,
+  createQuickMealDraft,
   createRepeatMealDraft,
   nutritionFactsForMeal,
   parseHd1,
+  recentFoodIds,
   recommendNextMeal,
   resolveDailyTargets,
   validateMealDraft,
@@ -180,6 +183,12 @@ export function filterFoodsForMealEditor(
     .sort((left, right) => left.score - right.score || left.food.name.localeCompare(right.food.name, "zh-CN"));
 
   return ranked.slice(0, 60).map((entry) => entry.food);
+}
+
+export function commonPortions(unit: QuantityUnit): number[] {
+  if (unit === "pc") return [1, 2];
+  if (unit === "ml") return [250, 500];
+  return [50, 100, 200];
 }
 
 const HEALTH_FLAGS: { value: HealthFlag; label: string }[] = [
@@ -331,7 +340,7 @@ function MealDraftEditor({ draft, foods, onChange, onCancel, onSave, saving }: M
   };
 
   return (
-    <section className="card editor-card">
+    <section id="meal-draft-editor" className="card editor-card">
       <div className="section-heading">
         <div><span className="eyebrow">人工确认</span><h2>确认食物与重量</h2></div>
         <button className="text-button" type="button" onClick={onCancel}>取消</button>
@@ -379,6 +388,14 @@ function MealDraftEditor({ draft, foods, onChange, onCancel, onSave, saving }: M
                   {QUANTITY_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
                 </select>
               </label>
+              <div className="quick-portions" role="group" aria-label={`${item.name || `食物 ${index + 1}`}常用份量`}>
+                <span>常用份量</span>
+                {commonPortions(item.unit).map((quantity) => (
+                  <button className="portion-button" type="button" key={quantity} onClick={() => updateItem(index, { quantityMin: quantity, quantityMax: quantity })}>
+                    {quantity}{item.unit}
+                  </button>
+                ))}
+              </div>
               <button className="danger text-button" type="button" onClick={() => onChange({ ...draft, items: draft.items.filter((_, itemIndex) => itemIndex !== index) })}>移除</button>
             </fieldset>
           );
@@ -395,6 +412,101 @@ function MealDraftEditor({ draft, foods, onChange, onCancel, onSave, saving }: M
       <label>烹调方式<input value={draft.cookingMethod} onChange={(event) => onChange({ ...draft, cookingMethod: event.target.value })} /></label>
       <label>备注<textarea rows={2} value={draft.note} onChange={(event) => onChange({ ...draft, note: event.target.value })} /></label>
       <button className="primary full-width" type="button" disabled={saving || draft.items.length === 0} onClick={onSave}>{saving ? "保存中…" : "确认并保存"}</button>
+    </section>
+  );
+}
+
+interface QuickMealCardProps {
+  foods: FoodReference[];
+  favoriteFoodIds: string[];
+  favoriteFoods: FoodReference[];
+  recentFoods: FoodReference[];
+  hasDraft: boolean;
+  onAdd: (
+    food: FoodReference,
+    eatenAt: string,
+    mealType: ConfirmedMeal["mealType"],
+    unknownOil: boolean,
+    unknownSalt: boolean
+  ) => void;
+  onToggleFavorite: (foodId: string) => void;
+  onReviewDraft: () => void;
+}
+
+function mealTypeForNow(date = new Date()): ConfirmedMeal["mealType"] {
+  const hour = date.getHours();
+  if (hour < 10) return "B";
+  if (hour < 15) return "L";
+  if (hour < 21) return "D";
+  return "S";
+}
+
+export function QuickMealCard({
+  foods,
+  favoriteFoodIds,
+  favoriteFoods,
+  recentFoods,
+  hasDraft,
+  onAdd,
+  onToggleFavorite,
+  onReviewDraft
+}: QuickMealCardProps) {
+  const [query, setQuery] = useState("");
+  const [mealType, setMealType] = useState<ConfirmedMeal["mealType"]>(() => mealTypeForNow());
+  const [eatenAt, setEatenAt] = useState(() => localDateTime());
+  const [unknownOil, setUnknownOil] = useState(true);
+  const [unknownSalt, setUnknownSalt] = useState(true);
+  const results = useMemo(
+    () => query.trim() ? filterFoodsForMealEditor(foods, query).slice(0, 8) : [],
+    [foods, query]
+  );
+  const add = (food: FoodReference) => onAdd(food, eatenAt, mealType, unknownOil, unknownSalt);
+
+  return (
+    <section className="card quick-meal-card">
+      <div className="section-heading">
+        <div><span className="eyebrow">最快入口</span><h2>快速记一餐</h2></div>
+        <span className="step-pill">{hasDraft ? "加入当前草稿" : "新建草稿"}</span>
+      </div>
+      <div className="form-grid two-columns">
+        <label>餐次<select value={mealType} onChange={(event) => setMealType(event.target.value as ConfirmedMeal["mealType"])}>
+          {Object.entries(MEAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select></label>
+        <label>进餐时间<input type="datetime-local" value={eatenAt.slice(0, 16)} onChange={(event) => setEatenAt(event.target.value + ":00")} /></label>
+      </div>
+      <div className="form-grid two-columns compact-grid">
+        <label className="checkbox"><input type="checkbox" checked={unknownOil} onChange={(event) => setUnknownOil(event.target.checked)} />油量未知</label>
+        <label className="checkbox"><input type="checkbox" checked={unknownSalt} onChange={(event) => setUnknownSalt(event.target.checked)} />盐量未知</label>
+      </div>
+      {favoriteFoods.length > 0 && <div className="quick-food-group">
+        <b>我的收藏</b>
+        <div className="food-chip-list">
+          {favoriteFoods.map((food) => <button className="food-chip" type="button" key={food.id} onClick={() => add(food)}>★ {food.name}</button>)}
+        </div>
+      </div>}
+      {recentFoods.length > 0 && <div className="quick-food-group">
+        <b>最近使用</b>
+        <div className="food-chip-list">
+          {recentFoods.map((food) => <button className="food-chip" type="button" key={food.id} onClick={() => add(food)}>{food.name}</button>)}
+        </div>
+      </div>}
+      <label>搜索食物库<input type="search" placeholder="例如：鸡蛋、牛奶、米饭" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+      {query.trim() && <div className="quick-food-results">
+        {results.map((food) => {
+          const favorite = favoriteFoodIds.includes(food.id);
+          const defaultPortion = food.gramsPerPiece ? "1pc" : food.basisUnit === "ml" ? "250ml" : "100g";
+          return <article key={food.id}>
+            <div><b>{food.name}</b><small>{CATEGORY_LABELS[food.category]} · 默认 {defaultPortion}</small></div>
+            <div className="quick-food-actions">
+              <button className="text-button" type="button" aria-pressed={favorite} onClick={() => onToggleFavorite(food.id)}>{favorite ? "★ 已收藏" : "☆ 收藏"}</button>
+              <button className="secondary" type="button" onClick={() => add(food)}>加入</button>
+            </div>
+          </article>;
+        })}
+        {results.length === 0 && <p className="empty-state">没有可计算的匹配食物；可前往食物库新增本地数据。</p>}
+      </div>}
+      <p className="helper">默认份量只是记录起点。加入后请在确认区核对实际重量、状态和油盐；一餐可连续加入多种食物。</p>
+      {hasDraft && <button className="primary full-width" type="button" onClick={onReviewDraft}>核对份量并保存</button>}
     </section>
   );
 }
@@ -496,14 +608,34 @@ function TodayPage() {
   const foods = useFoodReferences();
   const today = localDateKey();
   const meals = useLiveQuery(() => loadMealsForDate(today), [today], []);
+  const recentMeals = useLiveQuery(() => loadMealsBetween(dateOffset(-30), today), [today], []);
   const completed = useLiveQuery(() => getDayCompletion(today), [today], false);
   const storedDayTarget = useLiveQuery(() => getSetting<unknown>(`dayTarget:${today}`, undefined), [today]);
   const waterMl = useLiveQuery(() => getSetting(`water:${today}`, 0), [today], 0);
+  const storedFavoriteFoodIds = useLiveQuery(() => getSetting<unknown>("favoriteFoodIds", []), [], []);
   const [rawLine, setRawLine] = useState(`HD1|${today.replaceAll("-", "")}-0800|B|鸡蛋~EG~CK~1-1pc;牛奶~DA~EA~250-250ml|水煮|油盐未知`);
   const [errors, setErrors] = useState<string[]>([]);
   const [draft, setDraft] = useState<ParsedMeal | ConfirmedMeal>();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const favoriteFoodIds = useMemo(
+    () => Array.isArray(storedFavoriteFoodIds)
+      ? storedFavoriteFoodIds.filter((value): value is string => typeof value === "string")
+      : [],
+    [storedFavoriteFoodIds]
+  );
+  const favoriteFoods = useMemo(
+    () => favoriteFoodIds
+      .map((id) => foods.find((food) => food.id === id))
+      .filter((food): food is FoodReference => food !== undefined && !isHiddenBuiltInFallbackFood(food)),
+    [favoriteFoodIds, foods]
+  );
+  const recentFoods = useMemo(
+    () => recentFoodIds(recentMeals)
+      .map((id) => foods.find((food) => food.id === id))
+      .filter((food): food is FoodReference => food !== undefined && !isHiddenBuiltInFallbackFood(food)),
+    [foods, recentMeals]
+  );
   const currentTargets = useMemo(() => profile ? calculateTargets(profile) : undefined, [profile]);
   const targets = useMemo(
     () => currentTargets
@@ -516,6 +648,19 @@ function TodayPage() {
   );
   const assessment = useMemo(() => targets ? assessDay(today, mealFacts(meals, foods), targets, { completed, waterMl }) : undefined, [completed, foods, meals, targets, today, waterMl]);
 
+  const scrollToMealEditor = () => {
+    requestAnimationFrame(() => {
+      document.getElementById("meal-draft-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const openDraft = (nextDraft: ParsedMeal | ConfirmedMeal, nextMessage: string) => {
+    setDraft(nextDraft);
+    setErrors([]);
+    setMessage(nextMessage);
+    scrollToMealEditor();
+  };
+
   const parse = () => {
     const result = parseHd1(rawLine);
     if (!result.ok) {
@@ -523,9 +668,7 @@ function TodayPage() {
       setDraft(undefined);
       return;
     }
-    setErrors([]);
-    setDraft(result.value);
-    setMessage("");
+    openDraft(result.value, "");
   };
 
   const save = async () => {
@@ -577,6 +720,30 @@ function TodayPage() {
   return (
     <div className="page-stack">
       <PageIntro eyebrow={today} title={`今天，${profile.name || "给自己吃好一点"}`} description="记录事实，看到缺口，再决定下一餐。所有数据只保存在这台设备。" />
+      <QuickMealCard
+        foods={foods}
+        favoriteFoodIds={favoriteFoodIds}
+        favoriteFoods={favoriteFoods}
+        recentFoods={recentFoods}
+        hasDraft={Boolean(draft)}
+        onAdd={(food, eatenAt, mealType, unknownOil, unknownSalt) => {
+          setDraft((current) => current
+            ? appendQuickMealFood(current, food)
+            : createQuickMealDraft(food, eatenAt, mealType, unknownOil, unknownSalt)
+          );
+          setErrors([]);
+          setMessage(`已加入“${food.name}”，请核对份量后保存。`);
+        }}
+        onToggleFavorite={(foodId) => {
+          const next = favoriteFoodIds.includes(foodId)
+            ? favoriteFoodIds.filter((id) => id !== foodId)
+            : [...favoriteFoodIds, foodId];
+          void setSetting("favoriteFoodIds", next).catch((error) => setMessage(errorMessage(error)));
+        }}
+        onReviewDraft={scrollToMealEditor}
+      />
+      {draft && <MealDraftEditor draft={draft} foods={foods} onChange={setDraft} onCancel={() => setDraft(undefined)} onSave={() => void save()} saving={saving} />}
+      {message && <p className="notice success">{message}</p>}
       {assessment && <AssessmentPanel assessment={assessment} />}
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">常用搭配</span><h2>点一下生成可编辑草稿</h2></div><span className="step-pill">示例份量</span></div>
@@ -584,27 +751,21 @@ function TodayPage() {
         <div className="template-grid">
           {MEAL_TEMPLATES.map((template) => (
             <button className="template-button" type="button" key={template.id} onClick={() => {
-              setDraft(createMealDraftFromTemplate(template, localDateTime()));
-              setErrors([]);
-              setMessage("已生成“" + template.name + "”草稿，请按实际情况修改后保存。");
+              openDraft(createMealDraftFromTemplate(template, localDateTime()), "已生成“" + template.name + "”草稿，请按实际情况修改后保存。");
             }}><strong>{template.name}</strong><span>{template.description}</span></button>
           ))}
         </div>
       </section>
       <MixedMealEstimatorCard onCreate={(nextDraft, label) => {
-        setDraft(nextDraft);
-        setErrors([]);
-        setMessage(`已生成“${label}”估算草稿，请按实际情况修改后保存。`);
+        openDraft(nextDraft, `已生成“${label}”估算草稿，请按实际情况修改后保存。`);
       }} />
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">HD1 导入</span><h2>粘贴一行餐食</h2></div><span className="step-pill">先解析，再确认</span></div>
         <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLine(event.target.value)} spellCheck={false} />
         <p className="helper">格式：HD1|日期时间|餐次|名称~分类~状态~重量范围|烹调|备注</p>
         {errors.map((error) => <p className="notice error" key={error}>{error}</p>)}
-        {message && <p className="notice success">{message}</p>}
         <button className="primary full-width" type="button" onClick={parse}>解析并人工确认</button>
       </section>
-      {draft && <MealDraftEditor draft={draft} foods={foods} onChange={setDraft} onCancel={() => setDraft(undefined)} onSave={() => void save()} saving={saving} />}
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">今日记录</span><h2>{meals.length} 个餐次</h2></div></div>
         {meals.length === 0 ? <EmptyState text="还没有餐食记录。" /> : (
@@ -613,11 +774,9 @@ function TodayPage() {
               key={meal.id}
               meal={meal}
               onRepeat={() => {
-                setDraft(createRepeatMealDraft(meal, localDateTime()));
-                setErrors([]);
-                setMessage("已复制餐食，请确认时间、内容和重量后保存。");
+                openDraft(createRepeatMealDraft(meal, localDateTime()), "已复制餐食，请确认时间、内容和重量后保存。");
               }}
-              onEdit={() => setDraft(meal)}
+              onEdit={() => openDraft(meal, "正在编辑已有餐食，保存后会更新原记录。")}
               onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); } catch (error) { setMessage(errorMessage(error)); } }}
             />)}
           </div>

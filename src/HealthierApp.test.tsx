@@ -4,7 +4,9 @@ import {
   AssessmentPanel,
   BrandMark,
   MealRow,
+  QuickMealCard,
   WeeklyActionsPanel,
+  commonPortions,
   filterFoodsForMealEditor,
   foodCategoriesForKind,
   foodQualityLabel
@@ -202,6 +204,35 @@ describe("food library filters", () => {
     expect(filterFoodsForMealEditor(searchable, "快餐").map((item) => item.id)).toEqual(["burger"]);
     expect(filterFoodsForMealEditor(searchable, "早餐").map((item) => item.id)).toEqual(["milk"]);
     expect(filterFoodsForMealEditor(searchable, "", "burger")[0]?.id).toBe("burger");
+  });
+
+  it("快速记餐展示收藏、最近使用和当前草稿状态", () => {
+    const rice = { ...food("rice", "GR"), name: "熟米饭" };
+    const milk = { ...food("milk", "DA"), name: "纯牛奶", basisUnit: "ml" as const };
+    const html = renderToStaticMarkup(
+      <QuickMealCard
+        foods={[rice, milk]}
+        favoriteFoodIds={["rice"]}
+        favoriteFoods={[rice]}
+        recentFoods={[milk]}
+        hasDraft
+        onAdd={() => undefined}
+        onToggleFavorite={() => undefined}
+        onReviewDraft={() => undefined}
+      />
+    );
+
+    expect(html).toContain("快速记一餐");
+    expect(html).toContain("加入当前草稿");
+    expect(html).toContain("★ 熟米饭");
+    expect(html).toContain("纯牛奶");
+    expect(html).toContain("核对份量并保存");
+  });
+
+  it("按单位提供简洁的常用份量", () => {
+    expect(commonPortions("g")).toEqual([50, 100, 200]);
+    expect(commonPortions("ml")).toEqual([250, 500]);
+    expect(commonPortions("pc")).toEqual([1, 2]);
   });
 
   it("所有内置无营养占位均不进入普通选择，但旧记录和用户自建条目仍可用", () => {
