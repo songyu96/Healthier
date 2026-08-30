@@ -960,7 +960,9 @@ function BookKnowledgePage() {
       chapter.coreIdea,
       chapter.id,
       ...chapter.knowledgePoints,
+      ...(chapter.decisionRules ?? []),
       ...(chapter.bookExamples ?? []),
+      ...(chapter.commonMisuses ?? []),
       ...(chapter.appNotes ?? []),
       ...chapter.relatedRuleIds
     ].join(" ")).includes(normalizedQuery);
@@ -1004,13 +1006,20 @@ function BookChapterPage() {
         <p>{bookLocationLabel(chapter.source)}</p>
         <p className="helper">内部定位：<code>{chapter.source.epubFile}</code> · 纸书页码：该 EPUB 未提供</p>
       </section>
-      <section className="card book-knowledge-section">
+      {chapter.decisionRules ? <section className="card book-knowledge-section">
+        <span className="eyebrow">具体怎么计算或判断</span>
+        <ul>{chapter.decisionRules.map((rule) => <li key={rule}>{rule}</li>)}</ul>
+      </section> : <section className="card book-knowledge-section">
         <span className="eyebrow">真正值得记住</span>
         <ul>{chapter.knowledgePoints.map((point) => <li key={point}>{point}</li>)}</ul>
-      </section>
+      </section>}
       {chapter.bookExamples && <section className="card book-knowledge-section">
         <span className="eyebrow">书中数据与案例</span>
         <ul>{chapter.bookExamples.map((example) => <li key={example}>{example}</li>)}</ul>
+      </section>}
+      {chapter.commonMisuses && <section className="card book-knowledge-section book-misuse-card">
+        <span className="eyebrow">最容易用错的地方</span>
+        <ul>{chapter.commonMisuses.map((misuse) => <li key={misuse}>{misuse}</li>)}</ul>
       </section>}
       {chapter.appNotes && <section className="card book-knowledge-section">
         <span className="eyebrow">应用如何使用</span>

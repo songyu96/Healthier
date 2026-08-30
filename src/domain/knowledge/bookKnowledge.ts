@@ -15,7 +15,9 @@ export interface BookChapterKnowledge {
   source: BookSourceLocation;
   coreIdea: string;
   knowledgePoints: string[];
+  decisionRules?: string[];
   bookExamples?: string[];
+  commonMisuses?: string[];
   appNotes?: string[];
   relatedRuleIds: string[];
   applicability: BookKnowledgeApplicability;
@@ -307,14 +309,81 @@ const BOOK_1_CHAPTERS: ChapterSeed[] = [
     ["应用记录水果克数与碳水，但不会自动建议用水果替代整顿饭。"], ["BR-F-003", "BR-M-004"]]
 ];
 
+const STRUCTURED_TRIAL_CONTENT: Partial<Record<string, {
+  decisionRules: string[];
+  commonMisuses: string[];
+}>> = {
+  "B1-ENERGY": {
+    decisionRules: [
+      "标准体重（kg）=身高（cm）−105。",
+      "每日能量=标准体重×活动系数；长期卧床、轻、中、重体力分别采用25、30、35、40 kcal/kg。",
+      "碳水目标=总能量×55%÷4；蛋白质目标=总能量×15%÷4；脂肪目标=总能量×30%÷9。",
+      "活动等级按长期日常工作和运动判断；只有长期状态改变时才需要重新计算。",
+      "轻体力且偏胖时，书中提出可把系数30降至25，但必须由使用者主动决定。"
+    ],
+    commonMisuses: [
+      "不能把普通成年人的公式当作疾病、孕产期或营养不良状态下的处方。",
+      "不能因为偶尔进行一次运动就提高整天或长期能量目标。",
+      "书中没有定义“偏胖”，应用不能根据体重自动启用25系数。",
+      "书中只说年龄大、消耗少时适当降低总能量，没有给出可自动套用的年龄扣减公式。"
+    ]
+  },
+  "B1-BREAKFAST": {
+    decisionRules: [
+      "先看能量：早餐占全天1/3～1/2，能量部分占50分。",
+      "再看结构：粮食、动物性食物、蔬菜、水果、油脂各10分，共50分。",
+      "总分高于60分为及格、80分为优秀、100分为结构和能量都较完整。",
+      "早餐主食至少约占全天主食的1/3，优先全谷、玉米、薯类等较完整的来源。",
+      "动物蛋白可用“全天蛋白质约为标准体重×1～1.2克，再取约一半并按三餐分配”进行交叉检查。"
+    ],
+    commonMisuses: [
+      "米粥加馒头、燕麦粥加花卷仍主要是粮食类累加，不能按菜名当作多个结构类别。",
+      "只有鸡蛋没有主食时能量不足；只有白粥、面包或杂粮糊时又缺少优质蛋白。",
+      "一个鸡蛋加200毫升牛奶约12～13克蛋白质，在书中175厘米案例中只是接近或略低于13.3克检查值。",
+      "应用的早餐能量线性折分是产品推导，不是书中给出的计算公式。"
+    ]
+  },
+  "B1-HIDDEN-CARB": {
+    decisionRules: [
+      "判断主食量时要把米面、全谷、杂豆、薯类、淀粉根茎、水果碳水和淀粉小吃一起考虑。",
+      "芡粉、粉条粉丝、凉皮米皮、土豆丝、山药泥等虽然可能以菜或配料出现，仍要计入主食或碳水。",
+      "主食量应结合实际体力、体重和腰围等指标调整，而不是人人采用同一克数。",
+      "书中的中心性肥胖观察值为男性腰围大于90厘米、女性大于80厘米，或腰臀比分别大于0.9和0.8。"
+    ],
+    commonMisuses: [
+      "土豆丝和山药不能因为出现在菜盘里就计入普通蔬菜目标。",
+      "粉丝和凉皮不能因为没有米饭外形就漏掉主食统计。",
+      "水果可以替换部分主食，但不能在原有主食之外无限叠加。",
+      "不能仅凭主食偏多推断肥胖、血糖异常或其他疾病原因。"
+    ]
+  },
+  "B1-FRUIT": {
+    decisionRules: [
+      "每天安排200～350克新鲜水果，果汁不计入鲜果目标。",
+      "水果可以和正餐一起吃，也可以作为加餐；如果增加水果，应相应考虑减少米面。",
+      "书中近似交换为200克苹果≈25克米面中的碳水，400克苹果≈50克米面中的碳水。",
+      "水果只能替换一部分主食，不能替代整餐所需的蛋白质、脂肪和其他营养。"
+    ],
+    commonMisuses: [
+      "吃饱饭后每天再加大量水果，会把水果变成额外能量，而不是结构替换。",
+      "不能用果汁、果汁饮料代替完整鲜果。",
+      "不能只吃水果减肥或把水果当作完整一餐。",
+      "书中没有明确米面交换值的生熟重口径，因此应用不能自动精确扣减主食克数。"
+    ]
+  }
+};
+
 function makeBook1(seed: ChapterSeed): BookChapterKnowledge {
   const [id, part, chapterTitle, epubFile, tocPosition, coreIdea, knowledgePoints, bookExamples, appNotes, relatedRuleIds] = seed;
+  const structured = STRUCTURED_TRIAL_CONTENT[id];
   return {
     id,
     source: { bookId: "BOOK_1", bookTitle: BOOK_1_TITLE, part, chapterTitle, epubFile, tocPosition, tocTotal: 141 },
     coreIdea,
-    knowledgePoints,
+    knowledgePoints: structured ? [] : knowledgePoints,
+    decisionRules: structured?.decisionRules,
     bookExamples: bookExamples.length ? bookExamples : undefined,
+    commonMisuses: structured?.commonMisuses,
     appNotes: appNotes.length ? appNotes : undefined,
     relatedRuleIds,
     applicability: "HEALTHY",

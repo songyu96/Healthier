@@ -211,6 +211,7 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .book-source-card p { line-height: 1.65; }
 .book-knowledge-section ul { margin: 12px 0 0; padding-left: 22px; }
 .book-knowledge-section li { margin-bottom: 12px; line-height: 1.7; }
+.book-misuse-card { border-color: rgba(160, 94, 24, 0.24); background: rgba(255, 248, 235, 0.82); }
 
 @media (max-width: 620px) {
   main { width: min(100% - 20px, 760px); }

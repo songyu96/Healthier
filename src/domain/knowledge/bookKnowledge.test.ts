@@ -12,7 +12,7 @@ describe("book knowledge", () => {
       expect(bookProgressPercent(chapter.source)).toBeGreaterThanOrEqual(1);
       expect(bookProgressPercent(chapter.source)).toBeLessThanOrEqual(100);
       expect(chapter.coreIdea.length).toBeGreaterThan(10);
-      expect(chapter.knowledgePoints.length).toBeGreaterThan(0);
+      expect(chapter.knowledgePoints.length + (chapter.decisionRules?.length ?? 0)).toBeGreaterThan(0);
     }
   });
 
@@ -30,12 +30,21 @@ describe("book knowledge", () => {
 
   it("高信息密度章节保留书中数字、案例和应用边界", () => {
     const breakfast = BOOK_CHAPTERS.find((chapter) => chapter.id === "B1-BREAKFAST");
-    expect(breakfast?.knowledgePoints.join(" ")).toContain("1/3～1/2");
+    expect(breakfast?.decisionRules?.join(" ")).toContain("1/3～1/2");
     expect(breakfast?.bookExamples?.join(" ")).toContain("700 kcal");
     expect(breakfast?.appNotes?.join(" ")).toContain("产品推导");
 
     const flow = BOOK_CHAPTERS.find((chapter) => chapter.id === "B2-FLOW");
     expect(flow?.knowledgePoints.join(" ")).toContain("频率乘平均单次摄入量");
     expect(flow?.cautions?.join(" ")).toContain("不进入普通健康模式");
+  });
+
+  it("4个试用章节包含可直接判断的规则和常见误用", () => {
+    for (const id of ["B1-ENERGY", "B1-BREAKFAST", "B1-HIDDEN-CARB", "B1-FRUIT"]) {
+      const chapter = BOOK_CHAPTERS.find((item) => item.id === id);
+      expect(chapter?.decisionRules?.length).toBeGreaterThanOrEqual(4);
+      expect(chapter?.commonMisuses?.length).toBeGreaterThanOrEqual(4);
+      expect(chapter?.knowledgePoints).toEqual([]);
+    }
   });
 });
