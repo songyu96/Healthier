@@ -940,7 +940,7 @@ export function BookChapterCard({ chapter }: { chapter: BookChapterKnowledge }) 
         <span className="food-chip">{BOOK_APPLICABILITY_LABELS[chapter.applicability]}</span>
       </div>
       <h2><NavLink to={`/book/${chapter.id}`}>{chapter.source.chapterTitle}</NavLink></h2>
-      <p>{chapter.summary}</p>
+      <p>{chapter.coreIdea}</p>
       <p className="book-location">{bookLocationLabel(chapter.source)}</p>
       <div className="book-rule-links">{chapter.relatedRuleIds.map((ruleId) => <code key={ruleId}>{ruleId}</code>)}</div>
     </article>
@@ -957,9 +957,11 @@ function BookKnowledgePage() {
     return normalizedFoodSearch([
       chapter.source.chapterTitle,
       chapter.source.part,
-      chapter.summary,
+      chapter.coreIdea,
       chapter.id,
-      ...chapter.keyPoints,
+      ...chapter.knowledgePoints,
+      ...(chapter.bookExamples ?? []),
+      ...(chapter.appNotes ?? []),
       ...chapter.relatedRuleIds
     ].join(" ")).includes(normalizedQuery);
   });
@@ -995,17 +997,25 @@ function BookChapterPage() {
   return (
     <div className="page-stack">
       <NavLink className="back-link" to="/book">← 返回书本知识</NavLink>
-      <PageIntro eyebrow={`${chapter.source.bookId === "BOOK_1" ? "第一册" : "第二册"} · ${chapter.source.part}`} title={chapter.source.chapterTitle} description={chapter.summary} />
+      <PageIntro eyebrow={`${chapter.source.bookId === "BOOK_1" ? "第一册" : "第二册"} · ${chapter.source.part}`} title={chapter.source.chapterTitle} description={chapter.coreIdea} />
       <section className="card book-source-card">
         <span className="eyebrow">引用位置</span>
         <h2>{chapter.source.bookTitle}</h2>
         <p>{bookLocationLabel(chapter.source)}</p>
         <p className="helper">内部定位：<code>{chapter.source.epubFile}</code> · 纸书页码：该 EPUB 未提供</p>
       </section>
-      <section className="card book-detail-grid">
-        <div><span className="eyebrow">本章重点</span><ul>{chapter.keyPoints.map((point) => <li key={point}>{point}</li>)}</ul></div>
-        <div><span className="eyebrow">可以怎么做</span><ol>{chapter.actions.map((action) => <li key={action}>{action}</li>)}</ol></div>
+      <section className="card book-knowledge-section">
+        <span className="eyebrow">真正值得记住</span>
+        <ul>{chapter.knowledgePoints.map((point) => <li key={point}>{point}</li>)}</ul>
       </section>
+      {chapter.bookExamples && <section className="card book-knowledge-section">
+        <span className="eyebrow">书中数据与案例</span>
+        <ul>{chapter.bookExamples.map((example) => <li key={example}>{example}</li>)}</ul>
+      </section>}
+      {chapter.appNotes && <section className="card book-knowledge-section">
+        <span className="eyebrow">应用如何使用</span>
+        <ul>{chapter.appNotes.map((note) => <li key={note}>{note}</li>)}</ul>
+      </section>}
       {chapter.cautions && <section className="card"><span className="eyebrow">适用边界</span>{chapter.cautions.map((caution) => <p className="notice warning" key={caution}>{caution}</p>)}</section>}
       <section className="card"><span className="eyebrow">关联规则</span><div className="book-rule-links">{chapter.relatedRuleIds.map((ruleId) => <code key={ruleId}>{ruleId}</code>)}</div></section>
     </div>

@@ -209,15 +209,14 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .book-location { margin-top: auto !important; padding-top: 4px; font-size: 12px; }
 .book-rule-links code { border-radius: 999px; padding: 5px 9px; color: var(--green-dark); background: rgba(31, 96, 72, 0.1); font-size: 11px; font-weight: 800; }
 .book-source-card p { line-height: 1.65; }
-.book-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
-.book-detail-grid ul, .book-detail-grid ol { margin: 12px 0 0; padding-left: 22px; }
-.book-detail-grid li { margin-bottom: 10px; line-height: 1.65; }
+.book-knowledge-section ul { margin: 12px 0 0; padding-left: 22px; }
+.book-knowledge-section li { margin-bottom: 12px; line-height: 1.7; }
 
 @media (max-width: 620px) {
   main { width: min(100% - 20px, 760px); }
   .page-stack { padding-top: 12px; }
   .card { border-radius: 17px; padding: 16px; }
-  .book-chapter-grid, .book-detail-grid { grid-template-columns: 1fr; }
+  .book-chapter-grid { grid-template-columns: 1fr; }
   .bottom-nav a { font-size: 10px; }
   .two-columns, .nutrient-inputs { grid-template-columns: 1fr; }
   .food-filters { grid-template-columns: 1fr; }
