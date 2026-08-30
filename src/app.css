@@ -209,8 +209,20 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .book-location { margin-top: auto !important; padding-top: 4px; font-size: 12px; }
 .book-rule-links code { border-radius: 999px; padding: 5px 9px; color: var(--green-dark); background: rgba(31, 96, 72, 0.1); font-size: 11px; font-weight: 800; }
 .book-source-card p { line-height: 1.65; }
-.book-knowledge-section ul { margin: 12px 0 0; padding-left: 22px; }
-.book-knowledge-section li { margin-bottom: 12px; line-height: 1.7; }
+.knowledge-core-source { margin-top: -18px; }
+.knowledge-list { display: grid; gap: 12px; margin: 12px 0 0; padding-left: 22px; }
+.knowledge-list li { padding-left: 2px; line-height: 1.7; }
+.knowledge-list li > span { margin-right: 8px; }
+.knowledge-source-chip { display: inline-block; border-radius: 999px; padding: 2px 7px; white-space: nowrap; vertical-align: 1px; color: var(--green-dark); background: rgba(31, 96, 72, 0.1); font-size: 10px; font-weight: 800; }
+.source-book_case { color: #66511e; background: rgba(192, 153, 48, 0.16); }
+.source-app_derived { color: #31516d; background: rgba(64, 122, 166, 0.14); }
+.source-safety { color: #854d14; background: rgba(189, 105, 25, 0.15); }
+.knowledge-boundary-card { padding-top: 18px; padding-bottom: 18px; }
+.knowledge-disclosure summary { cursor: pointer; color: var(--green-dark); font-weight: 900; }
+.knowledge-disclosure-body { display: grid; gap: 22px; margin-top: 22px; }
+.knowledge-disclosure-body > section + section { border-top: 1px solid var(--line); padding-top: 20px; }
+.knowledge-disclosure-body h2 { margin-bottom: 6px; }
+.knowledge-context-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 0 0; font-size: 13px; }
 .book-misuse-card { border-color: rgba(160, 94, 24, 0.24); background: rgba(255, 248, 235, 0.82); }
 
 @media (max-width: 620px) {

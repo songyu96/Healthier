@@ -45,6 +45,8 @@ import {
   type ActivityLevel,
   type BeverageSugarProfile,
   type BookChapterKnowledge,
+  type BookKnowledgeItem,
+  type BookKnowledgeSourceKind,
   type ConfirmedMeal,
   type DailyAssessment,
   type DailyTargets,
@@ -536,6 +538,7 @@ export function AssessmentPanel({ assessment }: { assessment: DailyAssessment })
           <div><span>碳水</span><b>{formatRange(assessment.nutrition.min.carb, assessment.nutrition.max.carb, "g", 1)}{isIncomplete("carb") ? "（已知小计）" : ""}</b></div>
           <div><span>脂肪</span><b>{formatRange(assessment.nutrition.min.fat, assessment.nutrition.max.fat, "g", 1)}{isIncomplete("fat") ? "（已知小计）" : ""}</b></div>
         </div>
+        {!assessment.targets.safetyRestricted && <p className="knowledge-context-links"><NavLink className="inline-link" to="/book/B1-ENERGY">为什么这样计算能量和三大营养素？</NavLink></p>}
       </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">最优先</span><h2>下一餐这样安排</h2></div></div>
@@ -544,6 +547,7 @@ export function AssessmentPanel({ assessment }: { assessment: DailyAssessment })
             <article key={action.id}><span>{index + 1}</span><div><h3>{action.title}</h3><p>{action.detail}</p><small>{action.ruleIds.join(" · ")}</small></div></article>
           ))}
         </div>
+        {!assessment.targets.safetyRestricted && <p className="knowledge-context-links"><NavLink className="inline-link" to="/book/B1-DINNER">为什么下一餐优先补当天缺口？</NavLink></p>}
       </section>
       {!assessment.targets.safetyRestricted && <section className="card">
         <div className="section-heading"><div><span className="eyebrow">结构检查</span><h2>今天吃得完整吗</h2></div></div>
@@ -556,6 +560,7 @@ export function AssessmentPanel({ assessment }: { assessment: DailyAssessment })
           <div><span>食物种类</span><b>{assessment.foodVarietyCount} 种</b></div>
         </div>
         <p className="helper">午餐仅判断三类结构是否出现；书本克数目标只比较有明确生熟重与单位口径的记录。</p>
+        <p className="knowledge-context-links"><NavLink className="inline-link" to="/book/B1-BREAKFAST">早餐评分依据</NavLink><NavLink className="inline-link" to="/book/B1-MATCH">一餐搭配依据</NavLink></p>
         {assessment.warnings.map((warning) => <p className="notice warning" key={warning}>{warning}</p>)}
       </section>}
     </>
@@ -931,6 +936,21 @@ const BOOK_APPLICABILITY_LABELS: Record<BookChapterKnowledge["applicability"], s
   SAFETY_ONLY: "安全与流程"
 };
 
+const BOOK_SOURCE_KIND_LABELS: Record<BookKnowledgeSourceKind, string> = {
+  BOOK_DIRECT: "书中明确",
+  BOOK_CASE: "书中案例",
+  APP_DERIVED: "应用推导",
+  SAFETY: "安全提示"
+};
+
+function KnowledgeSourceChip({ kind }: { kind: BookKnowledgeSourceKind }) {
+  return <small className={`knowledge-source-chip source-${kind.toLowerCase()}`}>{BOOK_SOURCE_KIND_LABELS[kind]}</small>;
+}
+
+function KnowledgeList({ items }: { items: BookKnowledgeItem[] }) {
+  return <ul className="knowledge-list">{items.map((item) => <li key={`${item.sourceKind}:${item.text}`}><span>{item.text}</span><KnowledgeSourceChip kind={item.sourceKind} /></li>)}</ul>;
+}
+
 export function BookChapterCard({ chapter }: { chapter: BookChapterKnowledge }) {
   return (
     <article className="card book-chapter-card">
@@ -959,18 +979,18 @@ function BookKnowledgePage() {
       chapter.source.part,
       chapter.coreIdea,
       chapter.id,
-      ...chapter.knowledgePoints,
-      ...(chapter.decisionRules ?? []),
-      ...(chapter.bookExamples ?? []),
-      ...(chapter.commonMisuses ?? []),
-      ...(chapter.appNotes ?? []),
+      ...chapter.knowledgePoints.map((item) => item.text),
+      ...(chapter.decisionRules ?? []).map((item) => item.text),
+      ...(chapter.bookExamples ?? []).map((item) => item.text),
+      ...(chapter.commonMisuses ?? []).map((item) => item.text),
+      ...(chapter.appNotes ?? []).map((item) => item.text),
       ...chapter.relatedRuleIds
     ].join(" ")).includes(normalizedQuery);
   });
 
   return (
     <div className="page-stack">
-      <PageIntro eyebrow="书本知识" title="边记录，边理解为什么" description="目前先收录24个与计算器、日评和周总结直接相关的核心章节；每条内容都保留书名、章节、EPUB目录位置和规则编号。" />
+      <PageIntro eyebrow="与当前应用相关" title="核心饮食知识" description="首批收录24个与计算器、日评和周总结直接相关的主题，并非两本书的完整章节整理；每条内容区分书中结论、案例、应用推导和安全提示。" />
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">章节查找</span><h2>核心知识目录</h2></div><span className="count-badge">{chapters.length} 章</span></div>
         <div className="compact-grid book-filters">
@@ -996,36 +1016,45 @@ function BookChapterPage() {
   const chapter = findBookChapter(chapterId);
   if (!chapter) return <Navigate replace to="/book" />;
 
+  const primaryItems = chapter.decisionRules ?? chapter.knowledgePoints;
+  const primaryPreview = primaryItems.slice(0, 4);
+  const remainingPrimary = primaryItems.slice(4);
+  const mechanismItems = chapter.decisionRules ? chapter.knowledgePoints : [];
+  const boundaryItem = chapter.cautions?.[0] ?? chapter.commonMisuses?.[0];
+  const remainingCautions = chapter.cautions?.slice(1);
+  const remainingMisuses = chapter.cautions ? chapter.commonMisuses : chapter.commonMisuses?.slice(1);
+
   return (
     <div className="page-stack">
       <NavLink className="back-link" to="/book">← 返回书本知识</NavLink>
       <PageIntro eyebrow={`${chapter.source.bookId === "BOOK_1" ? "第一册" : "第二册"} · ${chapter.source.part}`} title={chapter.source.chapterTitle} description={chapter.coreIdea} />
-      <section className="card book-source-card">
-        <span className="eyebrow">引用位置</span>
-        <h2>{chapter.source.bookTitle}</h2>
-        <p>{bookLocationLabel(chapter.source)}</p>
-        <p className="helper">内部定位：<code>{chapter.source.epubFile}</code> · 纸书页码：该 EPUB 未提供</p>
+      <div className="knowledge-core-source"><KnowledgeSourceChip kind={chapter.coreIdeaSource} /></div>
+      <section className="card book-knowledge-section knowledge-priority-card">
+        <span className="eyebrow">{chapter.decisionRules ? "先按这些规则判断" : "先记住这些重点"}</span>
+        <KnowledgeList items={primaryPreview} />
       </section>
-      {chapter.decisionRules ? <section className="card book-knowledge-section">
-        <span className="eyebrow">具体怎么计算或判断</span>
-        <ul>{chapter.decisionRules.map((rule) => <li key={rule}>{rule}</li>)}</ul>
-      </section> : <section className="card book-knowledge-section">
-        <span className="eyebrow">真正值得记住</span>
-        <ul>{chapter.knowledgePoints.map((point) => <li key={point}>{point}</li>)}</ul>
+      {boundaryItem && <section className="card book-misuse-card knowledge-boundary-card">
+        <span className="eyebrow">先注意这个边界</span>
+        <KnowledgeList items={[boundaryItem]} />
       </section>}
-      {chapter.bookExamples && <section className="card book-knowledge-section">
-        <span className="eyebrow">书中数据与案例</span>
-        <ul>{chapter.bookExamples.map((example) => <li key={example}>{example}</li>)}</ul>
-      </section>}
-      {chapter.commonMisuses && <section className="card book-knowledge-section book-misuse-card">
-        <span className="eyebrow">最容易用错的地方</span>
-        <ul>{chapter.commonMisuses.map((misuse) => <li key={misuse}>{misuse}</li>)}</ul>
-      </section>}
-      {chapter.appNotes && <section className="card book-knowledge-section">
-        <span className="eyebrow">应用如何使用</span>
-        <ul>{chapter.appNotes.map((note) => <li key={note}>{note}</li>)}</ul>
-      </section>}
-      {chapter.cautions && <section className="card"><span className="eyebrow">适用边界</span>{chapter.cautions.map((caution) => <p className="notice warning" key={caution}>{caution}</p>)}</section>}
+      <details className="card knowledge-disclosure">
+        <summary>展开原理、案例与完整来源</summary>
+        <div className="knowledge-disclosure-body">
+          {mechanismItems.length > 0 && <section className="book-knowledge-section"><span className="eyebrow">为什么这样做</span><KnowledgeList items={mechanismItems} /></section>}
+          {remainingPrimary.length > 0 && <section className="book-knowledge-section"><span className="eyebrow">更多判断要点</span><KnowledgeList items={remainingPrimary} /></section>}
+          {chapter.bookExamples && <section className="book-knowledge-section"><span className="eyebrow">书中数据与案例</span><KnowledgeList items={chapter.bookExamples} /></section>}
+          {remainingMisuses && remainingMisuses.length > 0 && <section className="book-knowledge-section book-misuse-section"><span className="eyebrow">其他容易用错的地方</span><KnowledgeList items={remainingMisuses} /></section>}
+          {chapter.appNotes && <section className="book-knowledge-section"><span className="eyebrow">应用如何使用</span><KnowledgeList items={chapter.appNotes} /></section>}
+          {remainingCautions && remainingCautions.length > 0 && <section className="book-knowledge-section"><span className="eyebrow">其他适用边界</span><KnowledgeList items={remainingCautions} /></section>}
+          <section className="book-source-card">
+            <span className="eyebrow">引用位置</span>
+            <h2>{chapter.source.bookTitle}</h2>
+            <p>{bookLocationLabel(chapter.source)}</p>
+            {chapter.source.sourceKeywords && <p>原文定位关键词：{chapter.source.sourceKeywords.join(" · ")}</p>}
+            <p className="helper">内部定位：<code>{chapter.source.epubFile}</code>{chapter.source.epubAnchor ? <> · 锚点：<code>{chapter.source.epubAnchor}</code></> : null} · 最近核对：{chapter.source.verifiedAt} · 纸书页码：该 EPUB 未提供</p>
+          </section>
+        </div>
+      </details>
       <section className="card"><span className="eyebrow">关联规则</span><div className="book-rule-links">{chapter.relatedRuleIds.map((ruleId) => <code key={ruleId}>{ruleId}</code>)}</div></section>
     </div>
   );

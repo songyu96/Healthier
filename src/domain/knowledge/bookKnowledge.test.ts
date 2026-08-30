@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BOOK_CHAPTERS, bookLocationLabel, bookProgressPercent, chaptersForRule } from "./bookKnowledge";
 
+const itemText = (items: { text: string }[] | undefined) => items?.map((item) => item.text).join(" ") ?? "";
+
 describe("book knowledge", () => {
   it("核心章节编号和 EPUB 定位唯一且有效", () => {
     expect(BOOK_CHAPTERS).toHaveLength(24);
@@ -12,7 +14,11 @@ describe("book knowledge", () => {
       expect(bookProgressPercent(chapter.source)).toBeGreaterThanOrEqual(1);
       expect(bookProgressPercent(chapter.source)).toBeLessThanOrEqual(100);
       expect(chapter.coreIdea.length).toBeGreaterThan(10);
-      expect(chapter.knowledgePoints.length + (chapter.decisionRules?.length ?? 0)).toBeGreaterThan(0);
+      expect(chapter.knowledgePoints.length).toBeGreaterThan(0);
+      expect(chapter.source.verifiedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      for (const item of [chapter.knowledgePoints, chapter.decisionRules, chapter.bookExamples, chapter.commonMisuses, chapter.appNotes, chapter.cautions].flatMap((items) => items ?? [])) {
+        expect(["BOOK_DIRECT", "BOOK_CASE", "APP_DERIVED", "SAFETY"]).toContain(item.sourceKind);
+      }
     }
   });
 
@@ -30,13 +36,13 @@ describe("book knowledge", () => {
 
   it("高信息密度章节保留书中数字、案例和应用边界", () => {
     const breakfast = BOOK_CHAPTERS.find((chapter) => chapter.id === "B1-BREAKFAST");
-    expect(breakfast?.decisionRules?.join(" ")).toContain("1/3～1/2");
-    expect(breakfast?.bookExamples?.join(" ")).toContain("700 kcal");
-    expect(breakfast?.appNotes?.join(" ")).toContain("产品推导");
+    expect(itemText(breakfast?.decisionRules)).toContain("1/3～1/2");
+    expect(itemText(breakfast?.bookExamples)).toContain("700 kcal");
+    expect(itemText(breakfast?.appNotes)).toContain("产品推导");
 
     const flow = BOOK_CHAPTERS.find((chapter) => chapter.id === "B2-FLOW");
-    expect(flow?.knowledgePoints.join(" ")).toContain("频率乘平均单次摄入量");
-    expect(flow?.cautions?.join(" ")).toContain("不进入普通健康模式");
+    expect(itemText(flow?.knowledgePoints)).toContain("频率乘平均单次摄入量");
+    expect(itemText(flow?.cautions)).toContain("不进入普通健康模式");
   });
 
   it("4个试用章节包含可直接判断的规则和常见误用", () => {
@@ -44,7 +50,15 @@ describe("book knowledge", () => {
       const chapter = BOOK_CHAPTERS.find((item) => item.id === id);
       expect(chapter?.decisionRules?.length).toBeGreaterThanOrEqual(4);
       expect(chapter?.commonMisuses?.length).toBeGreaterThanOrEqual(4);
-      expect(chapter?.knowledgePoints).toEqual([]);
+      expect(chapter?.knowledgePoints.length).toBeGreaterThanOrEqual(4);
+      expect(itemText(chapter?.knowledgePoints)).toMatch(/书中|食物|能量|水果|主食/);
     }
+  });
+
+  it("案例、应用推导和安全边界不会伪装成书中明确规则", () => {
+    const breakfast = BOOK_CHAPTERS.find((chapter) => chapter.id === "B1-BREAKFAST");
+    expect(breakfast?.bookExamples?.every((item) => item.sourceKind === "BOOK_CASE")).toBe(true);
+    expect(breakfast?.appNotes?.every((item) => item.sourceKind === "APP_DERIVED")).toBe(true);
+    expect(BOOK_CHAPTERS.find((chapter) => chapter.id === "B2-FLOW")?.cautions?.every((item) => item.sourceKind === "SAFETY")).toBe(true);
   });
 });

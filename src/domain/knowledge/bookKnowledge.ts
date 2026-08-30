@@ -1,4 +1,10 @@
 export type BookKnowledgeApplicability = "HEALTHY" | "INFORMATION_ONLY" | "SAFETY_ONLY";
+export type BookKnowledgeSourceKind = "BOOK_DIRECT" | "BOOK_CASE" | "APP_DERIVED" | "SAFETY";
+
+export interface BookKnowledgeItem {
+  text: string;
+  sourceKind: BookKnowledgeSourceKind;
+}
 
 export interface BookSourceLocation {
   bookId: "BOOK_1" | "BOOK_2";
@@ -8,20 +14,24 @@ export interface BookSourceLocation {
   epubFile: string;
   tocPosition: number;
   tocTotal: number;
+  epubAnchor?: string;
+  verifiedAt: string;
+  sourceKeywords?: string[];
 }
 
 export interface BookChapterKnowledge {
   id: string;
   source: BookSourceLocation;
   coreIdea: string;
-  knowledgePoints: string[];
-  decisionRules?: string[];
-  bookExamples?: string[];
-  commonMisuses?: string[];
-  appNotes?: string[];
+  coreIdeaSource: BookKnowledgeSourceKind;
+  knowledgePoints: BookKnowledgeItem[];
+  decisionRules?: BookKnowledgeItem[];
+  bookExamples?: BookKnowledgeItem[];
+  commonMisuses?: BookKnowledgeItem[];
+  appNotes?: BookKnowledgeItem[];
   relatedRuleIds: string[];
   applicability: BookKnowledgeApplicability;
-  cautions?: string[];
+  cautions?: BookKnowledgeItem[];
 }
 
 type ChapterSeed = [
@@ -39,6 +49,11 @@ type ChapterSeed = [
 
 const BOOK_1_TITLE = "《你是你吃出来的》";
 const BOOK_2_TITLE = "《你是你吃出来的2：慢病康复的饮食密码》";
+const KNOWLEDGE_VERIFIED_AT = "2026-08-30";
+
+function knowledgeItems(texts: string[], sourceKind: BookKnowledgeSourceKind): BookKnowledgeItem[] {
+  return texts.map((text) => ({ text, sourceKind }));
+}
 
 const BOOK_1_CHAPTERS: ChapterSeed[] = [
   ["B1-STRUCT", "PART 01", "防治慢病吃什么：35%动物类食物 + 65%植物类食物", "index_split_009.html", 8,
@@ -54,7 +69,7 @@ const BOOK_1_CHAPTERS: ChapterSeed[] = [
     [
       "能量密度表示单位体积能提供多少能量；营养密度表示单位体积含有多少种和多少量的营养素。",
       "只降低热量不等于营养更好，体力劳动者若能量不足也会破坏平衡。",
-      "书中把白米粥、甜饮料、白馒头和米饭列为主要供能、其他营养有限的例子；搭配肉、菜、油的饺子营养密度更高。"
+      "书中把单独食用的白米粥、甜饮料、白馒头和米饭列为主要供能、其他营养有限的例子；重点是改善搭配，不是把这些食物判定为“坏食物”。"
     ],
     ["馒头与油煎馒头相比，后者能量密度更高；馒头与饺子相比，饺子同时增加了能量和营养密度。"],
     ["应用将该章用于解释为什么活动量不同的人不应采用同样的食物选择。"], ["BR-Q-005"]],
@@ -310,66 +325,68 @@ const BOOK_1_CHAPTERS: ChapterSeed[] = [
 ];
 
 const STRUCTURED_TRIAL_CONTENT: Partial<Record<string, {
-  decisionRules: string[];
-  commonMisuses: string[];
+  decisionRules: BookKnowledgeItem[];
+  commonMisuses: BookKnowledgeItem[];
+  sourceKeywords: string[];
 }>> = {
   "B1-ENERGY": {
-    decisionRules: [
+    decisionRules: knowledgeItems([
       "标准体重（kg）=身高（cm）−105。",
       "每日能量=标准体重×活动系数；长期卧床、轻、中、重体力分别采用25、30、35、40 kcal/kg。",
       "碳水目标=总能量×55%÷4；蛋白质目标=总能量×15%÷4；脂肪目标=总能量×30%÷9。",
-      "活动等级按长期日常工作和运动判断；只有长期状态改变时才需要重新计算。",
-      "轻体力且偏胖时，书中提出可把系数30降至25，但必须由使用者主动决定。"
-    ],
-    commonMisuses: [
+      "活动等级按长期日常工作和运动判断；只有长期状态改变时才需要重新计算。"
+    ], "BOOK_DIRECT").concat([{ text: "轻体力且偏胖时，书中提出可把系数30降至25；由于书中未定义“偏胖”，应用要求使用者主动决定。", sourceKind: "APP_DERIVED" }]),
+    commonMisuses: knowledgeItems([
       "不能把普通成年人的公式当作疾病、孕产期或营养不良状态下的处方。",
       "不能因为偶尔进行一次运动就提高整天或长期能量目标。",
       "书中没有定义“偏胖”，应用不能根据体重自动启用25系数。",
       "书中只说年龄大、消耗少时适当降低总能量，没有给出可自动套用的年龄扣减公式。"
-    ]
+    ], "APP_DERIVED"),
+    sourceKeywords: ["标准体重", "活动系数", "55% / 15% / 30%"]
   },
   "B1-BREAKFAST": {
-    decisionRules: [
+    decisionRules: knowledgeItems([
       "先看能量：早餐占全天1/3～1/2，能量部分占50分。",
       "再看结构：粮食、动物性食物、蔬菜、水果、油脂各10分，共50分。",
       "总分高于60分为及格、80分为优秀、100分为结构和能量都较完整。",
       "早餐主食至少约占全天主食的1/3，优先全谷、玉米、薯类等较完整的来源。",
       "动物蛋白可用“全天蛋白质约为标准体重×1～1.2克，再取约一半并按三餐分配”进行交叉检查。"
-    ],
-    commonMisuses: [
+    ], "BOOK_DIRECT"),
+    commonMisuses: knowledgeItems([
       "米粥加馒头、燕麦粥加花卷仍主要是粮食类累加，不能按菜名当作多个结构类别。",
       "只有鸡蛋没有主食时能量不足；只有白粥、面包或杂粮糊时又缺少优质蛋白。",
-      "一个鸡蛋加200毫升牛奶约12～13克蛋白质，在书中175厘米案例中只是接近或略低于13.3克检查值。",
-      "应用的早餐能量线性折分是产品推导，不是书中给出的计算公式。"
-    ]
+      "一个鸡蛋加200毫升牛奶约12～13克蛋白质，在书中175厘米案例中只是接近或略低于13.3克检查值。"
+    ], "BOOK_DIRECT").concat([{ text: "应用的早餐能量线性折分是产品推导，不是书中给出的计算公式。", sourceKind: "APP_DERIVED" }]),
+    sourceKeywords: ["早餐能量", "五类结构", "100分"]
   },
   "B1-HIDDEN-CARB": {
-    decisionRules: [
+    decisionRules: knowledgeItems([
       "判断主食量时要把米面、全谷、杂豆、薯类、淀粉根茎、水果碳水和淀粉小吃一起考虑。",
       "芡粉、粉条粉丝、凉皮米皮、土豆丝、山药泥等虽然可能以菜或配料出现，仍要计入主食或碳水。",
       "主食量应结合实际体力、体重和腰围等指标调整，而不是人人采用同一克数。",
       "书中的中心性肥胖观察值为男性腰围大于90厘米、女性大于80厘米，或腰臀比分别大于0.9和0.8。"
-    ],
-    commonMisuses: [
+    ], "BOOK_DIRECT"),
+    commonMisuses: knowledgeItems([
       "土豆丝和山药不能因为出现在菜盘里就计入普通蔬菜目标。",
       "粉丝和凉皮不能因为没有米饭外形就漏掉主食统计。",
       "水果可以替换部分主食，但不能在原有主食之外无限叠加。",
       "不能仅凭主食偏多推断肥胖、血糖异常或其他疾病原因。"
-    ]
+    ], "APP_DERIVED"),
+    sourceKeywords: ["隐性主食", "淀粉", "腰围"]
   },
   "B1-FRUIT": {
-    decisionRules: [
+    decisionRules: knowledgeItems([
       "每天安排200～350克新鲜水果，果汁不计入鲜果目标。",
       "水果可以和正餐一起吃，也可以作为加餐；如果增加水果，应相应考虑减少米面。",
       "书中近似交换为200克苹果≈25克米面中的碳水，400克苹果≈50克米面中的碳水。",
       "水果只能替换一部分主食，不能替代整餐所需的蛋白质、脂肪和其他营养。"
-    ],
-    commonMisuses: [
+    ], "BOOK_DIRECT"),
+    commonMisuses: knowledgeItems([
       "吃饱饭后每天再加大量水果，会把水果变成额外能量，而不是结构替换。",
       "不能用果汁、果汁饮料代替完整鲜果。",
-      "不能只吃水果减肥或把水果当作完整一餐。",
-      "书中没有明确米面交换值的生熟重口径，因此应用不能自动精确扣减主食克数。"
-    ]
+      "不能只吃水果减肥或把水果当作完整一餐。"
+    ], "BOOK_DIRECT").concat([{ text: "书中没有明确米面交换值的生熟重口径，因此应用不能自动精确扣减主食克数。", sourceKind: "APP_DERIVED" }]),
+    sourceKeywords: ["200～350克", "鲜果", "主食交换"]
   }
 };
 
@@ -378,16 +395,17 @@ function makeBook1(seed: ChapterSeed): BookChapterKnowledge {
   const structured = STRUCTURED_TRIAL_CONTENT[id];
   return {
     id,
-    source: { bookId: "BOOK_1", bookTitle: BOOK_1_TITLE, part, chapterTitle, epubFile, tocPosition, tocTotal: 141 },
+    source: { bookId: "BOOK_1", bookTitle: BOOK_1_TITLE, part, chapterTitle, epubFile, tocPosition, tocTotal: 141, verifiedAt: KNOWLEDGE_VERIFIED_AT, sourceKeywords: structured?.sourceKeywords },
     coreIdea,
-    knowledgePoints: structured ? [] : knowledgePoints,
+    coreIdeaSource: "BOOK_DIRECT",
+    knowledgePoints: knowledgeItems(knowledgePoints, "BOOK_DIRECT"),
     decisionRules: structured?.decisionRules,
-    bookExamples: bookExamples.length ? bookExamples : undefined,
+    bookExamples: bookExamples.length ? knowledgeItems(bookExamples, "BOOK_CASE") : undefined,
     commonMisuses: structured?.commonMisuses,
-    appNotes: appNotes.length ? appNotes : undefined,
+    appNotes: appNotes.length ? knowledgeItems(appNotes, "APP_DERIVED") : undefined,
     relatedRuleIds,
     applicability: "HEALTHY",
-    cautions: id === "B1-ENERGY" ? ["疾病状态下的比例只是书中个案，不进入健康成年人计算。"] : undefined
+    cautions: id === "B1-ENERGY" ? knowledgeItems(["疾病状态下的比例只是书中个案，不进入健康成年人计算。"], "SAFETY") : undefined
   };
 }
 
@@ -402,10 +420,14 @@ export const BOOK_CHAPTERS: BookChapterKnowledge[] = [
       chapterTitle: "你一定要了解的营养诊疗流程",
       epubFile: "text/part0006.html",
       tocPosition: 7,
-      tocTotal: 226
+      tocTotal: 226,
+      epubAnchor: "5N3C0-4dbaaae4c32c48e192fd1cd92233d73e",
+      verifiedAt: KNOWLEDGE_VERIFIED_AT,
+      sourceKeywords: ["营养诊疗四步", "半定量饮食调查", "长期追踪"]
     },
     coreIdea: "营养管理必须从完整资料出发，经过评估、问题识别、干预和复查形成闭环，不能只凭身高、体重和病名套食谱。",
-    knowledgePoints: [
+    coreIdeaSource: "BOOK_DIRECT",
+    knowledgePoints: knowledgeItems([
       "健康管理包括资料收集、健康评估、指导和长期追踪；体检只是资料来源之一。",
       "营养诊疗四步是营养评定、营养诊断、营养干预、营养监测与效果评价。",
       "疾病诊断不能代替营养诊断；同一种疾病、相同身高体重的人，营养问题可能完全不同。",
@@ -414,18 +436,18 @@ export const BOOK_CHAPTERS: BookChapterKnowledge[] = [
       "不同问题见效时间不同，方案需要按体重、症状或检查结果复查，再根据新状态重新评估。",
       "半定量饮食调查关注近三个月习惯：频率乘平均单次摄入量，换算为日均量；估算不必假装绝对精确。",
       "烹调油难直接计算时，书中建议结合肥肉、内脏、坚果和油炸食品推断；蔬果调查强调新鲜食物。"
-    ],
-    bookExamples: [
+    ], "BOOK_DIRECT"),
+    bookExamples: knowledgeItems([
       "书中的5分钟自测先问每天、再问每周、最后问每月频率；月均不足一次按0处理。",
       "书中用鸡蛋约6克蛋白质、牛奶100毫升约3克、瘦肉100克约20克进行半定量估算。"
-    ],
-    appNotes: [
+    ], "BOOK_CASE"),
+    appNotes: knowledgeItems([
       "PWA把个人资料与记录、日周问题识别、1～3条行动和后续复盘对应到这套闭环。",
       "油脂未知时保留未知，周报显示区间和覆盖率，不制造精确结论。"
-    ],
+    ], "APP_DERIVED"),
     relatedRuleIds: ["BR-A-001", "BR-A-002", "BR-N-001", "BR-N-002", "BR-N-003", "BR-N-004"],
     applicability: "SAFETY_ONLY",
-    cautions: ["第二册疾病案例只作知识与安全边界说明，不进入普通健康模式自动建议。"]
+    cautions: knowledgeItems(["第二册疾病案例只作知识与安全边界说明，不进入普通健康模式自动建议。"], "SAFETY")
   }
 ];
 
