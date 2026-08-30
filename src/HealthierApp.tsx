@@ -58,6 +58,8 @@ import {
   type HealthFlag,
   type MealItemInput,
   type MixedMealKind,
+  type NutrientKey,
+  type NutritionFacts,
   type ParsedMeal,
   type QuantityUnit,
   type SeasoningLevel,
@@ -796,6 +798,7 @@ function TodayPage() {
             {meals.map((meal) => <MealRow
               key={meal.id}
               meal={meal}
+              facts={nutritionFactsForMeal(meal, foods)}
               onRepeat={() => {
                 openDraft(createRepeatMealDraft(meal, localDateTime()), "已复制餐食，请确认时间、内容和重量后保存。");
               }}
@@ -852,7 +855,26 @@ function TodayPage() {
   );
 }
 
-export function MealRow({ meal, onRepeat, onEdit, onDelete }: { meal: ConfirmedMeal; onRepeat?: () => void; onEdit: () => void; onDelete: () => void | Promise<void> }) {
+function mealNutrientValue(facts: NutritionFacts, key: NutrientKey, unit: string, digits = 0): string {
+  const coverage = facts.nutrientCoverage?.[key];
+  const hasKnownValue = coverage ? coverage.knownItemCount > 0 : facts.knownItemCount > 0;
+  return hasKnownValue ? formatRange(facts.totals.min[key], facts.totals.max[key], unit, digits) : "未知";
+}
+
+function itemNutritionText(item: NutritionFacts["items"][number]): string {
+  const isKnown = (key: NutrientKey) => item.knownNutrients?.includes(key) ?? true;
+  return [
+    isKnown("kcal") ? `能量 ${formatRange(item.nutrients.min.kcal, item.nutrients.max.kcal, "kcal")}` : undefined,
+    isKnown("protein") ? `蛋白质 ${formatRange(item.nutrients.min.protein, item.nutrients.max.protein, "g", 1)}` : undefined,
+    isKnown("carb") ? `碳水 ${formatRange(item.nutrients.min.carb, item.nutrients.max.carb, "g", 1)}` : undefined,
+    isKnown("fat") ? `脂肪 ${formatRange(item.nutrients.min.fat, item.nutrients.max.fat, "g", 1)}` : undefined,
+    isKnown("fiber") ? `纤维 ${formatRange(item.nutrients.min.fiber, item.nutrients.max.fiber, "g", 1)}` : undefined
+  ].filter((value): value is string => Boolean(value)).join(" · ") || "当前营养项未知";
+}
+
+export function MealRow({ meal, facts, onRepeat, onEdit, onDelete }: { meal: ConfirmedMeal; facts?: NutritionFacts; onRepeat?: () => void; onEdit: () => void; onDelete: () => void | Promise<void> }) {
+  const hasKnownNutrition = Boolean(facts && facts.knownItemCount > 0);
+  const isKnownSubtotal = Boolean(facts && (!facts.complete || facts.unknownItems.length > 0 || meal.unknownOil));
   return (
     <article className="meal-row">
       <div className="meal-time"><b>{meal.eatenAt.slice(11, 16)}</b><span>{MEAL_LABELS[meal.mealType]}</span></div>
@@ -860,6 +882,28 @@ export function MealRow({ meal, onRepeat, onEdit, onDelete }: { meal: ConfirmedM
         <h3>{meal.items.map((item) => item.name).join("、")}{meal.nutritionSnapshotOrigin === "MIGRATED" && <span className="tag">升级时估算</span>}</h3>
         <p>{meal.items.map((item) => `${item.quantityMin === item.quantityMax ? item.quantityMin : `${item.quantityMin}～${item.quantityMax}`}${item.unit}`).join(" · ")}</p>
         {meal.nutritionSnapshotOrigin === "MIGRATED" && <small>营养快照按升级或旧备份恢复当时的食物库估算；重新确认保存后会更新来源。</small>}
+        {facts && <div className="meal-nutrition">
+          {hasKnownNutrition ? <>
+            <div className="meal-nutrition-heading"><b>{isKnownSubtotal ? "本餐已知小计" : "本餐营养估算"}</b>{meal.unknownOil && <small>不含未知用油</small>}</div>
+            <div className="meal-nutrition-summary">
+              <span><small>能量</small><b>{mealNutrientValue(facts, "kcal", "kcal")}</b></span>
+              <span><small>蛋白质</small><b>{mealNutrientValue(facts, "protein", "g", 1)}</b></span>
+              <span><small>碳水</small><b>{mealNutrientValue(facts, "carb", "g", 1)}</b></span>
+              <span><small>脂肪</small><b>{mealNutrientValue(facts, "fat", "g", 1)}</b></span>
+            </div>
+          </> : <p className="meal-nutrition-empty">暂无可计算营养</p>}
+          <details className="meal-nutrition-details">
+            <summary>查看营养明细与来源</summary>
+            {facts.items.map((item) => <div className="meal-nutrition-item" key={item.tempId}>
+              <b>{item.name}</b>
+              <span>{itemNutritionText(item)}</span>
+              <small>数据来源：{item.sourceRef}</small>
+            </div>)}
+            {facts.unknownItems.map((item) => <div className="meal-nutrition-item unknown" key={item.tempId}>
+              <b>{item.name}</b><span>无法计算：{item.reason}</span>
+            </div>)}
+          </details>
+        </div>}
       </div>
       <div className="row-actions">{onRepeat && <button className="text-button" type="button" onClick={onRepeat}>再记一次</button>}<button className="text-button" type="button" onClick={onEdit}>编辑</button><button className="text-button danger" type="button" onClick={() => void onDelete()}>删除</button></div>
     </article>
@@ -1217,7 +1261,7 @@ function HistoryPage() {
         <div className="section-heading"><div><span className="eyebrow">按日期管理</span><h2>查看任意日期餐食</h2></div></div>
         <label>选择日期<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
         {historyMessage && <p className="notice">{historyMessage}</p>}
-        <div className="history-day"><h3>{selectedDate}<span>{completedFromSettings(settings, selectedDate) ? "完整" : "未标记完整"}</span></h3>{selectedMeals.length ? selectedMeals.map((meal) => <MealRow key={meal.id} meal={meal} onEdit={() => setDraft(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); setHistoryMessage("餐食已删除。"); } catch (error) { setHistoryMessage(errorMessage(error)); } }} />) : <p className="muted">该日期无记录</p>}</div>
+        <div className="history-day"><h3>{selectedDate}<span>{completedFromSettings(settings, selectedDate) ? "完整" : "未标记完整"}</span></h3>{selectedMeals.length ? selectedMeals.map((meal) => <MealRow key={meal.id} meal={meal} facts={nutritionFactsForMeal(meal, foods)} onEdit={() => setDraft(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); setHistoryMessage("餐食已删除。"); } catch (error) { setHistoryMessage(errorMessage(error)); } }} />) : <p className="muted">该日期无记录</p>}</div>
         <label className="checkbox complete-toggle"><input
           type="checkbox"
           checked={selectedCompleted}

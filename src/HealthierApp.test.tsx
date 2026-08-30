@@ -18,6 +18,7 @@ import {
   assessWeek,
   appendQuickMealFood,
   BOOK_CHAPTERS,
+  calculateNutrition,
   calculateTargets,
   createQuickMealDraft,
   type ConfirmedMeal,
@@ -160,6 +161,81 @@ describe("AssessmentPanel safety rendering", () => {
 
     expect(todayHtml).toContain("再记一次");
     expect(historyHtml).not.toContain("再记一次");
+  });
+
+  it("餐食卡片展示营养摘要并可查看食物明细与来源", () => {
+    const meal: ConfirmedMeal = {
+      id: "meal-nutrition",
+      protocolVersion: "HD1",
+      eatenAt: "2026-08-25T08:00:00",
+      date: "2026-08-25",
+      mealType: "B",
+      items: [{
+        tempId: "egg", name: "鸡蛋", category: "EG", state: "CK",
+        quantityMin: 1, quantityMax: 1, unit: "pc", canonicalFoodId: "egg"
+      }],
+      cookingMethod: "水煮",
+      note: "",
+      rawImportLine: "test",
+      unknownOil: false,
+      unknownSalt: false,
+      ruleSetVersion: "book-rules-0.1",
+      createdAt: "2026-08-25T08:01:00",
+      updatedAt: "2026-08-25T08:01:00"
+    };
+    const egg: FoodReference = {
+      id: "egg",
+      name: "鸡蛋",
+      aliases: [],
+      category: "EG",
+      compatibleStates: ["CK"],
+      basisUnit: "g",
+      gramsPerPiece: 50,
+      nutrientsPer100: { kcal: 144, protein: 12, fat: 10, carb: 2, fiber: 0 },
+      source: { kind: "USER", ref: "test-egg", release: "v1", method: "USER" }
+    };
+    const facts = calculateNutrition(meal, [egg]);
+    const html = renderToStaticMarkup(
+      <MealRow meal={meal} facts={facts} onEdit={() => undefined} onDelete={() => undefined} />
+    );
+
+    expect(html).toContain("本餐营养估算");
+    expect(html).toContain("72 kcal");
+    expect(html).toContain("蛋白质");
+    expect(html).toContain("查看营养明细与来源");
+    expect(html).toContain("USER:test-egg:v1");
+
+    const subtotalHtml = renderToStaticMarkup(
+      <MealRow meal={{ ...meal, unknownOil: true }} facts={facts} onEdit={() => undefined} onDelete={() => undefined} />
+    );
+    expect(subtotalHtml).toContain("本餐已知小计");
+    expect(subtotalHtml).toContain("不含未知用油");
+  });
+
+  it("完全无法计算时不展示假零值并说明原因", () => {
+    const meal: ConfirmedMeal = {
+      id: "meal-unknown",
+      protocolVersion: "HD1",
+      eatenAt: "2026-08-25T12:00:00",
+      date: "2026-08-25",
+      mealType: "L",
+      items: [{ tempId: "unknown", name: "自制混合菜", category: "OT", state: "EA", quantityMin: 200, quantityMax: 200, unit: "g" }],
+      cookingMethod: "未知",
+      note: "",
+      rawImportLine: "test",
+      unknownOil: true,
+      unknownSalt: true,
+      ruleSetVersion: "book-rules-0.1",
+      createdAt: "2026-08-25T12:01:00",
+      updatedAt: "2026-08-25T12:01:00"
+    };
+    const html = renderToStaticMarkup(
+      <MealRow meal={meal} facts={calculateNutrition(meal, [])} onEdit={() => undefined} onDelete={() => undefined} />
+    );
+
+    expect(html).toContain("暂无可计算营养");
+    expect(html).toContain("无法计算：食物库中没有匹配项");
+    expect(html).not.toContain(">0 kcal<");
   });
 });
 
