@@ -82,7 +82,19 @@ import {
   type BodyMetric,
   type FoodOverride
 } from "./db";
-import { decryptBackup, exportEncryptedBackup, restoreBackup, type BackupPayload } from "./backup";
+import { decryptBackup, exportEncryptedBackup, readBackupPayload, restoreBackup, type BackupPayload } from "./backup";
+import {
+  acceptSyncBaseline,
+  calculateBusinessDataHash,
+  classifySyncImport,
+  createSyncPackage,
+  getLocalSyncState,
+  inspectSyncPackage,
+  SYNC_STATE_KEY,
+  type InspectedSyncPackage,
+  type LocalSyncState,
+  type SyncImportStatus
+} from "./sync";
 import { AppProvider, useApp } from "./context/AppContext";
 
 const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
@@ -245,6 +257,15 @@ function formatWeeklyGroup(min: number, max: number, incomparable: boolean): str
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "操作失败，请重试。";
+}
+
+function downloadTextFile(text: string, filename: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json;charset=utf-8" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function defaultProfile(existing?: UserProfile): UserProfile {
@@ -1512,25 +1533,83 @@ function FoodsPage() {
   );
 }
 
+type SyncPreview = InspectedSyncPackage & { importStatus: SyncImportStatus };
+
+const SYNC_IMPORT_LABELS: Record<SyncImportStatus, string> = {
+  FIRST_IMPORT: "本机尚无接力基线；恢复会整体替换当前数据。",
+  REMOTE_UPDATE: "同步包接续本机基线，且本机没有后续修改。",
+  SAME_VERSION: "同步包与本机当前接力版本相同。",
+  CONFLICT: "本机数据或版本链已经变化；请先导出本机同步包，再决定是否替换。"
+};
+
 function SettingsPage() {
   const { profile } = useApp();
   const metrics = useLiveQuery(() => db.bodyMetrics.orderBy("measuredAt").reverse().toArray(), [], []);
   const rollbackBackup = useLiveQuery(() => getSetting<string | undefined>("restoreRollback", undefined), []);
+  const localSyncState = useLiveQuery(
+    () => getSetting<LocalSyncState | undefined>(SYNC_STATE_KEY, undefined),
+    []
+  );
   const [metric, setMetric] = useState({ date: localDateKey(), weightKg: profile?.currentWeightKg ?? 70, waistCm: profile?.waistCm ?? 0, note: "" });
+  const [syncPassword, setSyncPassword] = useState("");
+  const [syncText, setSyncText] = useState("");
+  const [syncPreview, setSyncPreview] = useState<SyncPreview>();
+  const [syncMessage, setSyncMessage] = useState("");
   const [password, setPassword] = useState("");
   const [backupText, setBackupText] = useState("");
   const [preview, setPreview] = useState<BackupPayload>();
   const [message, setMessage] = useState("");
 
+  const exportSyncPackage = async () => {
+    try {
+      const created = await createSyncPackage(syncPassword);
+      const timestamp = created.package.createdAt.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+      downloadTextFile(created.text, `healthier-sync-${timestamp}.hdsync`);
+      await acceptSyncBaseline(created.package, created.businessDataHash);
+      setSyncMessage("加密同步包已导出，并记录为本机最新接力基线。请在另一台设备导入。 ");
+    } catch (error) {
+      setSyncMessage(errorMessage(error));
+    }
+  };
+
+  const inspectSync = async () => {
+    try {
+      const [inspected, state, currentPayload] = await Promise.all([
+        inspectSyncPackage(syncText, syncPassword),
+        getLocalSyncState(),
+        readBackupPayload()
+      ]);
+      const currentBusinessDataHash = await calculateBusinessDataHash(currentPayload);
+      const importStatus = classifySyncImport(state, currentBusinessDataHash, inspected.package);
+      setSyncPreview({ ...inspected, importStatus });
+      setSyncMessage(importStatus === "CONFLICT"
+        ? "检测到版本冲突。应用不会静默覆盖；请先导出本机同步包留底。 "
+        : "同步包已解密并通过业务校验。请确认预览后再恢复。 ");
+    } catch (error) {
+      setSyncPreview(undefined);
+      setSyncMessage(errorMessage(error));
+    }
+  };
+
+  const restoreSync = async () => {
+    if (!syncPreview) return;
+    const conflictWarning = syncPreview.importStatus === "CONFLICT"
+      ? "检测到冲突。若尚未导出本机同步包，请先取消并留底。\n\n"
+      : "";
+    if (!confirm(`${conflictWarning}确定用该同步包整体替换本机全部 Healthier 数据？`)) return;
+    try {
+      await restoreBackup(syncPreview.payload, syncPassword);
+      await acceptSyncBaseline(syncPreview.package, syncPreview.businessDataHash);
+      location.reload();
+    } catch (error) {
+      setSyncMessage(errorMessage(error));
+    }
+  };
+
   const exportBackup = async () => {
     try {
       const text = await exportEncryptedBackup(password);
-      const url = URL.createObjectURL(new Blob([text], { type: "application/json;charset=utf-8" }));
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `healthier-backup-${localDateKey()}.hdbak`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      downloadTextFile(text, `healthier-backup-${localDateKey()}.hdbak`);
       setMessage("加密备份已下载。请妥善保管密码，应用无法找回。 ");
     } catch (error) { setMessage(errorMessage(error)); }
   };
@@ -1562,7 +1641,7 @@ function SettingsPage() {
 
   return (
     <div className="page-stack">
-      <PageIntro eyebrow="设置与数据" title="资料、身体指标和加密备份" description="浏览器清理站点数据会删除记录；请定期下载加密备份。" />
+      <PageIntro eyebrow="设置与数据" title="资料、身体指标和数据接力" description="本机仍是主数据；可通过加密同步包在手机和电脑之间接力，并定期保留独立备份。" />
       <ProfileEditor />
       <form className="card" onSubmit={async (event) => { event.preventDefault(); const measuredAt = `${metric.date}T12:00:00`; const bodyMetric: BodyMetric = { id: crypto.randomUUID(), measuredAt, weightKg: metric.weightKg, waistCm: metric.waistCm || undefined, note: metric.note || undefined }; await db.bodyMetrics.put(bodyMetric); setMessage("身体指标已记录。 "); }}>
         <div className="section-heading"><div><span className="eyebrow">趋势事实</span><h2>记录体重和腰围</h2></div></div>
@@ -1570,6 +1649,23 @@ function SettingsPage() {
         <button className="secondary full-width" type="submit">保存身体指标</button>
         {metrics.slice(0, 3).map((item) => <p className="metric-row" key={item.id}><span>{item.measuredAt.slice(0, 10)}</span><b>{item.weightKg.toFixed(1)} kg{item.waistCm ? ` · 腰围 ${item.waistCm.toFixed(1)} cm` : ""}</b><button className="text-button danger" type="button" onClick={() => void db.bodyMetrics.delete(item.id)}>删除</button></p>)}
       </form>
+      <section className="card">
+        <div className="section-heading"><div><span className="eyebrow">HD-SYNC-1</span><h2>跨设备接力（文件版）</h2></div><span className="step-pill">不依赖云服务</span></div>
+        <p className="helper">同步包是完整加密快照，不会实时合并。换设备前导出，在另一台设备输入同一密码、预览并整体恢复。</p>
+        {localSyncState?.lastSyncedAt && <p className="sync-state">本机最近接力：{new Date(localSyncState.lastSyncedAt).toLocaleString("zh-CN")}</p>}
+        <label>同步包密码（至少8字符）<input type="password" minLength={8} value={syncPassword} onChange={(event) => { setSyncPassword(event.target.value); setSyncPreview(undefined); }} /></label>
+        <button className="primary full-width" type="button" onClick={() => void exportSyncPackage()}>导出本机同步包</button>
+        <hr />
+        <label className="file-picker">选择 `.hdsync` 文件<input type="file" accept=".hdsync,application/json" onChange={async (event) => { const file = event.target.files?.[0]; setSyncText(file ? await file.text() : ""); setSyncPreview(undefined); setSyncMessage(""); }} /></label>
+        <button className="secondary full-width" type="button" disabled={!syncText} onClick={() => void inspectSync()}>解密、校验并预览</button>
+        {syncPreview && <div className={`backup-preview sync-preview ${syncPreview.importStatus.toLowerCase()}`}>
+          <b>数据导出时间：{new Date(syncPreview.payload.exportedAt).toLocaleString("zh-CN")}</b>
+          <span>餐食 {syncPreview.payload.meals.length} 条 · 食物项 {syncPreview.payload.mealItems.length} 条 · 身体指标 {syncPreview.payload.bodyMetrics.length} 条</span>
+          <span>{SYNC_IMPORT_LABELS[syncPreview.importStatus]}</span>
+          <button className={syncPreview.importStatus === "CONFLICT" ? "danger-button" : "secondary"} type="button" onClick={() => void restoreSync()}>确认用同步包替换本机</button>
+        </div>}
+        {syncMessage && <p className={`notice ${syncPreview?.importStatus === "CONFLICT" ? "warning" : ""}`}>{syncMessage.trim()}</p>}
+      </section>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">AES-256-GCM</span><h2>加密备份与恢复</h2></div></div>
         <p className="helper">密码经 PBKDF2-SHA-256 迭代 310,000 次派生。恢复前只预览数量，确认后整体替换。</p>

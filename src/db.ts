@@ -34,7 +34,7 @@ export interface AppSetting {
   value: unknown;
 }
 
-const STORE_SCHEMA = {
+export const STORE_SCHEMA = {
   profiles: "id",
   bodyMetrics: "id, measuredAt",
   meals: "id, date, eatenAt, mealType",
@@ -42,6 +42,8 @@ const STORE_SCHEMA = {
   foodOverrides: "id, name, category",
   settings: "key"
 };
+
+export const DATABASE_TABLE_NAMES = Object.keys(STORE_SCHEMA) as Array<keyof typeof STORE_SCHEMA>;
 
 export function materializeMissingNutritionSnapshots(
   meals: StoredMeal[],

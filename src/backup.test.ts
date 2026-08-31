@@ -60,4 +60,29 @@ describe("encrypted backup", () => {
     const rollbackPayload = await decryptBackup(rollback?.value as string, "correct-password");
     expect(rollbackPayload.settings).toContainEqual({ key: "local-only", value: "应删除" });
   });
+
+  it("备份排除本机同步状态，恢复时仍保留该状态", async () => {
+    const syncState = {
+      deviceId: "11111111-1111-4111-8111-111111111111",
+      baselineVersionId: "22222222-2222-4222-8222-222222222222",
+      baselineBusinessDataHash: "a".repeat(64)
+    };
+    await db.settings.bulkPut([
+      { key: "business-setting", value: "应同步" },
+      { key: "sync:file-state", value: syncState },
+      { key: "restoreRollback", value: "不应导出" }
+    ]);
+
+    const encrypted = await exportEncryptedBackup("correct-password");
+    const payload = await decryptBackup(encrypted, "correct-password");
+    expect(payload.settings).toEqual([{ key: "business-setting", value: "应同步" }]);
+
+    await db.settings.put({ key: "business-setting", value: "本机新值" });
+    await restoreBackup(payload, "correct-password");
+
+    expect(await db.settings.get("sync:file-state"))
+      .toEqual({ key: "sync:file-state", value: syncState });
+    expect(await db.settings.get("business-setting"))
+      .toEqual({ key: "business-setting", value: "应同步" });
+  });
 });

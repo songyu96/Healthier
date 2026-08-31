@@ -2,6 +2,7 @@ import { z } from "zod";
 import { db, materializeMissingNutritionSnapshots } from "./db";
 import { mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
 import { backupPayloadSchema, type BackupPayload } from "./backupSchemas";
+import { isSyncedSettingKey, settingSyncScope } from "./syncScope";
 export type { BackupPayload } from "./backupSchemas";
 
 const ITERATIONS = 310_000;
@@ -77,34 +78,36 @@ export async function readBackupPayload(): Promise<BackupPayload> {
       meals: await db.meals.toArray(),
       mealItems: await db.mealItems.toArray(),
       foodOverrides: await db.foodOverrides.toArray(),
-      settings: (await db.settings.toArray()).filter(
-        (setting) => setting.key !== "restoreRollback"
-      )
+      settings: (await db.settings.toArray()).filter((setting) => isSyncedSettingKey(setting.key))
     })
   );
 }
 
-export async function exportEncryptedBackup(password: string): Promise<string> {
-  const payload = await readBackupPayload();
+export async function encryptBackupPayload(payload: BackupPayload, password: string): Promise<string> {
+  const validated = backupPayloadSchema.parse(payload);
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(password, salt, ITERATIONS);
   const ciphertext = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
-    encoder.encode(JSON.stringify(payload))
+    encoder.encode(JSON.stringify(validated))
   );
 
   return JSON.stringify({
     format: "HD-BACKUP-2",
     appSchemaVersion: 2,
-    createdAt: payload.exportedAt,
+    createdAt: validated.exportedAt,
     kdf: { name: "PBKDF2", hash: "SHA-256", iterations: ITERATIONS },
     cipher: { name: "AES-GCM", length: 256 },
     salt: bytesToBase64(salt),
     iv: bytesToBase64(iv),
     ciphertext: bytesToBase64(new Uint8Array(ciphertext))
   });
+}
+
+export async function exportEncryptedBackup(password: string): Promise<string> {
+  return encryptBackupPayload(await readBackupPayload(), password);
 }
 
 export async function decryptBackup(text: string, password: string): Promise<BackupPayload> {
@@ -138,12 +141,16 @@ export async function restoreBackup(payload: BackupPayload, rollbackPassword: st
     validated.mealItems,
     restoredFoods
   );
-  const restoredSettings = validated.settings.filter((setting) => setting.key !== "restoreRollback");
+  const restoredSettings = validated.settings.filter((setting) => isSyncedSettingKey(setting.key));
 
   await db.transaction(
     "rw",
     [db.profiles, db.bodyMetrics, db.meals, db.mealItems, db.foodOverrides, db.settings],
     async () => {
+      const localOnlySettings = (await db.settings.toArray()).filter(
+        (setting) => settingSyncScope(setting.key) === "LOCAL_ONLY"
+      );
+
       await Promise.all([
         db.profiles.clear(),
         db.bodyMetrics.clear(),
@@ -158,6 +165,7 @@ export async function restoreBackup(payload: BackupPayload, rollbackPassword: st
       if (validated.mealItems.length) await db.mealItems.bulkAdd(validated.mealItems);
       if (validated.foodOverrides.length) await db.foodOverrides.bulkAdd(validated.foodOverrides);
       if (restoredSettings.length) await db.settings.bulkAdd(restoredSettings);
+      if (localOnlySettings.length) await db.settings.bulkAdd(localOnlySettings);
       await db.settings.put({ key: "restoreRollback", value: rollback });
     }
   );

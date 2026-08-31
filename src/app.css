@@ -226,6 +226,9 @@ summary { cursor: pointer; color: var(--green); font-weight: 800; }
 .file-picker { border: 1px dashed #9aad9e; border-radius: 12px; padding: 14px; background: #f3f5ef; }
 .file-picker input { min-height: auto; border: 0; padding: 6px 0 0; background: transparent; }
 .backup-preview { display: grid; gap: 8px; margin-top: 14px; border: 1px solid #d1c092; border-radius: 13px; padding: 14px; background: #fff7df; font-size: 12px; }
+.sync-state { margin: 0 0 14px; border-radius: 11px; padding: 9px 11px; color: var(--green-dark); background: #edf3ed; font-size: 11px; font-weight: 700; }
+.sync-preview.remote_update, .sync-preview.same_version { border-color: #a9c3ae; background: #f1f7ef; }
+.sync-preview.conflict { border-color: #d6aa63; background: #fff5df; }
 .metric-row { display: grid; grid-template-columns: 85px 1fr auto; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; font-size: 12px; }
 hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 
