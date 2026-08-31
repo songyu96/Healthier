@@ -881,30 +881,32 @@ export function MealRow({ meal, facts, onRepeat, onEdit, onDelete }: { meal: Con
       <div className="meal-content">
         <h3>{meal.items.map((item) => item.name).join("、")}{meal.nutritionSnapshotOrigin === "MIGRATED" && <span className="tag">升级时估算</span>}</h3>
         <p>{meal.items.map((item) => `${item.quantityMin === item.quantityMax ? item.quantityMin : `${item.quantityMin}～${item.quantityMax}`}${item.unit}`).join(" · ")}</p>
-        {meal.nutritionSnapshotOrigin === "MIGRATED" && <small>营养快照按升级或旧备份恢复当时的食物库估算；重新确认保存后会更新来源。</small>}
         {facts && <div className="meal-nutrition">
-          {hasKnownNutrition ? <>
-            <div className="meal-nutrition-bar">
-              {isKnownSubtotal && <span className="nutrition-status">已知小计</span>}
+          <div className="meal-nutrition-bar">
+            {hasKnownNutrition ? <>
+              {isKnownSubtotal && <span className="nutrition-status">{meal.unknownOil ? "已知小计 · 用油未计" : "已知小计"}</span>}
               <strong>{mealNutrientValue(facts, "kcal", "kcal")}</strong>
               <span><small>蛋白</small>{mealNutrientValue(facts, "protein", "g", 1)}</span>
               <span><small>碳水</small>{mealNutrientValue(facts, "carb", "g", 1)}</span>
               <span><small>脂肪</small>{mealNutrientValue(facts, "fat", "g", 1)}</span>
-            </div>
-            {meal.unknownOil && <small className="meal-nutrition-caveat">不含未知用油</small>}
-          </> : <p className="meal-nutrition-empty">暂无可计算营养</p>}
-          <details className="meal-nutrition-details">
-            <summary>营养明细与来源</summary>
-            {facts.items.map((item) => <div className="meal-nutrition-item" key={item.tempId}>
-              <b>{item.name}</b>
-              <span>{itemNutritionText(item)}</span>
-              <small>数据来源：{item.sourceRef}</small>
-            </div>)}
-            {facts.unknownItems.map((item) => <div className="meal-nutrition-item unknown" key={item.tempId}>
-              <b>{item.name}</b><span>无法计算：{item.reason}</span>
-            </div>)}
-          </details>
+            </> : <span className="meal-nutrition-empty">暂无可计算营养</span>}
+            <details className="meal-nutrition-details">
+              <summary>{hasKnownNutrition ? "明细" : "查看原因"}</summary>
+              <div className="meal-nutrition-detail-body">
+                {meal.nutritionSnapshotOrigin === "MIGRATED" && <p className="migration-note">营养快照按升级或旧备份恢复当时的食物库估算；重新确认保存后会更新来源。</p>}
+                {facts.items.map((item) => <div className="meal-nutrition-item" key={item.tempId}>
+                  <b>{item.name}</b>
+                  <span>{itemNutritionText(item)}</span>
+                  <small>数据来源：{item.sourceRef}</small>
+                </div>)}
+                {facts.unknownItems.map((item) => <div className="meal-nutrition-item unknown" key={item.tempId}>
+                  <b>{item.name}</b><span>无法计算：{item.reason}</span>
+                </div>)}
+              </div>
+            </details>
+          </div>
         </div>}
+        {!facts && meal.nutritionSnapshotOrigin === "MIGRATED" && <details className="meal-nutrition-details migration-only"><summary>升级时估算说明</summary><p className="migration-note">营养快照按升级或旧备份恢复当时的食物库估算；重新确认保存后会更新来源。</p></details>}
       </div>
       <div className="row-actions">{onRepeat && <button className="text-button" type="button" onClick={onRepeat}>再记一次</button>}<button className="text-button" type="button" onClick={onEdit}>编辑</button><button className="text-button danger" type="button" onClick={() => void onDelete()}>删除</button></div>
     </article>

@@ -202,7 +202,7 @@ describe("AssessmentPanel safety rendering", () => {
     expect(html).toContain("72 kcal");
     expect(html).toContain("蛋白质");
     expect(html).toContain("meal-nutrition-bar");
-    expect(html).toContain("营养明细与来源");
+    expect(html).toContain(">明细<");
     expect(html).not.toContain("本餐营养估算");
     expect(html).toContain("USER:test-egg:v1");
 
@@ -210,7 +210,8 @@ describe("AssessmentPanel safety rendering", () => {
       <MealRow meal={{ ...meal, unknownOil: true }} facts={facts} onEdit={() => undefined} onDelete={() => undefined} />
     );
     expect(subtotalHtml).toContain("已知小计");
-    expect(subtotalHtml).toContain("不含未知用油");
+    expect(subtotalHtml).toContain("用油未计");
+    expect(subtotalHtml).not.toContain("不含未知用油");
   });
 
   it("完全无法计算时不展示假零值并说明原因", () => {
@@ -235,6 +236,7 @@ describe("AssessmentPanel safety rendering", () => {
     );
 
     expect(html).toContain("暂无可计算营养");
+    expect(html).toContain("查看原因");
     expect(html).toContain("无法计算：食物库中没有匹配项");
     expect(html).not.toContain(">0 kcal<");
   });
