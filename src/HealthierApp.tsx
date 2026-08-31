@@ -884,16 +884,17 @@ export function MealRow({ meal, facts, onRepeat, onEdit, onDelete }: { meal: Con
         {meal.nutritionSnapshotOrigin === "MIGRATED" && <small>营养快照按升级或旧备份恢复当时的食物库估算；重新确认保存后会更新来源。</small>}
         {facts && <div className="meal-nutrition">
           {hasKnownNutrition ? <>
-            <div className="meal-nutrition-heading"><b>{isKnownSubtotal ? "本餐已知小计" : "本餐营养估算"}</b>{meal.unknownOil && <small>不含未知用油</small>}</div>
-            <div className="meal-nutrition-summary">
-              <span><small>能量</small><b>{mealNutrientValue(facts, "kcal", "kcal")}</b></span>
-              <span><small>蛋白质</small><b>{mealNutrientValue(facts, "protein", "g", 1)}</b></span>
-              <span><small>碳水</small><b>{mealNutrientValue(facts, "carb", "g", 1)}</b></span>
-              <span><small>脂肪</small><b>{mealNutrientValue(facts, "fat", "g", 1)}</b></span>
+            <div className="meal-nutrition-bar">
+              {isKnownSubtotal && <span className="nutrition-status">已知小计</span>}
+              <strong>{mealNutrientValue(facts, "kcal", "kcal")}</strong>
+              <span><small>蛋白</small>{mealNutrientValue(facts, "protein", "g", 1)}</span>
+              <span><small>碳水</small>{mealNutrientValue(facts, "carb", "g", 1)}</span>
+              <span><small>脂肪</small>{mealNutrientValue(facts, "fat", "g", 1)}</span>
             </div>
+            {meal.unknownOil && <small className="meal-nutrition-caveat">不含未知用油</small>}
           </> : <p className="meal-nutrition-empty">暂无可计算营养</p>}
           <details className="meal-nutrition-details">
-            <summary>查看营养明细与来源</summary>
+            <summary>营养明细与来源</summary>
             {facts.items.map((item) => <div className="meal-nutrition-item" key={item.tempId}>
               <b>{item.name}</b>
               <span>{itemNutritionText(item)}</span>

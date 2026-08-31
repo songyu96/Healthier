@@ -199,16 +199,17 @@ describe("AssessmentPanel safety rendering", () => {
       <MealRow meal={meal} facts={facts} onEdit={() => undefined} onDelete={() => undefined} />
     );
 
-    expect(html).toContain("本餐营养估算");
     expect(html).toContain("72 kcal");
     expect(html).toContain("蛋白质");
-    expect(html).toContain("查看营养明细与来源");
+    expect(html).toContain("meal-nutrition-bar");
+    expect(html).toContain("营养明细与来源");
+    expect(html).not.toContain("本餐营养估算");
     expect(html).toContain("USER:test-egg:v1");
 
     const subtotalHtml = renderToStaticMarkup(
       <MealRow meal={{ ...meal, unknownOil: true }} facts={facts} onEdit={() => undefined} onDelete={() => undefined} />
     );
-    expect(subtotalHtml).toContain("本餐已知小计");
+    expect(subtotalHtml).toContain("已知小计");
     expect(subtotalHtml).toContain("不含未知用油");
   });
 
