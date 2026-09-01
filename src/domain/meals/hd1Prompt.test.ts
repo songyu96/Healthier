@@ -8,7 +8,7 @@ import {
   MEAL_TYPES,
   QUANTITY_UNITS
 } from "./types";
-import { createHd1AiPrompt } from "./hd1Prompt";
+import { createHd1AiPrompt, createHd1ImagePrompt } from "./hd1Prompt";
 
 describe("HD1 AI prompt", () => {
   it("包含全部合法餐次、分类、状态和单位", () => {
@@ -28,5 +28,16 @@ describe("HD1 AI prompt", () => {
     expect(prompt).toContain("油盐未知");
     expect(prompt).toContain("恰好包含6段");
     expect(prompt).toContain("参考日期：2026-08-31");
+  });
+
+  it("图片模式直接估计宽松范围并交给人工确认", () => {
+    const prompt = createHd1ImagePrompt("2026-09-01T12:30");
+
+    expect(prompt).toContain("不要向我提问");
+    expect(prompt).toContain("只输出一行 HD1 字符串");
+    expect(prompt).toContain("估计实际呈现的可食重量范围");
+    expect(prompt).toContain("照片估计，油盐未知");
+    expect(prompt).toContain("解析并人工确认");
+    expect(prompt).toContain("参考本地日期时间：2026-09-01T12:30");
   });
 });

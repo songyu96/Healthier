@@ -34,6 +34,7 @@ import {
   calculateTargets,
   createMealDraftFromTemplate,
   createHd1AiPrompt,
+  createHd1ImagePrompt,
   createMixedMealDraft,
   createQuickMealDraft,
   createRepeatMealDraft,
@@ -668,6 +669,7 @@ function TodayPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const hd1AiPrompt = useMemo(() => createHd1AiPrompt(today), [today]);
+  const hd1ImagePrompt = createHd1ImagePrompt(localDateTime());
   const favoriteFoodIds = useMemo(
     () => Array.isArray(storedFavoriteFoodIds)
       ? storedFavoriteFoodIds.filter((value): value is string => typeof value === "string")
@@ -719,6 +721,15 @@ function TodayPage() {
       return;
     }
     openDraft(result.value, "");
+  };
+
+  const copyHd1Prompt = async (prompt: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setHd1PromptMessage(successMessage);
+    } catch {
+      setHd1PromptMessage("浏览器未允许复制，请展开对应 Prompt 后手动选择文本。");
+    }
   };
 
   const save = async () => {
@@ -865,18 +876,19 @@ function TodayPage() {
           <summary><span><b>让任意 AI 帮我生成</b><small>复制完整 Prompt，不需要记住 DA、EA 等代码</small></span><span className="step-pill">展开</span></summary>
           <div className="hd1-ai-help-body">
             <p className="helper">把 Prompt 发给 ChatGPT、Claude、DeepSeek、豆包等 AI，再补充你实际吃了什么。AI 生成后仍需在本应用中人工确认食物、状态和重量。</p>
-            <button className="secondary full-width" type="button" onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(hd1AiPrompt);
-                setHd1PromptMessage("完整 Prompt 已复制，可以直接粘贴给 AI。");
-              } catch {
-                setHd1PromptMessage("浏览器未允许复制，请展开字段说明后手动选择文本。");
-              }
-            }}>复制给 AI 的完整 Prompt</button>
+            <div className="hd1-prompt-actions">
+              <button className="secondary" type="button" onClick={() => void copyHd1Prompt(hd1AiPrompt, "文字描述 Prompt 已复制，可以直接粘贴给 AI。")}>复制文字描述 Prompt</button>
+              <button className="secondary" type="button" onClick={() => void copyHd1Prompt(createHd1ImagePrompt(localDateTime()), "照片识别 Prompt 已复制，请和餐食照片一起发送给 AI。")}>复制餐食照片 Prompt</button>
+            </div>
+            <p className="hd1-photo-hint">照片模式适用于支持图片识别的 AI。AI 会直接估计并生成草稿；粘贴回来后请点击“解析并人工确认”进行修改。</p>
             {hd1PromptMessage && <p className="notice success">{hd1PromptMessage}</p>}
             <details className="hd1-prompt-text">
-              <summary>查看完整 Prompt 文本</summary>
+              <summary>查看文字描述 Prompt</summary>
               <pre>{hd1AiPrompt}</pre>
+            </details>
+            <details className="hd1-prompt-text">
+              <summary>查看餐食照片 Prompt</summary>
+              <pre>{hd1ImagePrompt}</pre>
             </details>
             <details className="hd1-code-help">
               <summary>查看字段代码</summary>
