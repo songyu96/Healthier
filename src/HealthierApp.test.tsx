@@ -44,13 +44,15 @@ function profile(healthFlags: UserProfile["healthFlags"]): UserProfile {
 }
 
 describe("brand mark", () => {
-  it("使用 H、平衡弧线和代表用户的人形标志", () => {
+  it("使用开放圆环、种子和小芽标志", () => {
     const html = renderToStaticMarkup(<BrandMark />);
 
     expect(html).toContain("<svg");
-    expect(html).toContain("brand-balance");
-    expect(html).toContain("brand-person-head");
-    expect(html).not.toContain("brand-leaf");
+    expect(html).toContain("brand-orbit");
+    expect(html).toContain("brand-seed");
+    expect(html).toContain("brand-sprout");
+    expect(html).not.toContain("brand-person-head");
+    expect(html).not.toContain("brand-pillars");
     expect(html).not.toContain("衡");
   });
 

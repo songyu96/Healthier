@@ -28,11 +28,11 @@ a { color: inherit; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand-mark { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border-radius: 14px; background: var(--green); }
 .brand-mark svg { width: 38px; height: 38px; overflow: visible; }
-.brand-pillars, .brand-balance, .brand-person-body { fill: none; stroke-linecap: round; }
-.brand-pillars { stroke: #fffaf0; stroke-width: 5; }
-.brand-balance { stroke: #fffaf0; stroke-width: 4; }
-.brand-person-head { fill: #e2a23b; }
-.brand-person-body { stroke: #e2a23b; stroke-width: 4; }
+.brand-orbit, .brand-sprout, .brand-seed-vein { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.brand-orbit { stroke: #fffaf0; stroke-width: 4; }
+.brand-sprout { stroke: #e2a23b; stroke-width: 3; }
+.brand-seed { fill: #e2a23b; }
+.brand-seed-vein { stroke: var(--green); stroke-width: 1.6; }
 .brand strong, .brand small { display: block; }
 .brand-copy { min-width: 0; }
 .brand-wordmark { position: relative; width: max-content; color: var(--ink); font-size: 20px; line-height: 1; letter-spacing: -0.025em; }

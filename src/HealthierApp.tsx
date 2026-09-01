@@ -303,10 +303,10 @@ export function BrandMark() {
   return (
     <span className="brand-mark" aria-hidden="true">
       <svg viewBox="0 0 64 64" focusable="false">
-        <path className="brand-pillars" d="M18 16v32M46 16v32" />
-        <path className="brand-balance" d="M19 35c7 5 19 7 26 0" />
-        <circle className="brand-person-head" cx="32" cy="22" r="4" />
-        <path className="brand-person-body" d="M32 29v13" />
+        <path className="brand-orbit" d="M34 12c-12-1.5-22 7-22.7 19.3C10.6 44 20 54 32.6 54c12 0 22-9.3 22-21.3 0-9.3-5.3-16.7-14-19.3" />
+        <path className="brand-sprout" d="M44 14.7c4.7-2.7 8-2.7 10.7-1.3-1.3 4.7-4 7.3-9.3 8" />
+        <path className="brand-seed" d="M32 21.3c-6.7 5.3-8 14-1.3 21.3 7.3-5.3 9.3-14 2.7-21.3Z" />
+        <path className="brand-seed-vein" d="M32.7 25c0 6.7-.7 12-2 17" />
       </svg>
     </span>
   );
