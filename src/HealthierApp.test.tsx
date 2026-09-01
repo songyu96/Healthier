@@ -5,6 +5,7 @@ import {
   AssessmentPanel,
   BookChapterCard,
   BrandMark,
+  BrandWordmark,
   MealRow,
   QuickMealCard,
   WeeklyActionsPanel,
@@ -43,12 +44,22 @@ function profile(healthFlags: UserProfile["healthFlags"]): UserProfile {
 }
 
 describe("brand mark", () => {
-  it("使用 H 与叶片图形，不再显示旧汉字标志", () => {
+  it("使用 H、平衡弧线和代表用户的人形标志", () => {
     const html = renderToStaticMarkup(<BrandMark />);
 
     expect(html).toContain("<svg");
-    expect(html).toContain("brand-leaf");
+    expect(html).toContain("brand-balance");
+    expect(html).toContain("brand-person-head");
+    expect(html).not.toContain("brand-leaf");
     expect(html).not.toContain("衡");
+  });
+
+  it("在字标中突出eat和代表用户的i", () => {
+    const html = renderToStaticMarkup(<BrandWordmark />);
+
+    expect(html.match(/brand-eat/g)).toHaveLength(3);
+    expect(html).toContain("brand-self");
+    expect(html).toContain("饮食与身心状态记录");
   });
 });
 

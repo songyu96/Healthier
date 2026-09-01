@@ -303,10 +303,22 @@ export function BrandMark() {
   return (
     <span className="brand-mark" aria-hidden="true">
       <svg viewBox="0 0 64 64" focusable="false">
-        <path className="brand-h" d="M16 15v34M16 32h29M44 29v20" />
-        <path className="brand-leaf" d="M41 27C41 17 47 10 56 9c0 10-5 17-15 18Z" />
-        <path className="brand-leaf-vein" d="M43 24c3-5 7-9 11-12" />
+        <path className="brand-pillars" d="M18 16v32M46 16v32" />
+        <path className="brand-balance" d="M19 35c7 5 19 7 26 0" />
+        <circle className="brand-person-head" cx="32" cy="22" r="4" />
+        <path className="brand-person-body" d="M32 29v13" />
       </svg>
+    </span>
+  );
+}
+
+export function BrandWordmark() {
+  return (
+    <span className="brand-copy">
+      <strong className="brand-wordmark" aria-label="Healthier">
+        <span aria-hidden="true">H<span className="brand-eat">e</span><span className="brand-eat">a</span>l<span className="brand-eat">t</span>h<span className="brand-self">i</span>er</span>
+      </strong>
+      <small>饮食与身心状态记录</small>
     </span>
   );
 }
@@ -328,7 +340,7 @@ function Layout({ children }: PropsWithChildren) {
       <header className="topbar">
         <NavLink className="brand" to="/" aria-label="回到今日记录">
           <BrandMark />
-          <span><strong>Healthier</strong><small>书本规则饮食记录</small></span>
+          <BrandWordmark />
         </NavLink>
         <span className="local-badge">仅存本机</span>
       </header>

@@ -26,13 +26,19 @@ a { color: inherit; }
 .app-shell { min-height: 100vh; padding-bottom: 84px; }
 .topbar { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; justify-content: space-between; min-height: 68px; padding: 10px max(18px, calc((100vw - 1080px) / 2)); border-bottom: 1px solid rgba(33, 92, 67, 0.13); background: rgba(244, 241, 232, 0.92); backdrop-filter: blur(14px); }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.brand-mark { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; color: #fffaf0; background: var(--green); }
-.brand-mark svg { width: 34px; height: 34px; overflow: visible; }
-.brand-h { fill: none; stroke: currentColor; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
-.brand-leaf { fill: #f4c86a; }
-.brand-leaf-vein { fill: none; stroke: #fffaf0; stroke-width: 2.5; stroke-linecap: round; }
+.brand-mark { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; border-radius: 14px; background: var(--green); }
+.brand-mark svg { width: 38px; height: 38px; overflow: visible; }
+.brand-pillars, .brand-balance, .brand-person-body { fill: none; stroke-linecap: round; }
+.brand-pillars { stroke: #fffaf0; stroke-width: 5; }
+.brand-balance { stroke: #fffaf0; stroke-width: 4; }
+.brand-person-head { fill: #e2a23b; }
+.brand-person-body { stroke: #e2a23b; stroke-width: 4; }
 .brand strong, .brand small { display: block; }
-.brand strong { letter-spacing: 0.02em; }
+.brand-copy { min-width: 0; }
+.brand-wordmark { position: relative; width: max-content; color: var(--ink); font-size: 20px; line-height: 1; letter-spacing: -0.025em; }
+.brand-wordmark::after { position: absolute; bottom: -3px; left: 13px; width: 47px; height: 7px; border-bottom: 1.5px solid rgba(218, 154, 54, 0.62); border-radius: 0 0 50% 50%; content: ""; transform: rotate(-2deg); }
+.brand-eat { color: #c78521; }
+.brand-self { color: #3d8880; }
 .brand small { margin-top: 2px; color: var(--muted); font-size: 11px; }
 .local-badge, .step-pill, .tag { border-radius: 999px; background: #e6eadc; color: var(--green-dark); font-size: 11px; font-weight: 700; }
 .local-badge { padding: 7px 10px; }
