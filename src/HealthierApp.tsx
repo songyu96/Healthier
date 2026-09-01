@@ -16,6 +16,7 @@ import {
   CATEGORY_LABELS,
   FOOD_CATEGORIES,
   FOOD_KINDS,
+  FOOD_STATE_LABELS,
   FOOD_STATES,
   MEAL_TEMPLATES,
   MEAL_LABELS,
@@ -32,6 +33,7 @@ import {
   calculateNutrition,
   calculateTargets,
   createMealDraftFromTemplate,
+  createHd1AiPrompt,
   createMixedMealDraft,
   createQuickMealDraft,
   createRepeatMealDraft,
@@ -102,14 +104,6 @@ const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
   LIGHT: "轻体力/电脑工作（30 kcal/kg）",
   MODERATE: "中体力（35 kcal/kg）",
   HEAVY: "重体力（40 kcal/kg）"
-};
-
-const STATE_LABELS: Record<FoodState, string> = {
-  RW: "生重",
-  CK: "熟重",
-  EA: "即食",
-  PK: "包装标示",
-  UN: "未知"
 };
 
 const FOOD_KIND_LABELS: Record<FoodKind, string> = {
@@ -409,7 +403,7 @@ function MealDraftEditor({ draft, foods, onChange, onCancel, onSave, saving }: M
               </label>
               <label>状态
                 <select value={item.state} onChange={(event) => updateItem(index, { state: event.target.value as FoodState })}>
-                  {FOOD_STATES.map((state) => <option key={state} value={state}>{state} · {STATE_LABELS[state]}</option>)}
+                  {FOOD_STATES.map((state) => <option key={state} value={state}>{state} · {FOOD_STATE_LABELS[state]}</option>)}
                 </select>
               </label>
               <label>下限<input type="number" min="0" step="0.1" value={item.quantityMin} onChange={(event) => updateItem(index, { quantityMin: number(event.target.value) })} /></label>
@@ -668,10 +662,12 @@ function TodayPage() {
   const waterMl = useLiveQuery(() => getSetting(`water:${today}`, 0), [today], 0);
   const storedFavoriteFoodIds = useLiveQuery(() => getSetting<unknown>("favoriteFoodIds", []), [], []);
   const [rawLine, setRawLine] = useState(`HD1|${today.replaceAll("-", "")}-0800|B|鸡蛋~EG~CK~1-1pc;牛奶~DA~EA~250-250ml|水煮|油盐未知`);
+  const [hd1PromptMessage, setHd1PromptMessage] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [draft, setDraft] = useState<ParsedMeal | ConfirmedMeal>();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const hd1AiPrompt = useMemo(() => createHd1AiPrompt(today), [today]);
   const favoriteFoodIds = useMemo(
     () => Array.isArray(storedFavoriteFoodIds)
       ? storedFavoriteFoodIds.filter((value): value is string => typeof value === "string")
@@ -865,6 +861,35 @@ function TodayPage() {
       }} />
       <section className="today-tool-section">
         <div className="section-heading"><div><span className="eyebrow">HD1 导入</span><h2>粘贴一行餐食</h2></div><span className="step-pill">先解析，再确认</span></div>
+        <details className="hd1-ai-help">
+          <summary><span><b>让任意 AI 帮我生成</b><small>复制完整 Prompt，不需要记住 DA、EA 等代码</small></span><span className="step-pill">展开</span></summary>
+          <div className="hd1-ai-help-body">
+            <p className="helper">把 Prompt 发给 ChatGPT、Claude、DeepSeek、豆包等 AI，再补充你实际吃了什么。AI 生成后仍需在本应用中人工确认食物、状态和重量。</p>
+            <button className="secondary full-width" type="button" onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(hd1AiPrompt);
+                setHd1PromptMessage("完整 Prompt 已复制，可以直接粘贴给 AI。");
+              } catch {
+                setHd1PromptMessage("浏览器未允许复制，请展开字段说明后手动选择文本。");
+              }
+            }}>复制给 AI 的完整 Prompt</button>
+            {hd1PromptMessage && <p className="notice success">{hd1PromptMessage}</p>}
+            <details className="hd1-prompt-text">
+              <summary>查看完整 Prompt 文本</summary>
+              <pre>{hd1AiPrompt}</pre>
+            </details>
+            <details className="hd1-code-help">
+              <summary>查看字段代码</summary>
+              <div className="hd1-code-groups">
+                <div><b>餐次</b>{Object.entries(MEAL_LABELS).map(([code, label]) => <span key={code}><code>{code}</code>{label}</span>)}</div>
+                <div><b>食物分类</b>{FOOD_CATEGORIES.map((code) => <span key={code}><code>{code}</code>{CATEGORY_LABELS[code]}</span>)}</div>
+                <div><b>食物状态</b>{FOOD_STATES.map((code) => <span key={code}><code>{code}</code>{FOOD_STATE_LABELS[code]}</span>)}</div>
+                <div><b>单位</b><span><code>g</code>克</span><span><code>ml</code>毫升</span><span><code>pc</code>个</span></div>
+              </div>
+            </details>
+            <div className="hd1-example"><b>示例</b><code>HD1|{today.replaceAll("-", "")}-1230|L|米饭~GR~CK~150-150g;西兰花~DV~CK~100-100g;鸡胸肉~MP~CK~80-80g|清炒|油盐未知</code></div>
+          </div>
+        </details>
         <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLine(event.target.value)} spellCheck={false} />
         <p className="helper">格式：HD1|日期时间|餐次|名称~分类~状态~重量范围|烹调|备注</p>
         {errors.map((error) => <p className="notice error" key={error}>{error}</p>)}
@@ -1521,7 +1546,7 @@ function FoodsPage() {
           <label>标签（顿号分隔）<input value={form.tags} placeholder="例如：早餐、外卖" onChange={(event) => setForm({ ...form, tags: event.target.value })} /></label>
           <label>每100单位<select value={form.basisUnit} onChange={(event) => setForm({ ...form, basisUnit: event.target.value as "g" | "ml" })}><option value="g">克</option><option value="ml">毫升</option></select></label>
         </div>
-        <fieldset className="health-flags"><legend>适用状态</legend>{FOOD_STATES.filter((state) => state !== "UN").map((state) => <label className="checkbox" key={state}><input type="checkbox" checked={form.states.includes(state)} onChange={(event) => setForm({ ...form, states: event.target.checked ? [...form.states, state] : form.states.filter((value) => value !== state) })} />{STATE_LABELS[state]}</label>)}</fieldset>
+        <fieldset className="health-flags"><legend>适用状态</legend>{FOOD_STATES.filter((state) => state !== "UN").map((state) => <label className="checkbox" key={state}><input type="checkbox" checked={form.states.includes(state)} onChange={(event) => setForm({ ...form, states: event.target.checked ? [...form.states, state] : form.states.filter((value) => value !== state) })} />{FOOD_STATE_LABELS[state]}</label>)}</fieldset>
         <p className="helper">每100单位营养值可逐项填写；没有可靠数据的字段请留空，应用不会把空值当作零。</p>
         <div className="form-grid nutrient-inputs">{(["kcal", "protein", "fat", "carb", "fiber"] as const).map((key) => <label key={key}>{({ kcal: "能量 kcal", protein: "蛋白质 g", fat: "脂肪 g", carb: "碳水 g", fiber: "纤维 g" })[key]}<input type="number" min="0" step="0.01" value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value === "" ? "" : number(event.target.value) })} /></label>)}<label>每枚克数（可选）<input type="number" min="0" step="0.1" value={form.gramsPerPiece ?? ""} onChange={(event) => setForm({ ...form, gramsPerPiece: event.target.value ? number(event.target.value) : undefined })} /></label></div>
         <label>数据限制或换算说明（可选）<textarea rows={2} value={form.dataCaveat} placeholder="例如：数据来自包装标签；不同口味可能不同" onChange={(event) => setForm({ ...form, dataCaveat: event.target.value })} /></label>

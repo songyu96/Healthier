@@ -23,6 +23,14 @@ export type FoodCategory = (typeof FOOD_CATEGORIES)[number];
 export const FOOD_STATES = ["RW", "CK", "EA", "PK", "UN"] as const;
 export type FoodState = (typeof FOOD_STATES)[number];
 
+export const FOOD_STATE_LABELS: Record<FoodState, string> = {
+  RW: "生重",
+  CK: "熟重",
+  EA: "即食",
+  PK: "包装标示",
+  UN: "未知"
+};
+
 export const MEAL_TYPES = ["B", "L", "D", "S"] as const;
 export type MealType = (typeof MEAL_TYPES)[number];
 

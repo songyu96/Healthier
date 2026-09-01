@@ -85,6 +85,21 @@ input, select, textarea { width: 100%; min-height: 44px; border: 1px solid #cdd2
 textarea { resize: vertical; line-height: 1.5; }
 input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(33, 92, 67, 0.1); }
 .hd1-input { background: #1b2922; color: #e6f2e9; font-family: Consolas, monospace; font-size: 13px; }
+.hd1-ai-help { margin-bottom: 14px; border: 1px solid #cbd8cb; border-radius: 14px; background: #f4f7f1; }
+.hd1-ai-help > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; list-style: none; }
+.hd1-ai-help > summary::-webkit-details-marker { display: none; }
+.hd1-ai-help > summary span:first-child { display: grid; gap: 3px; }
+.hd1-ai-help > summary small { color: var(--muted); font-weight: 500; }
+.hd1-ai-help-body { display: grid; gap: 12px; border-top: 1px solid #d9e1d7; padding: 14px; }
+.hd1-code-help { border-radius: 11px; padding: 10px 12px; background: #fff; }
+.hd1-prompt-text { border-radius: 11px; padding: 10px 12px; background: #fff; }
+.hd1-prompt-text pre { max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 10px; margin: 10px 0 0; padding: 12px; color: #dfeee3; background: #1b2922; font: 11px/1.65 Consolas, monospace; }
+.hd1-code-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding-top: 12px; }
+.hd1-code-groups > div { display: grid; align-content: start; gap: 6px; }
+.hd1-code-groups span { display: grid; grid-template-columns: 34px 1fr; gap: 5px; color: var(--muted); font-size: 11px; }
+.hd1-code-groups code { color: var(--green-dark); font-weight: 800; }
+.hd1-example { display: grid; gap: 7px; min-width: 0; }
+.hd1-example code { overflow-wrap: anywhere; border-radius: 10px; padding: 10px; color: #dfeee3; background: #1b2922; font-size: 11px; line-height: 1.6; }
 .search-input { margin-bottom: 14px; }
 .food-filters { display: grid; grid-template-columns: minmax(0, 1.7fr) 1fr 1fr; gap: 8px; }
 .food-filters .search-input { margin: 0; }

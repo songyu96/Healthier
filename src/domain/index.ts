@@ -1,5 +1,6 @@
 export * from "./meals/types";
 export * from "./meals/hd1";
+export * from "./meals/hd1Prompt";
 export * from "./meals/portions";
 export * from "./meals/repeatMeal";
 export * from "./meals/quickMeal";

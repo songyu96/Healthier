@@ -1,0 +1,32 @@
+import { describe, expect, it } from "vitest";
+import {
+  CATEGORY_LABELS,
+  FOOD_CATEGORIES,
+  FOOD_STATE_LABELS,
+  FOOD_STATES,
+  MEAL_LABELS,
+  MEAL_TYPES,
+  QUANTITY_UNITS
+} from "./types";
+import { createHd1AiPrompt } from "./hd1Prompt";
+
+describe("HD1 AI prompt", () => {
+  it("包含全部合法餐次、分类、状态和单位", () => {
+    const prompt = createHd1AiPrompt("2026-08-31");
+
+    MEAL_TYPES.forEach((code) => expect(prompt).toContain(`${code}=${MEAL_LABELS[code]}`));
+    FOOD_CATEGORIES.forEach((code) => expect(prompt).toContain(`${code}=${CATEGORY_LABELS[code]}`));
+    FOOD_STATES.forEach((code) => expect(prompt).toContain(`${code}=${FOOD_STATE_LABELS[code]}`));
+    QUANTITY_UNITS.forEach((unit) => expect(prompt).toContain(unit));
+  });
+
+  it("明确单行输出、重量范围、未知油盐和分隔符约束", () => {
+    const prompt = createHd1AiPrompt("2026-08-31");
+
+    expect(prompt).toContain("只输出一行 HD1 字符串");
+    expect(prompt).toContain("合理范围");
+    expect(prompt).toContain("油盐未知");
+    expect(prompt).toContain("恰好包含6段");
+    expect(prompt).toContain("参考日期：2026-08-31");
+  });
+});
