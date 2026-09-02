@@ -104,6 +104,12 @@ describe("common food data", () => {
     expect(COMMON_FOODS.find((food) => food.id === "instant-noodles-prepared-generic")?.foodKind).toBe("PACKAGED");
   });
 
+  it("美式通用香肠不占用中国香肠和火腿肠别名", () => {
+    const americanSausage = COMMON_FOODS.find((food) => food.id === "ham-sausage-generic");
+    expect(americanSausage?.aliases).not.toContain("香肠");
+    expect(americanSausage?.aliases).not.toContain("火腿肠");
+  });
+
   it("馒头、油条和花卷可按官方常见单件重量近似换算", () => {
     expect(COMMON_FOODS.find((food) => food.id === "mantou-generic-recipe")?.gramsPerPiece).toBe(160);
     expect(COMMON_FOODS.find((food) => food.id === "youtiao-generic-recipe")?.gramsPerPiece).toBe(70);

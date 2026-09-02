@@ -1,18 +1,19 @@
 import { NUTRIENT_KEYS } from "./types";
 import type { FoodReference, NutrientVector, PartialNutrientVector } from "./types";
 
-const CHINA_FCT_RELEASE = "中国食物成分表公开查询平台（查询于2026-08-29）";
+const CHINA_FCT_DEFAULT_VERIFIED_ON = "2026-08-29";
 const CHINA_FCT_CAVEAT = "中国食物成分表公开查询平台的每100克通用值；记录重量需与页面食部或成品口径一致。";
 
 type ChinaFoodSeed = Omit<FoodReference, "source" | "dataCaveats" | "nutrientsPer100" | "partialNutrientsPer100"> & {
   pageId: string;
   energyKj: number;
   nutrients: Partial<Omit<NutrientVector, "kcal">>;
+  verifiedOn?: string;
   caveats?: string[];
 };
 
 function chinaFood(seed: ChinaFoodSeed): FoodReference {
-  const { pageId, energyKj, nutrients, caveats = [], ...food } = seed;
+  const { pageId, energyKj, nutrients, verifiedOn = CHINA_FCT_DEFAULT_VERIFIED_ON, caveats = [], ...food } = seed;
   const vector: PartialNutrientVector = {
     kcal: Math.round(energyKj / 4.184),
     ...nutrients
@@ -35,7 +36,7 @@ function chinaFood(seed: ChinaFoodSeed): FoodReference {
     source: {
       kind: "REFERENCE",
       ref: `https://nlc.chinanutri.cn/fq/foodinfo/${pageId}.html`,
-      release: CHINA_FCT_RELEASE,
+      release: `中国食物成分表公开查询平台（查询于${verifiedOn}）`,
       method: "OFFICIAL_COMPOSITION"
     }
   };
@@ -300,5 +301,208 @@ export const CHINA_FOODS: FoodReference[] = [
     tags: ["煎饼", "杂粮", "主食", "干制"], pageId: "1222", energyKj: 1408,
     nutrients: { protein: 9.5, fat: 3.5, carb: 70, fiber: 8.1 },
     caveats: ["官方页商品名为“老区煎饼”；这是低水分干煎饼，不能用于煎饼果子或现摊软煎饼。"]
+  }),
+  chinaFood({
+    id: "china-purple-cabbage-raw", name: "紫甘蓝（生，可食部）", aliases: ["紫甘蓝", "紫包菜", "红甘蓝", "紫椰菜"],
+    category: "DV", compatibleStates: ["RW", "EA"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["蔬菜", "深色蔬菜", "甘蓝", "凉拌"], pageId: "469", energyKj: 106,
+    nutrients: { protein: 1.2, fat: 0.2, carb: 6.2, fiber: 3 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为86%；凉拌时额外加入的油、糖和调味料需另行记录。"]
+  }),
+  chinaFood({
+    id: "china-shiitake-fresh-raw", name: "鲜香菇（生，可食部）", aliases: ["鲜香菇", "香菇", "冬菇", "香蕈"],
+    category: "LV", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["菌菇", "菌类", "香菇", "家常食材"], pageId: "584", energyKj: 107,
+    nutrients: { protein: 2.2, fat: 0.3, carb: 5.2 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为100%；这是鲜香菇生重，不适用于干香菇或烹调后重量。"]
+  }),
+  chinaFood({
+    id: "china-shiitake-dried", name: "干香菇", aliases: ["香菇干", "干冬菇"],
+    category: "LV", compatibleStates: ["RW", "PK"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["菌菇", "菌类", "香菇", "干货"], pageId: "585", energyKj: 1149,
+    nutrients: { protein: 20, fat: 1.2, carb: 61.7 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为95%；只按泡发前干重记录，泡发后重量不能直接套用。"]
+  }),
+  chinaFood({
+    id: "china-oyster-mushroom-raw", name: "平菇（生，可食部）", aliases: ["平菇", "糙皮侧耳", "青蘑"],
+    category: "LV", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["菌菇", "菌类", "平菇", "家常食材"], pageId: "581", energyKj: 101,
+    nutrients: { protein: 1.9, fat: 0.3, carb: 4.6 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为93%；烹调后的失水和用油需另行处理。"]
+  }),
+  chinaFood({
+    id: "china-enoki-mushroom-fresh-raw", name: "金针菇（鲜，生）", aliases: ["金针菇", "鲜金针菇", "智力菇"],
+    category: "LV", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["菌菇", "菌类", "金针菇", "火锅"], pageId: "575", energyKj: 133,
+    nutrients: { protein: 2.4, fat: 0.4, carb: 6 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为100%；火锅汤底、蘸料和吸附油脂不包含在内。"]
+  }),
+  chinaFood({
+    id: "china-king-oyster-mushroom-raw", name: "杏鲍菇（生）", aliases: ["杏鲍菇", "刺芹侧耳"],
+    category: "LV", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["菌菇", "菌类", "杏鲍菇", "家常食材"], pageId: "602", energyKj: 148,
+    nutrients: { protein: 1.3, fat: 0.1, carb: 8.3 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为100%；煎炒时额外加入的油需另行记录。"]
+  }),
+  chinaFood({
+    id: "china-black-fungus-soaked", name: "黑木耳（水发）", aliases: ["水发木耳", "泡发木耳", "云耳"],
+    category: "LV", compatibleStates: ["RW", "EA"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["菌菇", "菌类", "木耳", "泡发"], pageId: "580", energyKj: 112,
+    nutrients: { protein: 1.5, fat: 0.2, carb: 6 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为100%；只用于已经泡发后的重量，不适用于干木耳重量。"]
+  }),
+  chinaFood({
+    id: "china-tremella-dried", name: "银耳（干）", aliases: ["干银耳", "白木耳"],
+    category: "LV", compatibleStates: ["RW", "PK"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["菌菇", "菌类", "银耳", "干货"], pageId: "587", energyKj: 1092,
+    nutrients: { protein: 10, fat: 1.4, carb: 67.3 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为96%；只按泡发前干重记录，银耳羹还需另计糖和其他配料。"]
+  }),
+  chinaFood({
+    id: "china-grass-carp-raw", name: "草鱼（生，可食部）", aliases: ["草鱼", "白鲩", "草包鱼"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "淡水鱼", "家常食材"], pageId: "1003", energyKj: 475,
+    nutrients: { protein: 16.6, fat: 5.2 }, verifiedOn: "2026-09-02",
+    caveats: ["原表碳水为Tr且未给出膳食纤维，应用保持未知；页面食部为58%。"]
+  }),
+  chinaFood({
+    id: "china-common-carp-raw", name: "鲤鱼（生，可食部）", aliases: ["鲤鱼", "鲤拐子"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "淡水鱼", "家常食材"], pageId: "1012", energyKj: 459,
+    nutrients: { protein: 17.6, fat: 4.1, carb: 0.5 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为54%；整条鱼毛重不能直接套用。"]
+  }),
+  chinaFood({
+    id: "china-silver-carp-raw", name: "鲢鱼（生，可食部）", aliases: ["鲢鱼", "白鲢", "连子鱼"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "淡水鱼", "家常食材"], pageId: "1020", energyKj: 436,
+    nutrients: { protein: 17.8, fat: 3.6 }, verifiedOn: "2026-09-02",
+    caveats: ["原表碳水为Tr且未给出膳食纤维，应用保持未知；页面食部为61%。"]
+  }),
+  chinaFood({
+    id: "china-bighead-carp-raw", name: "鳙鱼（生，可食部）", aliases: ["鳙鱼", "胖头鱼", "花鲢鱼", "大头鱼"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "淡水鱼", "家常食材"], pageId: "1025", energyKj: 421,
+    nutrients: { protein: 15.3, fat: 2.2, carb: 4.7 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为61%；鱼头等带骨毛重不能直接套用。"]
+  }),
+  chinaFood({
+    id: "china-bream-raw", name: "鳊鱼（生，可食部）", aliases: ["鳊鱼", "鲂鱼", "武昌鱼"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "淡水鱼", "家常食材"], pageId: "1023", energyKj: 565,
+    nutrients: { protein: 18.3, fat: 6.3, carb: 1.2 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为59%；整条鱼毛重不能直接套用。"]
+  }),
+  chinaFood({
+    id: "china-black-carp-raw", name: "青鱼（生，可食部）", aliases: ["青鱼", "青皮鱼", "青鳞鱼", "青混"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "淡水鱼", "家常食材"], pageId: "1014", energyKj: 497,
+    nutrients: { protein: 20.1, fat: 4.2 }, verifiedOn: "2026-09-02",
+    caveats: ["原表碳水为Tr且未给出膳食纤维，应用保持未知；页面食部为63%。"]
+  }),
+  chinaFood({
+    id: "china-spanish-mackerel-raw", name: "鲅鱼（生，可食部）", aliases: ["鲅鱼", "马鲛鱼", "燕鲅鱼", "巴鱼"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "海鱼", "家常食材"], pageId: "1048", energyKj: 511,
+    nutrients: { protein: 21.2, fat: 3.1, carb: 2.1 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为80%；整条鱼毛重不能直接套用。"]
+  }),
+  chinaFood({
+    id: "china-small-yellow-croaker-raw", name: "小黄鱼（生，可食部）", aliases: ["小黄鱼", "小黄花鱼", "黄鱼"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "海鱼", "家常食材"], pageId: "1038", energyKj: 417,
+    nutrients: { protein: 17.9, fat: 3, carb: 0.1 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为63%；不适用于裹粉油炸的小黄鱼。"]
+  }),
+  chinaFood({
+    id: "china-swamp-eel-raw", name: "黄鳝（生，可食部）", aliases: ["黄鳝", "鳝鱼"],
+    category: "FI", compatibleStates: ["RW"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "淡水鱼", "家常食材"], pageId: "1008", energyKj: 378,
+    nutrients: { protein: 18, fat: 1.4, carb: 1.2 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为67%；熟制时的调味和用油需另行记录。"]
+  }),
+  chinaFood({
+    id: "china-cod-baked", name: "鳕鱼（烤）", aliases: ["烤鳕鱼", "无油烤鳕鱼"],
+    category: "FI", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "海鱼", "熟食", "烤制"], pageId: "1087", energyKj: 422,
+    nutrients: { protein: 21.4, fat: 1.2, carb: 0.8, fiber: 0 }, verifiedOn: "2026-09-02",
+    caveats: ["页面食部为85%；不包含额外刷油、裹粉或酱汁。"]
+  }),
+  chinaFood({
+    id: "china-cod-fried", name: "鳕鱼（炸）", aliases: ["炸鳕鱼", "油炸鳕鱼", "裹粉鳕鱼"],
+    category: "FI", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "COMPOSITE",
+    tags: ["鱼", "海鱼", "熟食", "油炸"], pageId: "1088", energyKj: 1032,
+    nutrients: { protein: 12.4, fat: 14.3, carb: 17.4, fiber: 0.4 }, verifiedOn: "2026-09-02",
+    caveats: ["这是平台中的油炸鳕鱼成品值；裹粉厚度、吸油量和品牌会显著改变结果。"]
+  }),
+  chinaFood({
+    id: "china-mackerel-steamed", name: "鲭鱼（蒸）", aliases: ["蒸鲭鱼", "清蒸鲭鱼"],
+    category: "FI", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "海鱼", "熟食", "蒸制"], pageId: "1081", energyKj: 1614,
+    nutrients: { protein: 14.6, fat: 36.5, carb: 0.9 }, verifiedOn: "2026-09-02",
+    caveats: ["平台样品脂肪值较高，只用于明确为鲭鱼的蒸制可食部；不包含另加油或酱汁。"]
+  }),
+  chinaFood({
+    id: "china-mackerel-baked-180", name: "鲭鱼（烤，180℃约10分钟）", aliases: ["烤鲭鱼", "烤青花鱼"],
+    category: "FI", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["鱼", "海鱼", "熟食", "烤制"], pageId: "1078", energyKj: 1520,
+    nutrients: { protein: 20.2, fat: 31.8 }, verifiedOn: "2026-09-02",
+    caveats: ["原表碳水为Tr且未给出膳食纤维，应用保持未知；只对应页面所列180℃约10分钟样品。"]
+  }),
+  chinaFood({
+    id: "china-dace-black-bean-cooked", name: "豆豉鲮鱼（熟）", aliases: ["豆豉鲮鱼", "罐头豆豉鲮鱼"],
+    category: "FI", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["鱼", "熟食", "罐头", "加工食品"], pageId: "1073", energyKj: 1963,
+    nutrients: { protein: 25.5, fat: 33.1, carb: 17.9 }, verifiedOn: "2026-09-02",
+    caveats: ["页面商品名为豆豉鲮鱼，食部100%；不同品牌油、糖和豆豉比例不同，包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-cured-sausage", name: "腊肠（中国通用）", aliases: ["中式腊肠", "广式腊肠", "腊肠"],
+    category: "MP", compatibleStates: ["CK", "EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["猪肉", "腌腊肉", "加工肉", "熟食"], pageId: "816", energyKj: 2421,
+    nutrients: { protein: 22, fat: 48.3, carb: 15.3 }, verifiedOn: "2026-09-02",
+    caveats: ["平台通用值食部100%；广式、川味及不同品牌糖盐和肥瘦差异明显，包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-pork-sausage", name: "香肠（中国通用）", aliases: ["香肠", "中式香肠", "猪肉香肠"],
+    category: "MP", compatibleStates: ["CK", "EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["猪肉", "香肠", "加工肉", "熟食"], pageId: "818", energyKj: 2106,
+    nutrients: { protein: 24.1, fat: 40.7, carb: 11.2 }, verifiedOn: "2026-09-02",
+    caveats: ["平台通用值食部100%；不能代表淀粉型火腿肠、烤肠或具体品牌，包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-cured-pork-raw", name: "腊肉（生）", aliases: ["生腊肉", "腌腊猪肉"],
+    category: "MP", compatibleStates: ["RW", "PK"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["猪肉", "腊肉", "腌腊肉", "加工肉"], pageId: "806", energyKj: 2056,
+    nutrients: { protein: 11.8, fat: 48.8, carb: 2.9 }, verifiedOn: "2026-09-02",
+    caveats: ["平台通用值食部100%；这是烹调前产品重量，熟腊肉的失水量和肥瘦比例会改变每100克数值。"]
+  }),
+  chinaFood({
+    id: "china-salted-pork", name: "咸肉（中国通用）", aliases: ["盐腌猪肉", "咸猪肉"],
+    category: "MP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "INGREDIENT",
+    tags: ["猪肉", "咸肉", "腌腊肉", "加工肉"], pageId: "808", energyKj: 1613,
+    nutrients: { protein: 16.5, fat: 36 }, verifiedOn: "2026-09-02",
+    caveats: ["原表碳水为Tr且未给出膳食纤维，应用保持未知；不同地区腌制和肥瘦差异明显。"]
+  }),
+  chinaFood({
+    id: "china-ham-sausage", name: "火腿肠（中国通用）", aliases: ["火腿肠", "淀粉肠", "即食火腿肠"],
+    category: "MP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["猪肉", "火腿肠", "加工肉", "便利店"], pageId: "815", energyKj: 888,
+    nutrients: { protein: 14, fat: 10.4, carb: 15.6 }, verifiedOn: "2026-09-02",
+    caveats: ["平台通用值食部100%；不同肉含量等级、淀粉量和品牌差异明显，包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-ham", name: "火腿（中国通用）", aliases: ["中式火腿", "熟火腿"],
+    category: "MP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED",
+    tags: ["猪肉", "火腿", "腌腊肉", "加工肉"], pageId: "821", energyKj: 1369,
+    nutrients: { protein: 16, fat: 27.4, carb: 4.9 }, verifiedOn: "2026-09-02",
+    caveats: ["平台通用值食部100%；不能代表低脂火腿片、火腿肠或具体品牌，包装标签优先。"]
+  }),
+  chinaFood({
+    id: "china-sauced-beef", name: "酱牛肉", aliases: ["卤牛肉", "五香牛肉"],
+    category: "MP", compatibleStates: ["CK", "EA"], basisUnit: "g", foodKind: "COMPOSITE",
+    tags: ["牛肉", "熟食", "卤味", "凉菜"], pageId: "841", energyKj: 1029,
+    nutrients: { protein: 31.4, fat: 11.9, carb: 3.2 }, verifiedOn: "2026-09-02",
+    caveats: ["平台通用值食部100%；卤汁糖盐、部位和含水量会改变结果，门店标签或实际配方优先。"]
   })
 ];

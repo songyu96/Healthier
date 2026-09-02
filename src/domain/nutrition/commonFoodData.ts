@@ -709,11 +709,11 @@ export const COMMON_FOODS: FoodReference[] = [
     caveats: ["仅对应鲜鱿鱼可食部生重；干制、裹粉油炸和调味制品不能使用此条目。"]
   }),
   fndds({
-    id: "ham-sausage-generic", name: "猪肉香肠/火腿肠（通用）", aliases: ["火腿肠", "香肠", "烤肠"],
+    id: "ham-sausage-generic", name: "美式猪肉香肠（通用）", aliases: ["美式香肠", "美式猪肉肠"],
     category: "UP", compatibleStates: ["EA", "PK"], basisUnit: "g", foodKind: "PACKAGED", tags: ["加工肉", "便利店", "聚餐"],
     nutrientsPer100: { kcal: 325, protein: 18.5, fat: 27.2, carb: 1.42, fiber: 0 },
     fdcId: "2706191", sourceDescription: "Pork sausage",
-    caveats: ["这是美国通用猪肉香肠数据，中国火腿肠的肉含量、淀粉和脂肪可能差异很大，包装标签优先。"]
+    caveats: ["这是美国通用猪肉香肠数据，不用于中国火腿肠、中式香肠或腊肠；包装标签优先。"]
   }),
   fndds({
     id: "instant-noodles-prepared-generic", name: "方便面（冲泡后通用）", aliases: ["方便面", "泡面", "桶面"],
