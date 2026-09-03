@@ -6,6 +6,7 @@ import {
   BookChapterCard,
   BrandMark,
   BrandWordmark,
+  CalculatorResult,
   MealRow,
   QuickMealCard,
   WeeklyActionsPanel,
@@ -252,6 +253,38 @@ describe("AssessmentPanel safety rendering", () => {
     expect(html).toContain("查看原因");
     expect(html).toContain("无法计算：食物库中没有匹配项");
     expect(html).not.toContain(">0 kcal<");
+  });
+});
+
+describe("calculator result rendering", () => {
+  it("直接展示每日能量和三大营养素计算结果", () => {
+    const html = renderToStaticMarkup(<CalculatorResult targets={calculateTargets(profile([]))} />);
+
+    expect(html).toContain("计算结果");
+    expect(html).toContain("2100");
+    expect(html).toContain("70.0 kg 标准体重 × 30 kcal/kg");
+    expect(html).toContain("碳水 55%");
+    expect(html).toContain("蛋白质 15%");
+    expect(html).toContain("脂肪 30%");
+  });
+
+  it("仅缺少描述资料时仍展示基础估算并标明限制", () => {
+    const targets = calculateTargets({ ...profile([]), dietHabitSummary: undefined });
+    const html = renderToStaticMarkup(<CalculatorResult targets={targets} />);
+
+    expect(html).toContain("基础估算 · 待补资料");
+    expect(html).toContain("2100");
+    expect(html).toContain("补充饮食习惯后");
+    expect(html).toContain("才用于今日评价和周总结");
+  });
+
+  it("特殊健康状态只展示暂停原因而不展示数值目标", () => {
+    const html = renderToStaticMarkup(<CalculatorResult targets={calculateTargets(profile(["MEDICATION"]))} />);
+
+    expect(html).toContain("自动建议已暂停");
+    expect(html).toContain("正在用药");
+    expect(html).not.toContain("2100");
+    expect(html).not.toContain("碳水 55%");
   });
 });
 

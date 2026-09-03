@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type PropsWithChildren
@@ -983,19 +984,75 @@ export function MealRow({ meal, facts, onRepeat, onEdit, onDelete }: { meal: Con
   );
 }
 
-function ProfileEditor({ showTitle = true, onSaved }: { showTitle?: boolean; onSaved?: (profile: UserProfile) => void }) {
+function isProfileOnlyRestriction(targets: DailyTargets): boolean {
+  return targets.safetyRestricted &&
+    Boolean(targets.missingProfileFields?.length) &&
+    targets.safetyMessages.every((message) => message.startsWith("健康模式资料不完整"));
+}
+
+export function CalculatorResult({ targets }: { targets: DailyTargets }) {
+  const provisional = isProfileOnlyRestriction(targets);
+
+  if (targets.safetyRestricted && !provisional) {
+    return (
+      <section className="calculator-inline-result restricted" aria-live="polite">
+        <span className="eyebrow">自动建议已暂停</span>
+        <h3>当前只保留记录功能</h3>
+        <p>这些情况可能改变营养需求，普通成年人公式不适合作为个体建议。</p>
+        <div className="calculator-safety-messages">
+          {targets.safetyMessages.map((message) => <p key={message}>{message}</p>)}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className={`calculator-inline-result${provisional ? " provisional" : ""}`} aria-live="polite">
+      <span className="eyebrow">{provisional ? "基础估算 · 待补资料" : "计算结果"}</span>
+      <div className="big-result"><strong>{targets.energyKcal.toFixed(0)}</strong><span>kcal / 天</span></div>
+      <p>{targets.standardWeightKg.toFixed(1)} kg 标准体重 × {targets.activityFactor} kcal/kg</p>
+      {provisional && <p className="calculator-result-note">基础公式已经算出；补充{targets.missingProfileFields?.join("、")}后，才用于今日评价和周总结。</p>}
+      <div className="macro-grid">
+        <div><span>碳水 55%</span><b>{targets.carbG.toFixed(1)} g</b></div>
+        <div><span>蛋白质 15%</span><b>{targets.proteinG.toFixed(1)} g</b></div>
+        <div><span>脂肪 30%</span><b>{targets.fatG.toFixed(1)} g</b></div>
+      </div>
+      <dl className="result-list">
+        <div><dt>蛋白质交叉检查</dt><dd>{formatRange(targets.proteinCrossCheck.min, targets.proteinCrossCheck.max, "g", 1)} · {targets.proteinCrossCheckStatus === "LOW" ? "15%口径偏低" : targets.proteinCrossCheckStatus === "HIGH" ? "15%口径偏高" : "两个口径一致"}</dd></div>
+        <div><dt>动物/植物蛋白</dt><dd>各约 {targets.animalProteinG.toFixed(1)} g</dd></div>
+        <div><dt>早餐能量</dt><dd>{formatRange(targets.breakfastEnergy.min, targets.breakfastEnergy.max, "kcal")}</dd></div>
+      </dl>
+    </section>
+  );
+}
+
+function ProfileEditor({ showTitle = true, showCalculationResult = false, onSaved }: { showTitle?: boolean; showCalculationResult?: boolean; onSaved?: (profile: UserProfile) => void }) {
   const { profile, saveProfile } = useApp();
   const [form, setForm] = useState(() => defaultProfile(profile));
   const [message, setMessage] = useState("");
+  const [calculatedTargets, setCalculatedTargets] = useState<DailyTargets | undefined>(() =>
+    showCalculationResult && profile ? calculateTargets(profile) : undefined
+  );
+  const [safetyOpen, setSafetyOpen] = useState(() => Boolean(profile?.healthFlags.length));
+  const resultRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { if (profile) setForm(profile); }, [profile]);
+  useEffect(() => {
+    if (!profile) return;
+    setForm(profile);
+    if (profile.healthFlags.length > 0) setSafetyOpen(true);
+    if (showCalculationResult) setCalculatedTargets(calculateTargets(profile));
+  }, [profile, showCalculationResult]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     try {
       const next = { ...form, updatedAt: new Date().toISOString() };
-      calculateTargets(next);
+      const nextTargets = calculateTargets(next);
       await saveProfile(next);
+      if (showCalculationResult) {
+        setCalculatedTargets(nextTargets);
+        window.requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+      }
       setMessage("个人资料已保存。 ");
       onSaved?.(next);
     } catch (error) {
@@ -1004,7 +1061,7 @@ function ProfileEditor({ showTitle = true, onSaved }: { showTitle?: boolean; onS
   };
 
   return (
-    <form className="card" onSubmit={(event) => void submit(event)}>
+    <form className={`card${showCalculationResult ? " profile-calculator-form" : ""}`} onSubmit={(event) => void submit(event)}>
       {showTitle && <div className="section-heading"><div><span className="eyebrow">计算依据</span><h2>个人资料</h2></div></div>}
       <div className="form-grid two-columns">
         <label>称呼（可选）<input value={form.name ?? ""} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
@@ -1032,9 +1089,17 @@ function ProfileEditor({ showTitle = true, onSaved }: { showTitle?: boolean; onS
           </select>
         </label>
         <label>饮食习惯简述<input placeholder="如：三餐规律、常外卖" value={form.dietHabitSummary ?? ""} onChange={(event) => setForm({ ...form, dietHabitSummary: event.target.value || undefined })} /></label>
+        {showCalculationResult && <div className="calculator-result-slot" ref={resultRef}>
+          {calculatedTargets
+            ? <CalculatorResult targets={calculatedTargets} />
+            : <div className="calculator-result-placeholder"><b>计算结果</b><span>填写资料并保存后，这里会显示每日能量和三大营养素目标。</span></div>}
+        </div>}
       </div>
       <label className="checkbox"><input type="checkbox" checked={form.overweightAdjustmentEnabled} onChange={(event) => setForm({ ...form, overweightAdjustmentEnabled: event.target.checked })} /><span><b>手动采用超重调整</b><small>仅在轻体力活动时，把系数从30调整为25；不会自动判断。</small></span></label>
-      <fieldset className="health-flags"><legend>安全提示条件（可多选）</legend>{HEALTH_FLAGS.map((flag) => <label className="checkbox" key={flag.value}><input type="checkbox" checked={form.healthFlags.includes(flag.value)} onChange={(event) => setForm({ ...form, healthFlags: event.target.checked ? [...form.healthFlags, flag.value] : form.healthFlags.filter((value) => value !== flag.value) })} />{flag.label}</label>)}</fieldset>
+      <details className="safety-disclosure" open={safetyOpen} onToggle={(event) => setSafetyOpen(event.currentTarget.open)}>
+        <summary><span><b>特殊情况与安全边界</b><small>通常无需填写；仅用于暂停可能不适用的普通成人建议。</small></span><span className="safety-selection-count">{form.healthFlags.length > 0 ? `已选 ${form.healthFlags.length} 项` : "按需展开"}</span></summary>
+        <fieldset className="health-flags"><legend>选择当前适用情况（可多选）</legend>{HEALTH_FLAGS.map((flag) => <label className="checkbox" key={flag.value}><input type="checkbox" checked={form.healthFlags.includes(flag.value)} onChange={(event) => setForm({ ...form, healthFlags: event.target.checked ? [...form.healthFlags, flag.value] : form.healthFlags.filter((value) => value !== flag.value) })} />{flag.label}</label>)}</fieldset>
+      </details>
       {message && <p className="notice">{message.trim()}</p>}
       <button className="primary full-width" type="submit">保存并计算</button>
     </form>
@@ -1042,35 +1107,11 @@ function ProfileEditor({ showTitle = true, onSaved }: { showTitle?: boolean; onS
 }
 
 function CalculatorPage() {
-  const { profile } = useApp();
-  const targets = profile ? calculateTargets(profile) : undefined;
   return (
     <div className="page-stack">
       <PageIntro eyebrow="书本计算器" title="把身高和工作强度变成每日目标" description="标准体重 = 身高 − 105；能量 = 标准体重 × 活动系数。结果用于普通成年人日常饮食自查。" />
-      <ProfileEditor />
-      {targets && (
-        <>
-          {targets.safetyRestricted ? <section className="card result-card">
-            <span className="eyebrow">自动建议已暂停</span>
-            <h2>当前只保留记录功能</h2>
-            <p>请先补全健康模式资料，或就已勾选的特殊情况咨询医生/注册营养师。本页不展示追赶式能量和宏量目标。</p>
-            {targets.safetyMessages.map((message) => <p className="notice warning" key={message}>{message}</p>)}
-          </section> : <section className="card result-card">
-            <span className="eyebrow">你的每日目标</span>
-            <div className="big-result"><strong>{targets.energyKcal.toFixed(0)}</strong><span>kcal / 天</span></div>
-            <p>{targets.standardWeightKg.toFixed(1)} kg 标准体重 × {targets.activityFactor} kcal/kg</p>
-            <div className="macro-grid">
-              <div><span>碳水 55%</span><b>{targets.carbG.toFixed(1)} g</b></div>
-              <div><span>蛋白质 15%</span><b>{targets.proteinG.toFixed(1)} g</b></div>
-              <div><span>脂肪 30%</span><b>{targets.fatG.toFixed(1)} g</b></div>
-            </div>
-            <dl className="result-list">
-              <div><dt>蛋白质交叉检查</dt><dd>{formatRange(targets.proteinCrossCheck.min, targets.proteinCrossCheck.max, "g", 1)} · {targets.proteinCrossCheckStatus === "LOW" ? "15%口径偏低" : targets.proteinCrossCheckStatus === "HIGH" ? "15%口径偏高" : "两个口径一致"}</dd></div>
-              <div><dt>动物/植物蛋白分配</dt><dd>各约 {targets.animalProteinG.toFixed(1)} g</dd></div>
-              <div><dt>早餐能量范围</dt><dd>{formatRange(targets.breakfastEnergy.min, targets.breakfastEnergy.max, "kcal")}</dd></div>
-            </dl>
-          </section>}
-          <section className="card">
+      <ProfileEditor showCalculationResult />
+      <section className="card">
             <div className="section-heading"><div><span className="eyebrow">来源追踪</span><h2>采用的书本规则</h2></div></div>
             <ul className="rule-list">
               <li><b>BR-E-001</b><span>第一册“能量平衡的方法因人而异”：标准体重 = 身高 − 105 · <NavLink className="inline-link" to="/book/B1-ENERGY">查看章节</NavLink></span></li>
@@ -1080,9 +1121,7 @@ function CalculatorPage() {
               <li><b>BR-M-002</b><span>第一册“早餐一定要吃够100分”的175厘米案例：每公斤1～1.2克蛋白质交叉检查 · <NavLink className="inline-link" to="/book/B1-BREAKFAST">查看章节</NavLink></span></li>
             </ul>
             <details><summary>书中案例验算</summary><p>175 cm 轻体力：70 × 30 = 2100 kcal；178 cm 电脑工作：73 × 30 = 2190 kcal；185 cm 程序员：80 × 30 = 2400 kcal。</p></details>
-          </section>
-        </>
-      )}
+      </section>
     </div>
   );
 }
