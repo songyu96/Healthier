@@ -128,6 +128,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--green); box-shad
 .helper, .muted { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .form-grid { display: grid; gap: 0 12px; }
 .two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profile-fields .profile-field-wide { grid-column: 1 / -1; }
 .compact-grid { margin-top: 14px; }
 .nutrient-inputs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .quick-meal-card .compact-grid { margin-top: 0; }
@@ -322,7 +323,10 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .book-filters { grid-template-columns: 1fr; }
   .bottom-nav a { font-size: 10px; }
   .two-columns, .nutrient-inputs { grid-template-columns: 1fr; }
-  .calculator-result-slot { grid-column: 1; }
+  .profile-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+  .profile-fields > label { min-width: 0; margin-bottom: 10px; font-size: 11px; }
+  .profile-fields input, .profile-fields select { min-width: 0; padding-right: 9px; padding-left: 9px; }
+  .profile-fields .profile-field-wide, .profile-fields .calculator-result-slot { grid-column: 1 / -1; }
   .calculator-inline-result .big-result strong { font-size: 38px; }
   .safety-disclosure > summary { align-items: flex-start; }
   .food-filters { grid-template-columns: 1fr; }

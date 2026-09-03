@@ -1063,21 +1063,11 @@ function ProfileEditor({ showTitle = true, showCalculationResult = false, onSave
   return (
     <form className={`card${showCalculationResult ? " profile-calculator-form" : ""}`} onSubmit={(event) => void submit(event)}>
       {showTitle && <div className="section-heading"><div><span className="eyebrow">计算依据</span><h2>个人资料</h2></div></div>}
-      <div className="form-grid two-columns">
+      <div className="form-grid two-columns profile-fields">
         <label>称呼（可选）<input value={form.name ?? ""} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
         <label>出生日期<input type="date" max={localDateKey()} value={form.birthDate ?? ""} onChange={(event) => setForm({ ...form, birthDate: event.target.value || undefined })} /></label>
         <label>身高（cm）<input required type="number" min="106" max="250" step="0.1" value={form.heightCm} onChange={(event) => setForm({ ...form, heightCm: number(event.target.value) })} /></label>
         <label>当前体重（kg）<input required type="number" min="20" max="300" step="0.1" value={form.currentWeightKg} onChange={(event) => setForm({ ...form, currentWeightKg: number(event.target.value) })} /></label>
-        <label>活动强度
-          <select value={form.activityLevel} onChange={(event) => setForm({ ...form, activityLevel: event.target.value as ActivityLevel })}>
-            {ACTIVITY_LEVELS.map((level) => <option key={level} value={level}>{ACTIVITY_LABELS[level]}</option>)}
-          </select>
-        </label>
-        <label>性别（仅记录）
-          <select value={form.sex ?? "UNSPECIFIED"} onChange={(event) => setForm({ ...form, sex: event.target.value as UserProfile["sex"] })}>
-            <option value="UNSPECIFIED">不指定</option><option value="F">女</option><option value="M">男</option>
-          </select>
-        </label>
         <label>日常饮食模式
           <select value={form.dietPattern ?? ""} onChange={(event) => setForm({ ...form, dietPattern: event.target.value ? event.target.value as UserProfile["dietPattern"] : undefined })}>
             <option value="">请选择</option><option value="OMNIVORE">杂食</option><option value="VEGETARIAN">蛋奶素/素食</option><option value="VEGAN">纯素</option><option value="OTHER">其他</option>
@@ -1088,8 +1078,13 @@ function ProfileEditor({ showTitle = true, showCalculationResult = false, onSave
             <option value="">请选择</option><option value="NONE">不运动/未安排</option><option value="LIGHT">轻量</option><option value="MODERATE">中等</option><option value="VIGOROUS">高强度</option>
           </select>
         </label>
-        <label>饮食习惯简述<input placeholder="如：三餐规律、常外卖" value={form.dietHabitSummary ?? ""} onChange={(event) => setForm({ ...form, dietHabitSummary: event.target.value || undefined })} /></label>
-        {showCalculationResult && <div className="calculator-result-slot" ref={resultRef}>
+        <label className="profile-field-wide">活动强度
+          <select value={form.activityLevel} onChange={(event) => setForm({ ...form, activityLevel: event.target.value as ActivityLevel })}>
+            {ACTIVITY_LEVELS.map((level) => <option key={level} value={level}>{ACTIVITY_LABELS[level]}</option>)}
+          </select>
+        </label>
+        <label className="profile-field-wide">饮食习惯简述<input placeholder="如：三餐规律、常外卖" value={form.dietHabitSummary ?? ""} onChange={(event) => setForm({ ...form, dietHabitSummary: event.target.value || undefined })} /></label>
+        {showCalculationResult && <div className="calculator-result-slot profile-field-wide" ref={resultRef}>
           {calculatedTargets
             ? <CalculatorResult targets={calculatedTargets} />
             : <div className="calculator-result-placeholder"><b>计算结果</b><span>填写资料并保存后，这里会显示每日能量和三大营养素目标。</span></div>}
