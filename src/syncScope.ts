@@ -1,5 +1,6 @@
 export type SyncScope = "SYNCED_BUSINESS_DATA" | "KEY_SCOPED";
 export type SettingScope = "SYNCED_BUSINESS_DATA" | "LOCAL_ONLY" | "TRANSIENT";
+export const MEAL_DRAFT_SETTING_KEY = "draft:meal";
 
 export const TABLE_SYNC_SCOPE = {
   profiles: "SYNCED_BUSINESS_DATA",
@@ -11,7 +12,7 @@ export const TABLE_SYNC_SCOPE = {
 } as const satisfies Record<string, SyncScope>;
 
 export function settingSyncScope(key: string): SettingScope {
-  if (key === "restoreRollback") return "TRANSIENT";
+  if (key === "restoreRollback" || key === MEAL_DRAFT_SETTING_KEY) return "TRANSIENT";
   if (key.startsWith("sync:")) return "LOCAL_ONLY";
   return "SYNCED_BUSINESS_DATA";
 }

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { decryptBackup, readBackupPayload, restoreBackup } from "./backup";
 import { isNutritionFacts } from "./domain";
-import { db, type StoredMeal, type StoredMealItem } from "./db";
+import { db, loadBodyMetrics, saveBodyMetric, type BodyMetric, type StoredMeal, type StoredMealItem } from "./db";
 
 function legacyMeal(): StoredMeal {
   return {
@@ -42,6 +42,53 @@ afterEach(async () => {
 });
 
 describe("backup migration and rollback boundary", () => {
+  it("合法身体指标可以备份并恢复", async () => {
+    const metric = {
+      id: "metric-backup",
+      measuredAt: "2026-08-25T12:00:00",
+      weightKg: 70,
+      waistCm: 82,
+      note: "备份恢复测试"
+    };
+    await saveBodyMetric(metric);
+    const payload = await readBackupPayload();
+    await db.bodyMetrics.clear();
+
+    await restoreBackup(payload, "rollback-password");
+
+    await expect(db.bodyMetrics.get(metric.id)).resolves.toEqual(metric);
+  });
+
+  it("设置页查询不会遗漏无日期异常记录，删除后可以正常备份", async () => {
+    const validMetric = {
+      id: "metric-valid",
+      measuredAt: "2026-08-25T12:00:00",
+      weightKg: 70
+    };
+    const invalidMetrics = [
+      { id: "metric-missing-date", weightKg: 71 },
+      { id: "metric-null-date", measuredAt: null, weightKg: 72 },
+      { id: "metric-invalid-date", measuredAt: "T12:00:00", weightKg: 73 }
+    ] as unknown as BodyMetric[];
+    await saveBodyMetric(validMetric);
+    await db.bodyMetrics.bulkPut(invalidMetrics);
+
+    const settingsMetrics = await loadBodyMetrics();
+    expect(settingsMetrics.map((metric) => metric.id).sort()).toEqual([
+      "metric-invalid-date",
+      "metric-missing-date",
+      "metric-null-date",
+      "metric-valid"
+    ]);
+    await expect(readBackupPayload()).rejects.toThrow();
+
+    await Promise.all(invalidMetrics.map((metric) => db.bodyMetrics.delete(metric.id)));
+    await expect(loadBodyMetrics()).resolves.toEqual([validMetric]);
+    const payload = await readBackupPayload();
+
+    expect(payload.bodyMetrics).toEqual([validMetric]);
+  });
+
   it("普通备份排除瞬态恢复回滚点", async () => {
     await db.settings.put({ key: "restoreRollback", value: "temporary-ciphertext" });
     const payload = await readBackupPayload();

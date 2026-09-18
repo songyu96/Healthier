@@ -40,6 +40,8 @@ describe("sync scope", () => {
     expect(Object.keys(TABLE_SYNC_SCOPE).sort()).toEqual([...DATABASE_TABLE_NAMES].sort());
     expect(settingSyncScope("dayCompletion:2026-08-31")).toBe("SYNCED_BUSINESS_DATA");
     expect(settingSyncScope("sync:file-state")).toBe("LOCAL_ONLY");
+    expect(settingSyncScope("draft:meal")).toBe("TRANSIENT");
+    expect(settingSyncScope("draft:unrelated")).toBe("SYNCED_BUSINESS_DATA");
     expect(settingSyncScope("restoreRollback")).toBe("TRANSIENT");
   });
 });

@@ -1,8 +1,52 @@
 import { NUTRIENT_KEYS } from "./types";
-import type { FoodReference, NutrientKey, NutrientVector, PartialNutrientVector } from "./types";
+import type { FoodKind, FoodReference, NutrientKey, NutrientVector, PartialNutrientVector } from "./types";
 
 export type NutrientFormValue = number | "";
 export type NutrientFormValues = Record<NutrientKey, NutrientFormValue>;
+export type FoodProvenance = Pick<FoodReference, "source" | "recipeEstimate">;
+export type FoodNutrition = Pick<FoodReference, "nutrientsPer100" | "partialNutrientsPer100">;
+
+export function preserveFoodProvenance(food: FoodReference): FoodProvenance {
+  return {
+    source: food.source,
+    ...(food.recipeEstimate ? { recipeEstimate: food.recipeEstimate } : {})
+  };
+}
+
+function sameFoodNutrition(left: FoodNutrition, right: FoodNutrition): boolean {
+  const leftNutrients = left.nutrientsPer100 ?? left.partialNutrientsPer100;
+  const rightNutrients = right.nutrientsPer100 ?? right.partialNutrientsPer100;
+  return NUTRIENT_KEYS.every((key) => leftNutrients?.[key] === rightNutrients?.[key]);
+}
+
+export function resolveFoodProvenanceForSave({
+  currentFood,
+  builtInFood,
+  nutrition,
+  foodKind,
+  release
+}: {
+  currentFood?: FoodReference;
+  builtInFood?: FoodReference;
+  nutrition: FoodNutrition;
+  foodKind: FoodKind;
+  release: string;
+}): FoodProvenance {
+  if (builtInFood && sameFoodNutrition(nutrition, builtInFood)) {
+    return preserveFoodProvenance(builtInFood);
+  }
+  if (currentFood && sameFoodNutrition(nutrition, currentFood)) {
+    return preserveFoodProvenance(currentFood);
+  }
+  return {
+    source: {
+      kind: "USER",
+      ref: "用户录入",
+      release,
+      method: foodKind === "PACKAGED" ? "LABEL" : "USER"
+    }
+  };
+}
 
 export function nutrientsToFormValues(food: FoodReference): NutrientFormValues {
   const nutrients = food.nutrientsPer100 ?? food.partialNutrientsPer100;

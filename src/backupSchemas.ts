@@ -108,7 +108,7 @@ const profileSchema = z.object({
   updatedAt: dateTimeSchema
 }).strict();
 
-const bodyMetricSchema = z.object({
+export const bodyMetricSchema = z.object({
   id: z.string().min(1),
   measuredAt: dateTimeSchema,
   weightKg: finitePositive.max(500),

@@ -81,7 +81,37 @@ function isComparableGroupQuantity(item: MealItemInput, fact: ItemNutritionFact)
 
 const INGREDIENT_KEY_BY_FOOD_ID: Record<string, string> = {
   "bread-whole-wheat": "ingredient:wheat",
-  "egg-noodles-cooked": "ingredient:wheat"
+  "egg-noodles-cooked": "ingredient:wheat",
+  "bagel-current": "ingredient:wheat",
+  "mantou-generic-recipe": "ingredient:wheat",
+  "youtiao-generic-recipe": "ingredient:wheat",
+  "huajuan-generic-recipe": "ingredient:wheat",
+  "shouzhuabing-plain-generic-recipe": "ingredient:wheat",
+  "rice-white-cooked": "ingredient:rice",
+  "rice-brown-cooked": "ingredient:rice",
+  "congee-plain-current": "ingredient:rice",
+  "rice-noodles-cooked-current": "ingredient:rice",
+  "potato-boiled": "ingredient:potato",
+  "french-fries-fast-food-current": "ingredient:potato",
+  "potato-chips-plain": "ingredient:potato",
+  "soybeans-cooked": "ingredient:soybean",
+  "tofu-firm": "ingredient:soybean",
+  "soy-milk-unsweetened-current": "ingredient:soybean",
+  "soy-milk-unknown": "ingredient:soybean",
+  "chicken-breast-roasted": "ingredient:chicken",
+  "chicken-thigh-roasted-current": "ingredient:chicken",
+  "fried-chicken-wing-fast-food-current": "ingredient:chicken",
+  "fried-chicken-generic-recipe": "ingredient:chicken",
+  "pork-loin-roasted": "ingredient:pork",
+  "pork-belly-raw": "ingredient:pork",
+  "pork-ribs-current": "ingredient:pork",
+  "ham-sausage-generic": "ingredient:pork",
+  "milk-whole": "ingredient:milk",
+  "china-sanyuan-whole-milk-sample": "ingredient:milk",
+  "yogurt-plain": "ingredient:milk",
+  "yogurt-lowfat-nonfruit-flavored": "ingredient:milk",
+  "orange-raw": "ingredient:orange",
+  "orange-juice-100-current": "ingredient:orange"
 };
 
 function diversityKey(item: MealItemInput, fact?: ItemNutritionFact): string {

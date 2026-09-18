@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import {
   AssessmentPanel,
+  BodyMetricRows,
   BookChapterCard,
   BrandMark,
   BrandWordmark,
@@ -15,6 +16,7 @@ import {
   foodCategoriesForKind,
   foodQualityLabel
 } from "./HealthierApp";
+import type { BodyMetric } from "./db";
 import {
   assessDay,
   assessWeek,
@@ -63,6 +65,26 @@ describe("brand mark", () => {
     expect(html.match(/brand-eat/g)).toHaveLength(3);
     expect(html).toContain("brand-self");
     expect(html).toContain("饮食与身心状态记录");
+  });
+});
+
+describe("body metric rendering", () => {
+  it("缺失或非法日期的已有记录不会导致页面崩溃并可删除", () => {
+    const invalidMetrics = [
+      { id: "missing-date", weightKg: 70 },
+      { id: "null-date", measuredAt: null, weightKg: 71 },
+      { id: "invalid-date", measuredAt: "T12:00:00", weightKg: 72 }
+    ] as unknown as BodyMetric[];
+    const html = renderToStaticMarkup(
+      <BodyMetricRows metrics={invalidMetrics} onDelete={() => undefined} />
+    );
+
+    expect(html).toContain("发现 3 条异常身体指标");
+    expect(html).toContain("异常身体指标");
+    expect(html).toContain("会阻止备份和恢复前的回滚备份");
+    expect(html.match(/日期缺失/g)).toHaveLength(2);
+    expect(html).toContain("T12:00:00");
+    expect(html.match(/>删除<\/button>/g)).toHaveLength(3);
   });
 });
 

@@ -1,14 +1,23 @@
 import Dexie, { type EntityTable } from "dexie";
+import { bodyMetricSchema } from "./backupSchemas";
 import {
   calculateNutrition,
+  FOOD_CATEGORIES,
+  FOOD_STATES,
   isDailyTargets,
   isNutritionFacts,
+  MEAL_TYPES,
+  QUANTITY_UNITS,
   type ConfirmedMeal,
   type FoodReference,
   type MealItemInput,
+  type ParsedMeal,
   type UserProfile
 } from "./domain";
 import { mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
+import { MEAL_DRAFT_SETTING_KEY } from "./syncScope";
+
+export { MEAL_DRAFT_SETTING_KEY } from "./syncScope";
 
 export interface BodyMetric {
   id: string;
@@ -99,6 +108,32 @@ export class HealthierDatabase extends Dexie {
 }
 
 export const db = new HealthierDatabase();
+
+export function isValidBodyMetric(value: unknown): value is BodyMetric {
+  return bodyMetricSchema.safeParse(value).success;
+}
+
+export async function loadBodyMetrics(): Promise<BodyMetric[]> {
+  return db.bodyMetrics.toArray();
+}
+
+export async function saveBodyMetric(metric: BodyMetric): Promise<void> {
+  const validated = bodyMetricSchema.safeParse(metric);
+  if (!validated.success) {
+    const labels: Record<string, string> = {
+      id: "记录ID",
+      measuredAt: "日期",
+      weightKg: "体重",
+      waistCm: "腰围",
+      note: "备注"
+    };
+    const details = validated.error.issues
+      .map((issue) => `${labels[String(issue.path[0])] ?? String(issue.path[0])}：${issue.message}`)
+      .join("；");
+    throw new Error(`身体指标无法保存：${details}`);
+  }
+  await db.bodyMetrics.put(validated.data);
+}
 
 const dayRevisionKey = (date: string) => `dayRevision:${date}`;
 const dayCompletionKey = (date: string) => `dayComplete:${date}`;
@@ -236,6 +271,55 @@ export async function loadMealsBetween(startDate: string, endDate: string): Prom
     itemsByMeal.set(item.mealId, current);
   });
   return meals.map((meal) => ({ ...meal, items: itemsByMeal.get(meal.id) ?? [] }));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function isStoredDraftItem(value: unknown): value is MealItemInput {
+  if (!isRecord(value)) return false;
+  return typeof value.tempId === "string"
+    && typeof value.name === "string"
+    && FOOD_CATEGORIES.includes(value.category as MealItemInput["category"])
+    && FOOD_STATES.includes(value.state as MealItemInput["state"])
+    && typeof value.quantityMin === "number"
+    && Number.isFinite(value.quantityMin)
+    && typeof value.quantityMax === "number"
+    && Number.isFinite(value.quantityMax)
+    && QUANTITY_UNITS.includes(value.unit as MealItemInput["unit"])
+    && (value.canonicalFoodId === undefined || typeof value.canonicalFoodId === "string");
+}
+
+export function isStoredMealDraft(value: unknown): value is ParsedMeal {
+  if (!isRecord(value) || "id" in value) return false;
+  return value.protocolVersion === "HD1"
+    && typeof value.eatenAt === "string"
+    && typeof value.date === "string"
+    && MEAL_TYPES.includes(value.mealType as ParsedMeal["mealType"])
+    && Array.isArray(value.items)
+    && value.items.every(isStoredDraftItem)
+    && typeof value.cookingMethod === "string"
+    && typeof value.note === "string"
+    && typeof value.rawImportLine === "string"
+    && typeof value.unknownOil === "boolean"
+    && typeof value.unknownSalt === "boolean";
+}
+
+export async function loadMealDraft(): Promise<ParsedMeal | undefined> {
+  const value = await getSetting<unknown>(MEAL_DRAFT_SETTING_KEY, undefined);
+  return isStoredMealDraft(value) ? value : undefined;
+}
+
+export async function saveMealDraft(draft: ParsedMeal): Promise<void> {
+  if (!isStoredMealDraft(draft)) {
+    throw new Error("只能持久化结构有效的新建餐食草稿。");
+  }
+  await setSetting(MEAL_DRAFT_SETTING_KEY, draft);
+}
+
+export async function clearMealDraft(): Promise<void> {
+  await db.settings.delete(MEAL_DRAFT_SETTING_KEY);
 }
 
 export async function setSetting<T>(key: string, value: T): Promise<void> {

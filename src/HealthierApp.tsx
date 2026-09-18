@@ -71,15 +71,26 @@ import {
   type WeeklyAssessment
 } from "./domain";
 import { BUILT_IN_FOODS, mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
-import { nutrientsFromFormValues, nutrientsToFormValues, type NutrientFormValue } from "./domain/nutrition/foodOverrides";
 import {
+  nutrientsFromFormValues,
+  nutrientsToFormValues,
+  resolveFoodProvenanceForSave,
+  type NutrientFormValue
+} from "./domain/nutrition/foodOverrides";
+import {
+  clearMealDraft,
   db,
   deleteMeal,
   getDayCompletion,
   getSetting,
+  isValidBodyMetric,
+  loadBodyMetrics,
+  loadMealDraft,
   loadMealsBetween,
   loadMealsForDate,
+  saveBodyMetric,
   saveConfirmedMeal,
+  saveMealDraft,
   setDayCompletion,
   setSetting,
   type AppSetting,
@@ -229,10 +240,26 @@ function localDateTime(date = new Date()): string {
   return `${new Date(date.getTime() - offset).toISOString().slice(0, 16)}:00`;
 }
 
-function dateOffset(days: number): string {
-  const date = new Date();
+function dateOffset(days: number, from = new Date()): string {
+  const date = new Date(from);
   date.setDate(date.getDate() + days);
   return localDateKey(date);
+}
+
+function useCurrentTime(): Date {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () => setNow(new Date());
+    const timer = window.setInterval(refresh, 60_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+  return now;
 }
 
 function number(value: string, fallback = 0): number {
@@ -495,16 +522,35 @@ export function QuickMealCard({
   onReviewDraft
 }: QuickMealCardProps) {
   const [query, setQuery] = useState("");
-  const [mealType, setMealType] = useState<ConfirmedMeal["mealType"]>(() => mealTypeForNow());
-  const [eatenAt, setEatenAt] = useState(() => localDateTime());
+  const [mealTypeOverride, setMealTypeOverride] = useState<ConfirmedMeal["mealType"]>();
+  const [eatenAtOverride, setEatenAtOverride] = useState<string>();
   const [unknownOil, setUnknownOil] = useState(true);
   const [unknownSalt, setUnknownSalt] = useState(true);
+  const hadDraft = useRef(Boolean(draft));
+  const mealType = mealTypeOverride ?? mealTypeForNow();
+  const eatenAt = eatenAtOverride ?? localDateTime();
   const results = useMemo(
     () => query.trim() ? filterFoodsForMealEditor(foods, query).slice(0, 8) : [],
     [foods, query]
   );
+
+  useEffect(() => {
+    if (hadDraft.current && !draft) {
+      setMealTypeOverride(undefined);
+      setEatenAtOverride(undefined);
+    }
+    hadDraft.current = Boolean(draft);
+  }, [draft]);
+
   const add = (food: FoodReference) => {
-    onAdd(food, eatenAt, mealType, unknownOil, unknownSalt);
+    const now = new Date();
+    onAdd(
+      food,
+      eatenAtOverride ?? localDateTime(now),
+      mealTypeOverride ?? mealTypeForNow(now),
+      unknownOil,
+      unknownSalt
+    );
     setQuery("");
   };
   const draftItemCount = draft?.items.length ?? 0;
@@ -516,10 +562,10 @@ export function QuickMealCard({
         <span className="step-pill">{draftItemCount > 0 ? `已选 ${draftItemCount} 项` : "新建一餐"}</span>
       </div>
       {!draft && <><div className="form-grid two-columns">
-        <label>餐次<select value={mealType} onChange={(event) => setMealType(event.target.value as ConfirmedMeal["mealType"])}>
+        <label>餐次<select value={mealType} onChange={(event) => setMealTypeOverride(event.target.value as ConfirmedMeal["mealType"])}>
           {Object.entries(MEAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select></label>
-        <label>进餐时间<input type="datetime-local" value={eatenAt.slice(0, 16)} onChange={(event) => setEatenAt(event.target.value + ":00")} /></label>
+        <label>进餐时间<input type="datetime-local" value={eatenAt.slice(0, 16)} onChange={(event) => setEatenAtOverride(event.target.value + ":00")} /></label>
       </div>
       <div className="form-grid two-columns compact-grid">
         <label className="checkbox"><input type="checkbox" checked={unknownOil} onChange={(event) => setUnknownOil(event.target.checked)} />油量未知</label>
@@ -668,17 +714,20 @@ function MixedMealEstimatorCard({ onCreate, embedded = false }: { onCreate: (dra
 function TodayPage() {
   const { profile } = useApp();
   const foods = useFoodReferences();
-  const today = localDateKey();
+  const now = useCurrentTime();
+  const today = localDateKey(now);
   const meals = useLiveQuery(() => loadMealsForDate(today), [today], []);
-  const recentMeals = useLiveQuery(() => loadMealsBetween(dateOffset(-30), today), [today], []);
+  const recentMeals = useLiveQuery(() => loadMealsBetween(dateOffset(-30, now), today), [today], []);
   const completed = useLiveQuery(() => getDayCompletion(today), [today], false);
   const storedDayTarget = useLiveQuery(() => getSetting<unknown>(`dayTarget:${today}`, undefined), [today]);
   const waterMl = useLiveQuery(() => getSetting(`water:${today}`, 0), [today], 0);
   const storedFavoriteFoodIds = useLiveQuery(() => getSetting<unknown>("favoriteFoodIds", []), [], []);
-  const [rawLine, setRawLine] = useState(`HD1|${today.replaceAll("-", "")}-0800|B|鸡蛋~EG~CK~1-1pc;牛奶~DA~EA~250-250ml|水煮|油盐未知`);
+  const [rawLineOverride, setRawLineOverride] = useState<string>();
+  const rawLine = rawLineOverride ?? `HD1|${today.replaceAll("-", "")}-0800|B|鸡蛋~EG~CK~1-1pc;牛奶~DA~EA~250-250ml|水煮|油盐未知`;
   const [hd1PromptMessage, setHd1PromptMessage] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [draft, setDraft] = useState<ParsedMeal | ConfirmedMeal>();
+  const [draftPersistenceReady, setDraftPersistenceReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const hd1AiPrompt = useMemo(() => createHd1AiPrompt(today), [today]);
@@ -713,6 +762,30 @@ function TodayPage() {
   );
   const assessment = useMemo(() => targets ? assessDay(today, mealFacts(meals, foods), targets, { completed, waterMl }) : undefined, [completed, foods, meals, targets, today, waterMl]);
 
+  useEffect(() => {
+    let active = true;
+    void loadMealDraft()
+      .then((storedDraft) => {
+        if (!active) return;
+        if (storedDraft) {
+          setDraft((current) => current ?? storedDraft);
+          setMessage("已恢复上次未保存的餐食草稿。");
+        }
+        setDraftPersistenceReady(true);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setMessage(errorMessage(error));
+        setDraftPersistenceReady(true);
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!draftPersistenceReady || !draft || "id" in draft) return;
+    void saveMealDraft(draft).catch((error) => setMessage(errorMessage(error)));
+  }, [draft, draftPersistenceReady]);
+
   const scrollToMealEditor = () => {
     requestAnimationFrame(() => {
       document.getElementById("meal-draft-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -726,11 +799,32 @@ function TodayPage() {
     scrollToMealEditor();
   };
 
+  const cancelDraft = () => {
+    if (draft && "id" in draft) {
+      setDraft(undefined);
+      setErrors([]);
+      setMessage("");
+      return;
+    }
+    void clearMealDraft()
+      .then(() => {
+        setDraft(undefined);
+        setErrors([]);
+        setMessage("");
+      })
+      .catch((error) => setMessage(errorMessage(error)));
+  };
+
+  const editExistingMeal = (meal: ConfirmedMeal) => {
+    void clearMealDraft()
+      .then(() => openDraft(meal, "正在编辑已有餐食，保存后会更新原记录。"))
+      .catch((error) => setMessage(errorMessage(error)));
+  };
+
   const parse = () => {
     const result = parseHd1(rawLine);
     if (!result.ok) {
       setErrors(result.errors);
-      setDraft(undefined);
       return;
     }
     openDraft(result.value, "");
@@ -778,6 +872,7 @@ function TodayPage() {
         nutritionSnapshotOrigin: "CONFIRMED"
       };
       await saveConfirmedMeal(meal);
+      if (!("id" in draft)) await clearMealDraft();
       setDraft(undefined);
       setMessage(meal.date === today ? "已保存到本机。" : `已保存到 ${meal.date}，可在周总结中查看。`);
     } catch (error) {
@@ -786,6 +881,10 @@ function TodayPage() {
       setSaving(false);
     }
   };
+
+  if (!draftPersistenceReady) {
+    return <PageIntro eyebrow="本机草稿" title="正在恢复未保存的餐食…" description="正在读取这台设备上的草稿。" />;
+  }
 
   if (!profile) {
     return <PageIntro eyebrow="开始使用" title="先建立你的每日目标" description="填写身高、体重和活动强度后，才能按书中规则评价餐食。"><NavLink className="primary button-link" to="/calculator">去填写资料</NavLink></PageIntro>;
@@ -815,22 +914,17 @@ function TodayPage() {
           void setSetting("favoriteFoodIds", next).catch((error) => setMessage(errorMessage(error)));
         }}
         onRemoveDraftItem={(tempId) => {
-          setDraft((current) => {
-            if (!current) return undefined;
-            const items = current.items.filter((item) => item.tempId !== tempId);
-            return items.length > 0 ? { ...current, items } : undefined;
-          });
+          if (!draft) return;
+          const items = draft.items.filter((item) => item.tempId !== tempId);
+          if (items.length > 0) setDraft({ ...draft, items });
+          else cancelDraft();
           setErrors([]);
           setMessage("");
         }}
-        onClearDraft={() => {
-          setDraft(undefined);
-          setErrors([]);
-          setMessage("");
-        }}
+        onClearDraft={cancelDraft}
         onReviewDraft={scrollToMealEditor}
       />
-      {draft && <MealDraftEditor draft={draft} foods={foods} onChange={setDraft} onCancel={() => setDraft(undefined)} onSave={() => void save()} saving={saving} />}
+      {draft && <MealDraftEditor draft={draft} foods={foods} onChange={setDraft} onCancel={cancelDraft} onSave={() => void save()} saving={saving} />}
       {message && <p className="notice success">{message}</p>}
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">今日记录</span><h2>{meals.length} 餐 · {meals.reduce((sum, meal) => sum + meal.items.length, 0)} 项食物</h2></div></div>
@@ -843,7 +937,7 @@ function TodayPage() {
               onRepeat={() => {
                 openDraft(createRepeatMealDraft(meal, localDateTime()), "已复制餐食，请确认时间、内容和重量后保存。");
               }}
-              onEdit={() => openDraft(meal, "正在编辑已有餐食，保存后会更新原记录。")}
+              onEdit={() => editExistingMeal(meal)}
               onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); } catch (error) { setMessage(errorMessage(error)); } }}
             />)}
           </div>
@@ -915,7 +1009,7 @@ function TodayPage() {
             <div className="hd1-example"><b>示例</b><code>HD1|{today.replaceAll("-", "")}-1230|L|米饭~GR~CK~150-150g;西兰花~DV~CK~100-100g;鸡胸肉~MP~CK~80-80g|清炒|油盐未知</code></div>
           </div>
         </details>
-        <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLine(event.target.value)} spellCheck={false} />
+        <textarea className="hd1-input" rows={5} value={rawLine} onChange={(event) => setRawLineOverride(event.target.value)} spellCheck={false} />
         <p className="helper">格式：HD1|日期时间|餐次|名称~分类~状态~重量范围|烹调|备注</p>
         {errors.map((error) => <p className="notice error" key={error}>{error}</p>)}
         <button className="primary full-width" type="button" onClick={parse}>解析并人工确认</button>
@@ -988,6 +1082,35 @@ function isProfileOnlyRestriction(targets: DailyTargets): boolean {
   return targets.safetyRestricted &&
     Boolean(targets.missingProfileFields?.length) &&
     targets.safetyMessages.every((message) => message.startsWith("健康模式资料不完整"));
+}
+
+export function BodyMetricRows({
+  metrics,
+  onDelete
+}: {
+  metrics: BodyMetric[];
+  onDelete: (id: string) => void | Promise<void>;
+}) {
+  const validMetrics = metrics
+    .filter(isValidBodyMetric)
+    .sort((left, right) => right.measuredAt.localeCompare(left.measuredAt));
+  const invalidMetrics = metrics.filter((item): boolean => !isValidBodyMetric(item));
+
+  return <>
+    {invalidMetrics.length > 0 && <div className="invalid-metrics">
+      <p className="notice warning">发现 {invalidMetrics.length} 条异常身体指标，会阻止备份和恢复前的回滚备份。请删除后重新填写。</p>
+      {invalidMetrics.map((item, index) => <p className="metric-row" key={`invalid-${String(item.id)}-${index}`}>
+        <span>{typeof item.measuredAt === "string" && item.measuredAt ? item.measuredAt : "日期缺失"}</span>
+        <b>异常身体指标</b>
+        <button className="text-button danger" type="button" onClick={() => void onDelete(item.id)}>删除</button>
+      </p>)}
+    </div>}
+    {validMetrics.slice(0, 3).map((item) => <p className="metric-row" key={item.id}>
+      <span>{item.measuredAt.slice(0, 10)}</span>
+      <b>{item.weightKg.toFixed(1)} kg{item.waistCm ? ` · 腰围 ${item.waistCm.toFixed(1)} cm` : ""}</b>
+      <button className="text-button danger" type="button" onClick={() => void onDelete(item.id)}>删除</button>
+    </p>)}
+  </>;
 }
 
 export function CalculatorResult({ targets }: { targets: DailyTargets }) {
@@ -1276,18 +1399,20 @@ export function WeeklyActionsPanel({
 function HistoryPage() {
   const { profile } = useApp();
   const foods = useFoodReferences();
-  const start = dateOffset(-6);
-  const end = localDateKey();
+  const now = useCurrentTime();
+  const start = dateOffset(-6, now);
+  const end = localDateKey(now);
   const [selectedDate, setSelectedDate] = useState(end);
   const meals = useLiveQuery(() => loadMealsBetween(start, end), [start, end], []);
   const selectedMeals = useLiveQuery(() => loadMealsForDate(selectedDate), [selectedDate], []);
   const settings = useLiveQuery(() => db.settings.toArray(), [], []);
   const metrics = useLiveQuery(() => db.bodyMetrics.orderBy("measuredAt").toArray(), [], []);
+  const validMetrics = metrics.filter(isValidBodyMetric);
   const [draft, setDraft] = useState<ConfirmedMeal>();
   const [saving, setSaving] = useState(false);
   const [historyMessage, setHistoryMessage] = useState("");
   const currentTargets = profile ? calculateTargets(profile) : undefined;
-  const dates = Array.from({ length: 7 }, (_, index) => dateOffset(index - 6));
+  const dates = Array.from({ length: 7 }, (_, index) => dateOffset(index - 6, now));
   const completedMap = new Map(dates.map((date) => [date, completedFromSettings(settings, date)]));
   const selectedCompleted = completedFromSettings(settings, selectedDate);
   const waterMap = new Map(settings.filter((item) => item.key.startsWith("water:")).map((item) => [item.key.slice(6), Number(item.value)]));
@@ -1303,8 +1428,8 @@ function HistoryPage() {
     );
     return assessDay(date, mealFacts(dateMeals, foods), dayTargets, { completed: completedMap.get(date) ?? false, waterMl: waterMap.get(date) ?? 0 });
   }) : [];
-  const week = currentTargets ? assessWeek(start, end, days, metrics) : undefined;
-  const waistMetrics = metrics.filter((item) => {
+  const week = currentTargets ? assessWeek(start, end, days, validMetrics) : undefined;
+  const waistMetrics = validMetrics.filter((item) => {
     const date = item.measuredAt.slice(0, 10);
     return item.waistCm !== undefined && date >= start && date <= end;
   });
@@ -1313,6 +1438,12 @@ function HistoryPage() {
   const waistChange = latestWaist !== undefined && previousWaist !== undefined
     ? latestWaist - previousWaist
     : undefined;
+
+  const editExistingMeal = (meal: ConfirmedMeal) => {
+    void clearMealDraft()
+      .then(() => setDraft(meal))
+      .catch((error) => setHistoryMessage(errorMessage(error)));
+  };
 
   const saveEdit = async () => {
     if (!draft || !currentTargets) return;
@@ -1368,7 +1499,7 @@ function HistoryPage() {
         <div className="section-heading"><div><span className="eyebrow">按日期管理</span><h2>查看任意日期餐食</h2></div></div>
         <label>选择日期<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
         {historyMessage && <p className="notice">{historyMessage}</p>}
-        <div className="history-day"><h3>{selectedDate}<span>{completedFromSettings(settings, selectedDate) ? "完整" : "未标记完整"}</span></h3>{selectedMeals.length ? selectedMeals.map((meal) => <MealRow key={meal.id} meal={meal} facts={nutritionFactsForMeal(meal, foods)} onEdit={() => setDraft(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); setHistoryMessage("餐食已删除。"); } catch (error) { setHistoryMessage(errorMessage(error)); } }} />) : <p className="muted">该日期无记录</p>}</div>
+        <div className="history-day"><h3>{selectedDate}<span>{completedFromSettings(settings, selectedDate) ? "完整" : "未标记完整"}</span></h3>{selectedMeals.length ? selectedMeals.map((meal) => <MealRow key={meal.id} meal={meal} facts={nutritionFactsForMeal(meal, foods)} onEdit={() => editExistingMeal(meal)} onDelete={async () => { if (!confirm("删除这条餐食记录？")) return; try { await deleteMeal(meal.id); setHistoryMessage("餐食已删除。"); } catch (error) { setHistoryMessage(errorMessage(error)); } }} />) : <p className="muted">该日期无记录</p>}</div>
         <label className="checkbox complete-toggle"><input
           type="checkbox"
           checked={selectedCompleted}
@@ -1390,6 +1521,7 @@ function HistoryPage() {
 
 interface FoodFormState {
   id?: string;
+  originalFood?: FoodReference;
   name: string;
   aliases: string;
   foodKind: FoodKind;
@@ -1474,6 +1606,7 @@ function FoodsPage() {
   const edit = (food: FoodReference) => {
     setForm({
       id: food.id,
+      originalFood: food,
       name: food.name,
       aliases: food.aliases.join("、"),
       foodKind: resolveFoodKind(food),
@@ -1497,6 +1630,16 @@ function FoodsPage() {
       setMessage("请填写名称并至少选择一种状态。");
       return;
     }
+    const nutrition = nutrientsFromFormValues({
+      kcal: form.kcal, protein: form.protein, fat: form.fat, carb: form.carb, fiber: form.fiber
+    });
+    const provenance = resolveFoodProvenanceForSave({
+      currentFood: form.originalFood,
+      builtInFood: form.id ? BUILT_IN_FOODS.find((food) => food.id === form.id) : undefined,
+      nutrition,
+      foodKind: form.foodKind,
+      release: localDateKey()
+    });
     const food: FoodOverride = {
       id: form.id ?? "user-" + crypto.randomUUID(),
       name: form.name.trim(),
@@ -1509,10 +1652,8 @@ function FoodsPage() {
       basisUnit: form.basisUnit,
       gramsPerPiece: form.gramsPerPiece,
       dataCaveats: form.dataCaveat.split(/[；;]/).map((value) => value.trim()).filter(Boolean),
-      ...nutrientsFromFormValues({
-        kcal: form.kcal, protein: form.protein, fat: form.fat, carb: form.carb, fiber: form.fiber
-      }),
-      source: { kind: "USER", ref: "用户录入", release: localDateKey(), method: form.foodKind === "PACKAGED" ? "LABEL" : "USER" },
+      ...nutrition,
+      ...provenance,
       updatedAt: new Date().toISOString()
     };
     await db.foodOverrides.put(food);
@@ -1627,7 +1768,7 @@ const SYNC_IMPORT_LABELS: Record<SyncImportStatus, string> = {
 
 function SettingsPage() {
   const { profile } = useApp();
-  const metrics = useLiveQuery(() => db.bodyMetrics.orderBy("measuredAt").reverse().toArray(), [], []);
+  const metrics = useLiveQuery(loadBodyMetrics, [], []);
   const rollbackBackup = useLiveQuery(() => getSetting<string | undefined>("restoreRollback", undefined), []);
   const localSyncState = useLiveQuery(
     () => getSetting<LocalSyncState | undefined>(SYNC_STATE_KEY, undefined),
@@ -1726,11 +1867,27 @@ function SettingsPage() {
     <div className="page-stack">
       <PageIntro eyebrow="设置与数据" title="资料、身体指标和数据接力" description="本机仍是主数据；可通过加密同步包在手机和电脑之间接力，并定期保留独立备份。" />
       <ProfileEditor />
-      <form className="card" onSubmit={async (event) => { event.preventDefault(); const measuredAt = `${metric.date}T12:00:00`; const bodyMetric: BodyMetric = { id: crypto.randomUUID(), measuredAt, weightKg: metric.weightKg, waistCm: metric.waistCm || undefined, note: metric.note || undefined }; await db.bodyMetrics.put(bodyMetric); setMessage("身体指标已记录。 "); }}>
+      <form className="card" onSubmit={async (event) => {
+        event.preventDefault();
+        const measuredAt = `${metric.date}T12:00:00`;
+        const bodyMetric: BodyMetric = {
+          id: crypto.randomUUID(),
+          measuredAt,
+          weightKg: metric.weightKg,
+          waistCm: metric.waistCm || undefined,
+          note: metric.note || undefined
+        };
+        try {
+          await saveBodyMetric(bodyMetric);
+          setMessage("身体指标已记录。 ");
+        } catch (error) {
+          setMessage(errorMessage(error));
+        }
+      }}>
         <div className="section-heading"><div><span className="eyebrow">趋势事实</span><h2>记录体重和腰围</h2></div></div>
-        <div className="form-grid two-columns"><label>日期<input type="date" value={metric.date} onChange={(event) => setMetric({ ...metric, date: event.target.value })} /></label><label>体重（kg）<input required type="number" min="20" max="300" step="0.1" value={metric.weightKg} onChange={(event) => setMetric({ ...metric, weightKg: number(event.target.value) })} /></label><label>腰围（cm，可选）<input type="number" min="0" max="250" step="0.1" value={metric.waistCm || ""} onChange={(event) => setMetric({ ...metric, waistCm: number(event.target.value) })} /></label><label>备注<input value={metric.note} onChange={(event) => setMetric({ ...metric, note: event.target.value })} /></label></div>
+        <div className="form-grid two-columns"><label>日期<input required type="date" value={metric.date} onChange={(event) => setMetric({ ...metric, date: event.target.value })} /></label><label>体重（kg）<input required type="number" min="0.1" max="500" step="0.1" value={metric.weightKg} onChange={(event) => setMetric({ ...metric, weightKg: number(event.target.value) })} /></label><label>腰围（cm，可选）<input type="number" min="0.1" max="300" step="0.1" value={metric.waistCm || ""} onChange={(event) => setMetric({ ...metric, waistCm: number(event.target.value) })} /></label><label>备注<input value={metric.note} onChange={(event) => setMetric({ ...metric, note: event.target.value })} /></label></div>
         <button className="secondary full-width" type="submit">保存身体指标</button>
-        {metrics.slice(0, 3).map((item) => <p className="metric-row" key={item.id}><span>{item.measuredAt.slice(0, 10)}</span><b>{item.weightKg.toFixed(1)} kg{item.waistCm ? ` · 腰围 ${item.waistCm.toFixed(1)} cm` : ""}</b><button className="text-button danger" type="button" onClick={() => void db.bodyMetrics.delete(item.id)}>删除</button></p>)}
+        <BodyMetricRows metrics={metrics} onDelete={(id) => db.bodyMetrics.delete(id)} />
       </form>
       <section className="card">
         <div className="section-heading"><div><span className="eyebrow">HD-SYNC-1</span><h2>跨设备接力（文件版）</h2></div><span className="step-pill">不依赖云服务</span></div>

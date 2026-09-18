@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { decryptBackup, exportEncryptedBackup, restoreBackup } from "./backup";
-import { db } from "./db";
+import { db, loadMealDraft, saveMealDraft } from "./db";
+import type { ParsedMeal } from "./domain";
 
 afterEach(async () => {
   await db.transaction("rw", db.tables, async () => {
@@ -9,6 +10,39 @@ afterEach(async () => {
 });
 
 describe("backup boundary validation", () => {
+  it("本机餐食草稿不进入备份且整体恢复后清除", async () => {
+    const draft: ParsedMeal = {
+      protocolVersion: "HD1",
+      eatenAt: "2026-09-11T12:00:00",
+      date: "2026-09-11",
+      mealType: "L",
+      items: [{
+        tempId: "draft-rice",
+        name: "米饭",
+        category: "GR",
+        state: "CK",
+        quantityMin: 100,
+        quantityMax: 100,
+        unit: "g",
+        canonicalFoodId: "rice-cooked"
+      }],
+      cookingMethod: "",
+      note: "未保存",
+      rawImportLine: "",
+      unknownOil: true,
+      unknownSalt: true
+    };
+    await saveMealDraft(draft);
+    const payload = await decryptBackup(
+      await exportEncryptedBackup("correct-password"),
+      "correct-password"
+    );
+
+    expect(payload.settings.some((setting) => setting.key === "draft:meal")).toBe(false);
+    await restoreBackup(payload, "correct-password");
+    await expect(loadMealDraft()).resolves.toBeUndefined();
+  });
+
   it("在密钥派生前拒绝被篡改的PBKDF2迭代次数", async () => {
     const encrypted = await exportEncryptedBackup("correct-password");
     const envelope = JSON.parse(encrypted) as { kdf: { iterations: number } };
@@ -71,6 +105,51 @@ describe("backup boundary validation", () => {
       kcal: 109, protein: 17.1, fat: 2.7, carb: 3.8
     });
     expect(restored?.partialNutrientsPer100?.fiber).toBeUndefined();
+  });
+
+  it("配方食物来源和低可信度可备份并恢复", async () => {
+    await db.foodOverrides.put({
+      id: "user-low-recipe",
+      name: "我的低可信度配方",
+      aliases: [],
+      foodKind: "COMPOSITE",
+      category: "OT",
+      compatibleStates: ["EA"],
+      basisUnit: "g",
+      nutrientsPer100: { kcal: 200, protein: 8, fat: 6, carb: 30, fiber: 2 },
+      recipeEstimate: {
+        finalWeightG: 200,
+        ingredients: [{ name: "原料", weightG: 200 }],
+        confidence: "LOW"
+      },
+      source: {
+        kind: "REFERENCE",
+        ref: "RECIPE:user-low-recipe",
+        release: "food-library-v2",
+        method: "RECIPE"
+      },
+      updatedAt: "2026-08-29T12:00:00.000Z"
+    });
+    const payload = await decryptBackup(
+      await exportEncryptedBackup("correct-password"),
+      "correct-password"
+    );
+    await db.foodOverrides.clear();
+
+    await restoreBackup(payload, "correct-password");
+    const restored = await db.foodOverrides.get("user-low-recipe");
+
+    expect(restored?.source).toEqual({
+      kind: "REFERENCE",
+      ref: "RECIPE:user-low-recipe",
+      release: "food-library-v2",
+      method: "RECIPE"
+    });
+    expect(restored?.recipeEstimate).toEqual({
+      finalWeightG: 200,
+      ingredients: [{ name: "原料", weightG: 200 }],
+      confidence: "LOW"
+    });
   });
 
   it("快速记餐收藏食物会进入加密备份", async () => {
