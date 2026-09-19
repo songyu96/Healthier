@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "book:generate": "node scripts/generate-book-handbook.mjs",
+    "book:verify": "node scripts/verify-book-handbook.mjs",
+    "book:verify:structure": "node scripts/verify-book-handbook.mjs --allow-missing-epub",
     "verify:pwa": "node scripts/verify-dist.mjs",
     "typecheck": "tsc -b",
     "lint": "eslint .",
@@ -27,6 +30,8 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "@vitejs/plugin-react": "6.1.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "eslint": "9.39.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.4",

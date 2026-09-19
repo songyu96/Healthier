@@ -1,0 +1,901 @@
+[
+  {
+    "id": "B1-ENERGY-004",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "健康模式供能取值",
+    "question": "作者为中国普通健康饮食选取的三大营养素比例是多少？",
+    "answer": "作者建议中国普通健康饮食将碳水化合物取范围低值55%、蛋白质取范围高值15%、脂类取范围高值30%。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "能量平衡的方法因人而异",
+        "epubFile": "index_split_024.html",
+        "tocPosition": 23,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "碳水化合物的摄入量我们尽量取其范围的低值",
+          "蛋白质和脂类我们尽量取其范围的高值"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "第三，三大能量之间的比例。大多数营养书上三大能量比例是蛋白质为10%～15% ，脂类为20%～30% ，碳水化合物为55%～65%。我要特别说明一下，根据多年临床工作经验，如果想让身体保持更好的健康状态，根据中国居民饮食现状和身体状况，碳水化合物的摄入量我们尽量取其范围的低值，蛋白质和脂类我们尽量取其范围的高值，这样的目标设定效果会好得多。",
+            "assertions": [
+              {
+                "id": "protein-range",
+                "kind": "RANGE",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "蛋白质",
+                "min": 10,
+                "max": 15,
+                "unit": "%",
+                "timeBasis": "NONE"
+              },
+              {
+                "id": "fat-range",
+                "kind": "RANGE",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "脂类",
+                "min": 20,
+                "max": 30,
+                "unit": "%",
+                "timeBasis": "NONE"
+              },
+              {
+                "id": "carbohydrate-range",
+                "kind": "RANGE",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "碳水化合物",
+                "min": 55,
+                "max": 65,
+                "unit": "%",
+                "timeBasis": "NONE"
+              },
+              {
+                "id": "carbohydrate-low-selection",
+                "kind": "TEXT",
+                "claimScope": "EVIDENCE_ONLY",
+                "text": "碳水化合物的摄入量我们尽量取其范围的低值"
+              },
+              {
+                "id": "protein-fat-high-selection",
+                "kind": "TEXT",
+                "claimScope": "EVIDENCE_ONLY",
+                "text": "蛋白质和脂类我们尽量取其范围的高值"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "protein-range",
+                "span": {
+                  "start": 27,
+                  "end": 38,
+                  "text": "蛋白质为10%～15%"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "fat-range",
+                "span": {
+                  "start": 40,
+                  "end": 50,
+                  "text": "脂类为20%～30%"
+                }
+              },
+              {
+                "id": "b3",
+                "kind": "CONTIGUOUS",
+                "assertionId": "carbohydrate-range",
+                "span": {
+                  "start": 52,
+                  "end": 65,
+                  "text": "碳水化合物为55%～65%"
+                }
+              },
+              {
+                "id": "b4",
+                "kind": "CONTIGUOUS",
+                "assertionId": "carbohydrate-low-selection",
+                "span": {
+                  "start": 118,
+                  "end": 138,
+                  "text": "碳水化合物的摄入量我们尽量取其范围的低值"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "原文分别给出候选范围和取低值原则，需要人工确认可否据此整理为55%。"
+                }
+              },
+              {
+                "id": "b5",
+                "kind": "CONTIGUOUS",
+                "assertionId": "protein-fat-high-selection",
+                "span": {
+                  "start": 139,
+                  "end": 156,
+                  "text": "蛋白质和脂类我们尽量取其范围的高值"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "原文分别给出候选范围和取高值原则，需要人工确认可否据此整理为蛋白质15%、脂类30%。"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是作者根据其临床经验作出的取值选择。"
+    ]
+  },
+  {
+    "id": "B1-FAT-003",
+    "coverageSectionId": "B1-PART-04",
+    "topic": "三类脂肪酸推荐比例",
+    "question": "书中更加推荐的三类脂肪酸比例是多少？",
+    "answer": "食用油章节称饱和、单不饱和和多不饱和脂肪酸更加推荐的比例为3∶4∶3。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 04",
+        "chapter": "油不怕多，只怕比例不当",
+        "epubFile": "index_split_110.html",
+        "tocPosition": 109,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "更加推荐的比例是3∶4∶3",
+          "单不饱和脂肪酸要比另外两种脂肪酸稍微多一点儿"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "大家经常在电视广告上听到的一个词是1∶1∶1，意思是饱和脂肪酸、单不饱和脂肪酸和多不饱和脂肪酸之间的比例是1∶1∶1。现在这三者之间更加推荐的比例是3∶4∶3，也就是说单不饱和脂肪酸要比另外两种脂肪酸稍微多一点儿，为什么呢？",
+            "assertions": [
+              {
+                "id": "advertised-ratio",
+                "kind": "RATIO",
+                "claimScope": "EVIDENCE_ONLY",
+                "subjects": [
+                  "饱和脂肪酸",
+                  "单不饱和脂肪酸",
+                  "多不饱和脂肪酸"
+                ],
+                "ratioValues": [
+                  "1",
+                  "1",
+                  "1"
+                ]
+              },
+              {
+                "id": "recommended-pronoun-text",
+                "kind": "TEXT",
+                "claimScope": "EVIDENCE_ONLY",
+                "text": "现在这三者之间更加推荐的比例"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "advertised-ratio",
+                "span": {
+                  "start": 26,
+                  "end": 58,
+                  "text": "饱和脂肪酸、单不饱和脂肪酸和多不饱和脂肪酸之间的比例是1∶1∶1"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "recommended-pronoun-text",
+                "span": {
+                  "start": 59,
+                  "end": 73,
+                  "text": "现在这三者之间更加推荐的比例"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "“这三者”需要人工确认确实回指前述饱和、单不饱和和多不饱和脂肪酸。"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [
+      "B1-FAT-002"
+    ],
+    "notes": [
+      "该顺序必须保留，不能脱离三类脂肪酸名称单独展示比例。"
+    ]
+  },
+  {
+    "id": "B1-FAT-008",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "反式脂肪酸限量",
+    "question": "书中引用的反式脂肪酸每日限量是多少？",
+    "answer": "书中引用的限量口径为每日反式脂肪酸不超过2克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "反式脂肪酸最大摄取量不超过总能量的1%",
+          "一天的限量在2克左右"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "世界卫生组织、联合国粮农组织在《膳食营养与慢性疾病（2003）》中建议“反式脂肪酸最大摄取量不超过总能量的1%”，这个1%折算出来一个人一天的限量在2克左右。",
+            "assertions": [
+              {
+                "id": "trans-fat-energy",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "反式脂肪酸",
+                "value": 1,
+                "unit": "%",
+                "comparator": "LTE",
+                "timeBasis": "NONE"
+              },
+              {
+                "id": "trans-fat-derived",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "限量",
+                "value": 2,
+                "unit": "克",
+                "comparator": "APPROX",
+                "timeBasis": "DAY"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "trans-fat-energy",
+                "span": {
+                  "start": 0,
+                  "end": 56,
+                  "text": "世界卫生组织、联合国粮农组织在《膳食营养与慢性疾病（2003）》中建议“反式脂肪酸最大摄取量不超过总能量的1%”"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "trans-fat-derived",
+                "span": {
+                  "start": 68,
+                  "end": 78,
+                  "text": "一天的限量在2克左右"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "“这个1%”到每日约2克属于指代和折算关系，程序不能自动证明换算语义。"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对烟糖酒的要求：限量",
+        "epubFile": "index_split_071.html",
+        "tocPosition": 70,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每日反式脂肪酸摄入量不超过2克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "第三，每日反式脂肪酸摄入量不超过2克；",
+            "assertions": [
+              {
+                "id": "trans-fat-daily",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "反式脂肪酸",
+                "value": 2,
+                "unit": "克",
+                "comparator": "LTE",
+                "timeBasis": "DAY"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "trans-fat-daily",
+                "span": {
+                  "start": 3,
+                  "end": 18,
+                  "text": "每日反式脂肪酸摄入量不超过2克"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "书中一处引用世界卫生组织和联合国粮农组织2003年资料，一处引用2016版中国居民膳食指南。"
+    ]
+  },
+  {
+    "id": "B1-WATER-002",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "2016版指南饮水口径",
+    "question": "书中引用的2016版指南每日饮水量是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：成年人每日饮水7～8杯；成年人每日饮水1500～1700毫升。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对烟糖酒的要求：限量",
+        "epubFile": "index_split_071.html",
+        "tocPosition": 70,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "成年人每天7～8杯（1500～1700毫升）"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "第四，足量饮水，成年人每天7～8杯（1500～1700毫升），提倡饮用白开水和茶水，不喝或少喝含糖饮料；",
+            "assertions": [
+              {
+                "id": "cups",
+                "kind": "RANGE",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "饮水",
+                "min": 7,
+                "max": 8,
+                "unit": "杯",
+                "timeBasis": "DAY"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "cups",
+                "span": {
+                  "start": 5,
+                  "end": 17,
+                  "text": "饮水，成年人每天7～8杯"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "原文在7～8杯后以括号给出1500～1700毫升，需要人工确认两种表达的对应关系。"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [
+      "B1-WATER-001"
+    ],
+    "notes": [
+      "与作者饮水平衡章节的1200～1500毫升口径并列保留。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-007",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "豆制品",
+    "question": "作者怎样描述豆制品的频率和单日量？",
+    "answer": "作者提出豆制品不要天天吃，也不要一次吃很多；豆制品食用日总量可保持在30～50克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对蔬果、奶制品和豆制品的要求：多吃",
+        "epubFile": "index_split_069.html",
+        "tocPosition": 68,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "不要天天吃",
+          "一天总量保持在30～50克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "豆制品是国民当家菜，可以补充人体必需的氨基酸，但是不要天天吃，也不要一次吃很多，一天总量保持在30～50克。",
+            "assertions": [
+              {
+                "id": "soy-products",
+                "kind": "RANGE",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "一天总量",
+                "min": 30,
+                "max": 50,
+                "unit": "克",
+                "timeBasis": "DAY"
+              },
+              {
+                "id": "not-daily",
+                "kind": "TEXT",
+                "claimScope": "EVIDENCE_ONLY",
+                "text": "不要天天吃"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "soy-products",
+                "span": {
+                  "start": 40,
+                  "end": 53,
+                  "text": "一天总量保持在30～50克"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "“一天总量”沿用段首豆制品主语，需要人工确认指代关系。"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "not-daily",
+                "span": {
+                  "start": 23,
+                  "end": 30,
+                  "text": "但是不要天天吃"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "不能把30～50克写成每日强制目标。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-012",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "添加糖",
+    "question": "书中引用的添加糖每日限量是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：添加糖每日不超过50克；添加糖每日最好低于25克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对烟糖酒的要求：限量",
+        "epubFile": "index_split_071.html",
+        "tocPosition": 70,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每天摄入不超过50克",
+          "最好控制在25克以下"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "控制添加糖的摄入量，每天摄入不超过50克，最好控制在25克以下；",
+            "assertions": [
+              {
+                "id": "added-sugar-max",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "添加糖",
+                "value": 50,
+                "unit": "克",
+                "comparator": "LTE",
+                "timeBasis": "DAY"
+              },
+              {
+                "id": "added-sugar-preferred",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "最好控制",
+                "value": 25,
+                "unit": "克",
+                "comparator": "LT",
+                "timeBasis": "NONE"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "added-sugar-max",
+                "span": {
+                  "start": 2,
+                  "end": 20,
+                  "text": "添加糖的摄入量，每天摄入不超过50克"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "added-sugar-preferred",
+                "span": {
+                  "start": 21,
+                  "end": 31,
+                  "text": "最好控制在25克以下"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "25克限量沿用前文添加糖主语和每日口径，需要人工确认省略关系。"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": []
+  },
+  {
+    "id": "B1-ACTIVITY-001",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "身体活动",
+    "question": "书中引用的身体活动目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：中等强度身体活动每周至少5天；中等强度身体活动每周累计150分钟以上；主动身体活动每日最好6000步。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本中关于运动的要求：每周至少5天，累计150分钟",
+        "epubFile": "index_split_073.html",
+        "tocPosition": 72,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每周至少进行5天中等强度身体活动",
+          "累计150分钟以上",
+          "每天行走6000步"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "坚持日常身体活动，每周至少进行5天中等强度身体活动，累计150分钟以上，主动身体活动最好每天行走6000步；",
+            "assertions": [
+              {
+                "id": "activity-days",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "中等强度身体活动",
+                "value": 5,
+                "unit": "天",
+                "comparator": "GTE",
+                "timeBasis": "WEEK"
+              },
+              {
+                "id": "activity-minutes",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "累计",
+                "value": 150,
+                "unit": "分钟",
+                "comparator": "GTE",
+                "timeBasis": "NONE"
+              },
+              {
+                "id": "daily-steps",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "主动身体活动",
+                "value": 6000,
+                "unit": "步",
+                "comparator": "RECOMMENDED",
+                "timeBasis": "DAY"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "activity-days",
+                "span": {
+                  "start": 9,
+                  "end": 25,
+                  "text": "每周至少进行5天中等强度身体活动"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "activity-minutes",
+                "span": {
+                  "start": 26,
+                  "end": 35,
+                  "text": "累计150分钟以上"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "累计150分钟沿用前文中等强度身体活动和每周口径，需要人工确认省略关系。"
+                }
+              },
+              {
+                "id": "b3",
+                "kind": "CONTIGUOUS",
+                "assertionId": "daily-steps",
+                "span": {
+                  "start": 36,
+                  "end": 53,
+                  "text": "主动身体活动最好每天行走6000步"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "来源是书中引用的2016版指南。"
+    ]
+  },
+  {
+    "id": "B1-BREAKFAST-002",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "早餐评分组成",
+    "question": "作者的早餐100分由哪两部分组成？",
+    "answer": "作者的早餐评分方法中，能量部分占50分，食物结构部分占50分。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "早餐一定要吃够100分",
+        "epubFile": "index_split_076.html",
+        "tocPosition": 75,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "这项内容占50分",
+          "这一项也占50分"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "第一，算好能量比例，这项内容占50分。",
+            "assertions": [
+              {
+                "id": "energy-score",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "算好能量比例",
+                "value": 50,
+                "unit": "分",
+                "comparator": "EQ",
+                "timeBasis": "NONE"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "energy-score",
+                "span": {
+                  "start": 3,
+                  "end": 18,
+                  "text": "算好能量比例，这项内容占50分"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "“这项内容”回指前文能量比例，需要人工确认指代关系。"
+                }
+              }
+            ]
+          },
+          {
+            "id": "e2",
+            "text": "第二，选足食物种类，搭好结构，这一项也占50分。",
+            "assertions": [
+              {
+                "id": "structure-score",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "选足食物种类，搭好结构",
+                "value": 50,
+                "unit": "分",
+                "comparator": "EQ",
+                "timeBasis": "NONE"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "structure-score",
+                "span": {
+                  "start": 3,
+                  "end": 23,
+                  "text": "选足食物种类，搭好结构，这一项也占50分"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "“这一项”回指前文食物种类与结构，需要人工确认指代关系。"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是作者的饮食评价方法，不是医学诊断量表。"
+    ]
+  },
+  {
+    "id": "B1-BREAKFAST-004",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "早餐评分等级",
+    "question": "作者怎样划分早餐评分等级？",
+    "answer": "作者将早餐总分大于60分称为及格，早餐总分80分称为优秀，早餐总分100分称为完美。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "SOURCE_LOCATED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "早餐一定要吃够100分",
+        "epubFile": "index_split_076.html",
+        "tocPosition": 75,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "总分大于60分算及格",
+          "80分算优秀",
+          "100分就很完美了"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "总分大于60分算及格，80分算优秀，100分就很完美了。",
+            "assertions": [
+              {
+                "id": "pass",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "总分",
+                "value": 60,
+                "unit": "分",
+                "comparator": "GT",
+                "timeBasis": "NONE"
+              },
+              {
+                "id": "excellent",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "优秀",
+                "value": 80,
+                "unit": "分",
+                "comparator": "EQ",
+                "timeBasis": "NONE"
+              },
+              {
+                "id": "perfect",
+                "kind": "QUANTITY",
+                "claimScope": "EVIDENCE_ONLY",
+                "subject": "完美",
+                "value": 100,
+                "unit": "分",
+                "comparator": "EQ",
+                "timeBasis": "NONE"
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "pass",
+                "span": {
+                  "start": 0,
+                  "end": 10,
+                  "text": "总分大于60分算及格"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "excellent",
+                "span": {
+                  "start": 11,
+                  "end": 17,
+                  "text": "80分算优秀"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "80分沿用句首总分主语，需要人工确认省略关系。"
+                }
+              },
+              {
+                "id": "b3",
+                "kind": "CONTIGUOUS",
+                "assertionId": "perfect",
+                "span": {
+                  "start": 18,
+                  "end": 27,
+                  "text": "100分就很完美了"
+                },
+                "semanticReview": {
+                  "status": "HUMAN_REVIEW_REQUIRED",
+                  "reason": "100分沿用句首总分主语，需要人工确认省略关系。"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "书中使用的是“大于60分”，不是“大于或等于60分”。"
+    ]
+  }
+]

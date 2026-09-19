@@ -1,0 +1,2377 @@
+[
+  {
+    "id": "B1-ENERGY-001",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "标准体重",
+    "question": "书中怎样估算标准体重？",
+    "answer": "书中使用“标准体重＝身高（厘米）－105”估算参考体重，男性和女性采用同一公式。",
+    "claimType": "FORMULA",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "能量平衡的方法因人而异",
+        "epubFile": "index_split_024.html",
+        "tocPosition": 23,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "标准体重=身高（厘米）－105",
+          "不管男性还是女性"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "第一，身高体重。依据标准体重计算，标准体重=身高（厘米）－105，不管男性还是女性基本都是这样计算。",
+            "assertions": [
+              {
+                "id": "standard-weight",
+                "kind": "FORMULA",
+                "claimScope": "BOTH",
+                "expression": "标准体重=身高（厘米）－105",
+                "targetFragments": {
+                  "statement": "书中使用“标准体重＝身高（厘米）－105”估算参考体重，男性和女性采用同一公式。",
+                  "referenceValue": "标准体重：身高（厘米）－105"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "standard-weight",
+                "span": {
+                  "start": 17,
+                  "end": 32,
+                  "text": "标准体重=身高（厘米）－105"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是书中的估算方法，不代表唯一的临床体重计算方法。"
+    ]
+  },
+  {
+    "id": "B1-ENERGY-002",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "活动系数",
+    "question": "书中不同活动水平使用什么能量系数？",
+    "answer": "书中按标准体重计算每日能量：长期卧床者25千卡/千克，轻体力劳动者30千卡/千克，中体力劳动者35千卡/千克，重体力劳动者40千卡/千克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "能量平衡的方法因人而异",
+        "epubFile": "index_split_024.html",
+        "tocPosition": 23,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "轻体力劳动者",
+          "每千克耗能30千卡",
+          "长期卧床的人"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "第二，活动量。一般来讲轻体力劳动者 [注：轻体力劳动者：75%时间坐或站立，25%时间站着活动，如从事办公室工作、修理电器、售货员等。] 是标准体重每千克耗能30千卡，中体力劳动者 [注：中体力劳动者：25%时间坐或站立，75%时间特殊职业活动，如学生日常生活、机动车驾驶员、电工、安装人员、车床操作者、从事金属切割的人员等。] 35千卡，重体力劳动者 [注：重体力劳动者：40%时间坐或站立，60%时间特殊职业活动，如从事非机械化农业劳动，炼钢、舞蹈、体育活动、装卸、采矿等。] 40千卡，长期卧床的人标准体重每千克耗能25千卡。",
+            "assertions": [
+              {
+                "id": "bedridden",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "长期卧床的人",
+                "value": 25,
+                "unit": "千卡",
+                "comparator": "EQ",
+                "timeBasis": "PER_KG",
+                "targetFragments": {
+                  "statement": "长期卧床者25千卡/千克",
+                  "referenceValue": "卧床25千卡/千克"
+                }
+              },
+              {
+                "id": "light",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "轻体力劳动者",
+                "value": 30,
+                "unit": "千卡",
+                "comparator": "EQ",
+                "timeBasis": "PER_KG",
+                "targetFragments": {
+                  "statement": "轻体力劳动者30千卡/千克",
+                  "referenceValue": "轻体力30千卡/千克"
+                }
+              },
+              {
+                "id": "moderate",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "中体力劳动者",
+                "value": 35,
+                "unit": "千卡",
+                "comparator": "EQ",
+                "timeBasis": "PER_KG",
+                "targetFragments": {
+                  "statement": "中体力劳动者35千卡/千克",
+                  "referenceValue": "中体力35千卡/千克"
+                }
+              },
+              {
+                "id": "heavy",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "重体力劳动者",
+                "value": 40,
+                "unit": "千卡",
+                "comparator": "EQ",
+                "timeBasis": "PER_KG",
+                "targetFragments": {
+                  "statement": "重体力劳动者40千卡/千克",
+                  "referenceValue": "重体力40千卡/千克"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "ORDERED_LIST",
+                "span": {
+                  "start": 11,
+                  "end": 245,
+                  "text": "轻体力劳动者 [注：轻体力劳动者：75%时间坐或站立，25%时间站着活动，如从事办公室工作、修理电器、售货员等。] 是标准体重每千克耗能30千卡，中体力劳动者 [注：中体力劳动者：25%时间坐或站立，75%时间特殊职业活动，如学生日常生活、机动车驾驶员、电工、安装人员、车床操作者、从事金属切割的人员等。] 35千卡，重体力劳动者 [注：重体力劳动者：40%时间坐或站立，60%时间特殊职业活动，如从事非机械化农业劳动，炼钢、舞蹈、体育活动、装卸、采矿等。] 40千卡"
+                },
+                "sharedBindings": {
+                  "timeBasis": {
+                    "value": "PER_KG",
+                    "span": {
+                      "start": 74,
+                      "end": 77,
+                      "text": "每千克"
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "assertionId": "light",
+                    "subjectSpan": {
+                      "start": 11,
+                      "end": 17,
+                      "text": "轻体力劳动者"
+                    },
+                    "measurementSpan": {
+                      "start": 77,
+                      "end": 83,
+                      "text": "耗能30千卡"
+                    }
+                  },
+                  {
+                    "assertionId": "moderate",
+                    "subjectSpan": {
+                      "start": 84,
+                      "end": 90,
+                      "text": "中体力劳动者"
+                    },
+                    "measurementSpan": {
+                      "start": 165,
+                      "end": 169,
+                      "text": "35千卡"
+                    }
+                  },
+                  {
+                    "assertionId": "heavy",
+                    "subjectSpan": {
+                      "start": 170,
+                      "end": 176,
+                      "text": "重体力劳动者"
+                    },
+                    "measurementSpan": {
+                      "start": 241,
+                      "end": 245,
+                      "text": "40千卡"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "bedridden",
+                "span": {
+                  "start": 246,
+                  "end": 265,
+                  "text": "长期卧床的人标准体重每千克耗能25千卡"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "轻体力且偏胖的书中示例会把系数由30下调为25，但没有统一的偏胖判定标准。"
+    ]
+  },
+  {
+    "id": "B1-ENERGY-003",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "三大营养素供能范围",
+    "question": "书中列出的三大营养素供能范围是多少？",
+    "answer": "书中列出的供能范围为：蛋白质10%～15%，脂类20%～30%，碳水化合物55%～65%。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "能量平衡的方法因人而异",
+        "epubFile": "index_split_024.html",
+        "tocPosition": 23,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "蛋白质为10%～15%",
+          "脂类为20%～30%",
+          "碳水化合物为55%～65%"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "第三，三大能量之间的比例。大多数营养书上三大能量比例是蛋白质为10%～15% ，脂类为20%～30% ，碳水化合物为55%～65%。",
+            "assertions": [
+              {
+                "id": "protein",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "蛋白质",
+                "min": 10,
+                "max": 15,
+                "unit": "%",
+                "timeBasis": "NONE",
+                "targetFragments": {
+                  "statement": "蛋白质10%～15%",
+                  "referenceValue": "蛋白质10%～15%"
+                }
+              },
+              {
+                "id": "fat",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "脂类",
+                "min": 20,
+                "max": 30,
+                "unit": "%",
+                "timeBasis": "NONE",
+                "targetFragments": {
+                  "statement": "脂类20%～30%",
+                  "referenceValue": "脂肪20%～30%"
+                }
+              },
+              {
+                "id": "carbohydrate",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "碳水化合物",
+                "min": 55,
+                "max": 65,
+                "unit": "%",
+                "timeBasis": "NONE",
+                "targetFragments": {
+                  "statement": "碳水化合物55%～65%",
+                  "referenceValue": "碳水55%～65%"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "protein",
+                "span": {
+                  "start": 13,
+                  "end": 38,
+                  "text": "大多数营养书上三大能量比例是蛋白质为10%～15%"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "fat",
+                "span": {
+                  "start": 40,
+                  "end": 50,
+                  "text": "脂类为20%～30%"
+                }
+              },
+              {
+                "id": "b3",
+                "kind": "CONTIGUOUS",
+                "assertionId": "carbohydrate",
+                "span": {
+                  "start": 52,
+                  "end": 65,
+                  "text": "碳水化合物为55%～65%"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "疾病章节使用的比例可能不同，不能覆盖健康人范围。"
+    ]
+  },
+  {
+    "id": "B1-PROTEIN-001",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "健康人蛋白质参考",
+    "question": "早餐章节怎样按体重估算健康人的蛋白质？",
+    "answer": "早餐章节使用健康人每日每千克体重1～1.2克蛋白质作为案例计算口径。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_CASE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "早餐一定要吃够100分",
+        "epubFile": "index_split_076.html",
+        "tocPosition": 75,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每千克体重×（1～1.2）克",
+          "需要的蛋白质应该是70～84克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "正常人每天需要的蛋白质是每千克体重×（1～1.2）克，此人需要的蛋白质应该是70～84克。",
+            "assertions": [
+              {
+                "id": "daily-protein",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "蛋白质",
+                "min": 1,
+                "max": 1.2,
+                "unit": "克",
+                "timeBasis": "PER_KG",
+                "targetFragments": {
+                  "statement": "早餐章节使用健康人每日每千克体重1～1.2克蛋白质作为案例计算口径。",
+                  "referenceValue": "健康人蛋白质案例口径：每千克体重1～1.2克/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "daily-protein",
+                "span": {
+                  "start": 0,
+                  "end": 26,
+                  "text": "正常人每天需要的蛋白质是每千克体重×（1～1.2）克"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是早餐案例中的口径，与按总能量15%计算的结果应分别保留。"
+    ]
+  },
+  {
+    "id": "B1-PROTEIN-002",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "常见食物蛋白质估算",
+    "question": "书中怎样估算鸡蛋、牛奶、瘦肉和鱼的蛋白质？",
+    "answer": "书中近似估算：1个鸡蛋含蛋白质6～7克，100毫升牛奶约3克，瘦肉和鱼的蛋白质约占重量的17%～20%。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "GENERAL_KNOWLEDGE",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "早餐一定要吃够100分",
+        "epubFile": "index_split_076.html",
+        "tocPosition": 75,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "1个鸡蛋含有6～7克蛋白质",
+          "100毫升牛奶含有3克左右蛋白质",
+          "17%～20%"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "1个鸡蛋含有6～7克蛋白质，100毫升牛奶含有3克左右蛋白质，纯瘦肉和鱼类一般蛋白质占其重量的17%～20%。",
+            "assertions": [
+              {
+                "id": "egg",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "鸡蛋",
+                "min": 6,
+                "max": 7,
+                "unit": "克",
+                "timeBasis": "PER_ITEM",
+                "targetFragments": {
+                  "statement": "1个鸡蛋含蛋白质6～7克",
+                  "referenceValue": "鸡蛋6～7克/个"
+                }
+              },
+              {
+                "id": "milk",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "牛奶",
+                "value": 3,
+                "unit": "克",
+                "comparator": "APPROX",
+                "timeBasis": "PER_100_ML",
+                "targetFragments": {
+                  "statement": "100毫升牛奶约3克",
+                  "referenceValue": "牛奶约3克/100毫升"
+                }
+              },
+              {
+                "id": "lean-meat-fish",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "纯瘦肉和鱼类",
+                "min": 17,
+                "max": 20,
+                "unit": "%",
+                "timeBasis": "NONE",
+                "targetFragments": {
+                  "statement": "瘦肉和鱼的蛋白质约占重量的17%～20%",
+                  "referenceValue": "瘦肉和鱼约17%～20%"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "egg",
+                "span": {
+                  "start": 0,
+                  "end": 13,
+                  "text": "1个鸡蛋含有6～7克蛋白质"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "milk",
+                "span": {
+                  "start": 14,
+                  "end": 30,
+                  "text": "100毫升牛奶含有3克左右蛋白质"
+                }
+              },
+              {
+                "id": "b3",
+                "kind": "CONTIGUOUS",
+                "assertionId": "lean-meat-fish",
+                "span": {
+                  "start": 31,
+                  "end": 54,
+                  "text": "纯瘦肉和鱼类一般蛋白质占其重量的17%～20%"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "不同品种和烹调状态会有差异，书中数字用于近似估算。"
+    ]
+  },
+  {
+    "id": "B1-FAT-001",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "脂肪供能比例",
+    "question": "脂类摄入章节建议脂肪约占总能量多少？",
+    "answer": "脂类摄入章节认为日常脂类应占总能量的30%左右。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每天摄入的脂类应占一天总能量的30%左右"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "一般来讲，我们每天摄入的脂类应占一天总能量的30%左右。",
+            "assertions": [
+              {
+                "id": "fat-energy",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "脂类",
+                "value": 30,
+                "unit": "%",
+                "comparator": "APPROX",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "脂类摄入章节认为日常脂类应占总能量的30%左右。",
+                  "referenceValue": "脂肪供能：每日约占总能量30%"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "fat-energy",
+                "span": {
+                  "start": 5,
+                  "end": 27,
+                  "text": "我们每天摄入的脂类应占一天总能量的30%左右"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "同书其他位置列出的通常范围是20%～30%。"
+    ]
+  },
+  {
+    "id": "B1-FAT-002",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "三类脂肪酸等分口径",
+    "question": "脂类摄入章节怎样分配三类脂肪酸？",
+    "answer": "脂类摄入章节提出，饱和、单不饱和和多不饱和脂肪酸可各占总能量约10%。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DOUBLE_CHECKED",
+    "verifiedAt": "2026-09-07",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "这三种脂肪酸应各占10%",
+          "三种脂肪酸各占1/3"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "在这30%左右的脂类中，饱和脂肪酸、单不饱和脂肪酸和多不饱和脂肪酸这三种脂肪酸应各占10%。",
+            "assertions": [
+              {
+                "id": "three-fatty-acids",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "三种脂肪酸",
+                "value": 10,
+                "unit": "%",
+                "comparator": "EQ",
+                "timeBasis": "NONE",
+                "targetComparators": {
+                  "statement": {
+                    "comparator": "APPROX",
+                    "reason": "原文给出目标值，摘要使用“约”保留作者强调的大致执行语气。"
+                  },
+                  "referenceValue": {
+                    "comparator": "APPROX",
+                    "reason": "原文给出目标值，摘要使用“约”保留作者强调的大致执行语气。"
+                  }
+                },
+                "targetFragments": {
+                  "statement": "饱和、单不饱和和多不饱和脂肪酸可各占总能量约10%",
+                  "referenceValue": "三类脂肪酸各占总能量约10%"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "three-fatty-acids",
+                "span": {
+                  "start": 12,
+                  "end": 45,
+                  "text": "饱和脂肪酸、单不饱和脂肪酸和多不饱和脂肪酸这三种脂肪酸应各占10%"
+                }
+              }
+            ]
+          },
+          {
+            "id": "e2",
+            "text": "怎么才能做到三种脂肪酸各占1/3呢？实际上在生活中没有必要搞得那么复杂和准确，只要做到大致正确便可以了。",
+            "assertions": [
+              {
+                "id": "three-fatty-acids-fraction",
+                "kind": "FRACTION",
+                "claimScope": "REFERENCE_ONLY",
+                "subject": "三种脂肪酸",
+                "numerator": 1,
+                "denominator": 3,
+                "comparator": "EQ",
+                "targetComparators": {
+                  "referenceValue": {
+                    "comparator": "APPROX",
+                    "reason": "原文给出目标值，摘要使用“约”保留作者强调的大致执行语气。"
+                  }
+                },
+                "targetFragments": {
+                  "referenceValue": "三类脂肪酸各占脂肪约1/3"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "three-fatty-acids-fraction",
+                "span": {
+                  "start": 0,
+                  "end": 17,
+                  "text": "怎么才能做到三种脂肪酸各占1/3呢"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [
+      "B1-FAT-003"
+    ],
+    "notes": [
+      "与后文更加推荐的3∶4∶3口径并列记录。"
+    ]
+  },
+  {
+    "id": "B1-FAT-004",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "动物与植物脂肪来源",
+    "question": "书中怎样分配动物性和植物性脂肪来源？",
+    "answer": "书中案例将每日脂肪分为两部分：动物脂肪占一半，植物脂肪占一半。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_CASE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DOUBLE_CHECKED",
+    "verifiedAt": "2026-09-07",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "有一半要来自动物脂肪",
+          "另一半来自植物脂肪"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "有一半要来自动物脂肪，从肉、蛋、奶、鱼中获得；另一半来自植物脂肪，从食用油和坚果中获得。",
+            "assertions": [
+              {
+                "id": "animal-fat",
+                "kind": "FRACTION",
+                "claimScope": "BOTH",
+                "subject": "动物脂肪",
+                "numerator": 1,
+                "denominator": 2,
+                "comparator": "EQ",
+                "targetComparators": {
+                  "referenceValue": {
+                    "comparator": "APPROX",
+                    "reason": "原文写作“一半”，速查使用“约”反映案例中的大致分配。"
+                  }
+                },
+                "targetFragments": {
+                  "statement": "动物脂肪占一半",
+                  "referenceValue": "动物脂肪约一半"
+                }
+              },
+              {
+                "id": "plant-fat",
+                "kind": "FRACTION",
+                "claimScope": "BOTH",
+                "subject": "植物脂肪",
+                "numerator": 1,
+                "denominator": 2,
+                "comparator": "EQ",
+                "targetComparators": {
+                  "referenceValue": {
+                    "comparator": "APPROX",
+                    "reason": "原文写作“一半”，速查使用“约”反映案例中的大致分配。"
+                  }
+                },
+                "targetFragments": {
+                  "statement": "植物脂肪占一半",
+                  "referenceValue": "植物脂肪约一半"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "animal-fat",
+                "span": {
+                  "start": 0,
+                  "end": 10,
+                  "text": "有一半要来自动物脂肪"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "plant-fat",
+                "span": {
+                  "start": 23,
+                  "end": 32,
+                  "text": "另一半来自植物脂肪"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是书中案例和操作化解释，不代表所有食物必须精确等分。"
+    ]
+  },
+  {
+    "id": "B1-FAT-005",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "必需脂肪酸总量",
+    "question": "书中认为两类必需脂肪酸合计至少占总能量多少？",
+    "answer": "书中认为ω-3和ω-6两类必需脂肪酸合计不应少于总能量的3%。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "GENERAL_KNOWLEDGE",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "都是人体必需脂肪酸",
+          "一般认为应不少于总能量的3%"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "ω-3和ω-6系列不饱和脂肪酸都是人体必需脂肪酸，一定要从食物中获得，一般认为应不少于总能量的3%。",
+            "assertions": [
+              {
+                "id": "essential-fatty-acids",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "ω-3和ω-6系列不饱和脂肪酸",
+                "value": 3,
+                "unit": "%",
+                "comparator": "GTE",
+                "timeBasis": "NONE",
+                "targetFragments": {
+                  "statement": "书中认为ω-3和ω-6两类必需脂肪酸合计不应少于总能量的3%。",
+                  "referenceValue": "ω-3和ω-6必需脂肪酸合计：不低于总能量3%"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "essential-fatty-acids",
+                "span": {
+                  "start": 0,
+                  "end": 49,
+                  "text": "ω-3和ω-6系列不饱和脂肪酸都是人体必需脂肪酸，一定要从食物中获得，一般认为应不少于总能量的3%"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": []
+  },
+  {
+    "id": "B1-FAT-006",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "ω-3与ω-6比例",
+    "question": "书中认为ω-3与ω-6较好的比例是多少？",
+    "answer": "书中给出的较好比例是ω-3∶ω-6＝1∶4～6。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "GENERAL_KNOWLEDGE",
+    "verificationStatus": "DOUBLE_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "ω-3∶ω-6要调整为1∶4～6",
+          "比较好的比例是1∶4～6"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "必需脂肪酸最佳比例：ω-3∶ω-6要调整为1∶4～6",
+            "assertions": [
+              {
+                "id": "omega-ratio",
+                "kind": "RATIO",
+                "claimScope": "BOTH",
+                "subjects": [
+                  "ω-3",
+                  "ω-6"
+                ],
+                "ratioValues": [
+                  "1",
+                  "4～6"
+                ],
+                "targetFragments": {
+                  "statement": "书中给出的较好比例是ω-3∶ω-6＝1∶4～6。",
+                  "referenceValue": "ω-3与ω-6：ω-3∶ω-6＝1∶4～6"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "omega-ratio",
+                "span": {
+                  "start": 0,
+                  "end": 26,
+                  "text": "必需脂肪酸最佳比例：ω-3∶ω-6要调整为1∶4～6"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "index_split_110中的ω-6∶ω-3＝1～2∶1是历史饮食描述，不作为本条推荐值。"
+    ]
+  },
+  {
+    "id": "B1-FAT-007",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "ω-3最低供能比例",
+    "question": "书中认为ω-3每日摄入量至少占总能量多少？",
+    "answer": "书中认为ω-3脂肪酸每日摄入量不低于总能量的0.5%。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "GENERAL_KNOWLEDGE",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "ω-3脂肪酸的每日摄入量应不低于总能量的0.5%"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "通常来讲，一个人ω-3脂肪酸的每日摄入量应不低于总能量的0.5%。",
+            "assertions": [
+              {
+                "id": "omega-3-minimum",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "ω-3脂肪酸",
+                "value": 0.5,
+                "unit": "%",
+                "comparator": "GTE",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "书中认为ω-3脂肪酸每日摄入量不低于总能量的0.5%。",
+                  "referenceValue": "ω-3每日摄入量：不低于总能量0.5%"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "omega-3-minimum",
+                "span": {
+                  "start": 5,
+                  "end": 32,
+                  "text": "一个人ω-3脂肪酸的每日摄入量应不低于总能量的0.5%"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "书中给出的是供能比例，不是固定克数。"
+    ]
+  },
+  {
+    "id": "B1-FAT-009",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "膳食胆固醇",
+    "question": "书中作者给出的每日膳食胆固醇参考口径是多少？",
+    "answer": "书中作者使用每日膳食胆固醇300～500毫克作为其一般参考口径。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "脂类的摄入：肉蛋奶鱼、植物油和坚果等",
+        "epubFile": "index_split_037.html",
+        "tocPosition": 36,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每天饮食摄入胆固醇300～500毫克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "正常的比例是每天饮食摄入胆固醇300～500毫克（白天从三顿饭中获得），肝脏合成1000毫克（大部分在晚上合成）。",
+            "assertions": [
+              {
+                "id": "dietary-cholesterol",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "饮食摄入胆固醇",
+                "min": 300,
+                "max": 500,
+                "unit": "毫克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "书中作者使用每日膳食胆固醇300～500毫克作为其一般参考口径。",
+                  "referenceValue": "膳食胆固醇（作者口径）：300～500毫克/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "dietary-cholesterol",
+                "span": {
+                  "start": 0,
+                  "end": 35,
+                  "text": "正常的比例是每天饮食摄入胆固醇300～500毫克（白天从三顿饭中获得）"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "该数值需要与现行膳食指南和个体疾病情况另行核验。"
+    ]
+  },
+  {
+    "id": "B1-FIBER-001",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "膳食纤维",
+    "question": "书中引用的成年人每日膳食纤维目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：成年人每日膳食纤维25～35克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "膳食纤维摄入平衡靠重视水果和蔬菜",
+        "epubFile": "index_split_058.html",
+        "tocPosition": 57,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "中国成年人每天应摄入膳食纤维25～35克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "中国成年人每天应摄入膳食纤维25～35克",
+            "assertions": [
+              {
+                "id": "dietary-fiber",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "膳食纤维",
+                "min": 25,
+                "max": 35,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "书中引用《中国居民膳食指南（2016）》：成年人每日膳食纤维25～35克。",
+                  "referenceValue": "膳食纤维：25～35克/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "dietary-fiber",
+                "span": {
+                  "start": 0,
+                  "end": 20,
+                  "text": "中国成年人每天应摄入膳食纤维25～35克"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "来源是书中引用的2016版指南。"
+    ]
+  },
+  {
+    "id": "B1-WATER-001",
+    "coverageSectionId": "B1-PART-02",
+    "topic": "普通人直接饮水",
+    "question": "饮水平衡章节给出的普通人每日饮水量是多少？",
+    "answer": "饮水平衡章节认为，正常情况下普通人每日饮水1200～1500毫升，并根据天气、出汗、运动和含水食物调整。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 02",
+        "chapter": "一天到底喝8杯水还是12杯水",
+        "epubFile": "index_split_062.html",
+        "tocPosition": 61,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "普通人每天应该饮水1200～1500毫升"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "普通人每天应该饮水1200～1500毫升",
+            "assertions": [
+              {
+                "id": "drinking-water",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "饮水",
+                "min": 1200,
+                "max": 1500,
+                "unit": "毫升",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "饮水平衡章节认为，正常情况下普通人每日饮水1200～1500毫升，并根据天气、出汗、运动和含水食物调整。",
+                  "referenceValue": "直接饮水（作者章节口径）：一般1200～1500毫升/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "drinking-water",
+                "span": {
+                  "start": 0,
+                  "end": 20,
+                  "text": "普通人每天应该饮水1200～1500毫升"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [
+      "B1-WATER-002"
+    ],
+    "notes": [
+      "书中明确说明饮水量因人而异。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-001",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "基础食物多样性",
+    "question": "书中引用的基础食物多样性目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：平均每日摄入食物至少12种，每周摄入食物至少25种。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DOUBLE_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本中关于平衡膳食特征的定义：多样化，谷类为主",
+        "epubFile": "index_split_068.html",
+        "tocPosition": 67,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "平均每天摄入12种以上食物",
+          "每周摄入25种以上的食物"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "平均每天摄入12种以上食物，每周摄入25种以上的食物；",
+            "assertions": [
+              {
+                "id": "daily-variety",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "食物",
+                "value": 12,
+                "unit": "种",
+                "comparator": "GTE",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "平均每日摄入食物至少12种",
+                  "referenceValue": "食物至少12种/日"
+                }
+              },
+              {
+                "id": "weekly-variety",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "食物",
+                "value": 25,
+                "unit": "种",
+                "comparator": "GTE",
+                "timeBasis": "WEEK",
+                "targetFragments": {
+                  "statement": "每周摄入食物至少25种",
+                  "referenceValue": "食物至少25种/周"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "daily-variety",
+                "span": {
+                  "start": 0,
+                  "end": 13,
+                  "text": "平均每天摄入12种以上食物"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "weekly-variety",
+                "span": {
+                  "start": 14,
+                  "end": 26,
+                  "text": "每周摄入25种以上的食物"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "同一种原料的不同做法不能重复计数。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-002",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "增强食物多样性",
+    "question": "作者提出的增强食物多样性目标是多少？",
+    "answer": "作者提出有条件时最好每日吃到30种食物。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "一天最好吃够30种食物",
+        "epubFile": "index_split_082.html",
+        "tocPosition": 81,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "最好一天吃30种食物"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "如果你希望获得更多的营养，而且有条件获得，那么最好一天吃30种食物。",
+            "assertions": [
+              {
+                "id": "enhanced-variety",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "食物",
+                "value": 30,
+                "unit": "种",
+                "comparator": "RECOMMENDED",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "作者提出有条件时最好每日吃到30种食物。",
+                  "referenceValue": "作者的食物多样性增强目标：尽量30种/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "enhanced-variety",
+                "span": {
+                  "start": 21,
+                  "end": 33,
+                  "text": "那么最好一天吃30种食物"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是作者在基础指南目标上的增强建议。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-003",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "谷薯类",
+    "question": "书中引用的谷薯类每日摄入量是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：每日谷薯类食物250～400克，每日全谷物和杂豆类50～150克，每日薯类50～100克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本中关于平衡膳食特征的定义：多样化，谷类为主",
+        "epubFile": "index_split_068.html",
+        "tocPosition": 67,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "谷薯类食物250～400克",
+          "全谷物和杂豆类50～150克",
+          "薯类50～100克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "每天摄入谷薯类食物250～400克，其中全谷物和杂豆类50～150克，薯类50～100克。",
+            "assertions": [
+              {
+                "id": "grains-tubers",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "谷薯类食物",
+                "min": 250,
+                "max": 400,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "每日谷薯类食物250～400克",
+                  "referenceValue": "谷薯类食物250～400克/日"
+                }
+              },
+              {
+                "id": "whole-grains-beans",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "全谷物和杂豆类",
+                "min": 50,
+                "max": 150,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "每日全谷物和杂豆类50～150克",
+                  "referenceValue": "全谷物和杂豆类50～150克/日"
+                }
+              },
+              {
+                "id": "tubers",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "薯类",
+                "min": 50,
+                "max": 100,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "每日薯类50～100克",
+                  "referenceValue": "薯类50～100克/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "ORDERED_LIST",
+                "span": {
+                  "start": 0,
+                  "end": 44,
+                  "text": "每天摄入谷薯类食物250～400克，其中全谷物和杂豆类50～150克，薯类50～100克"
+                },
+                "sharedBindings": {
+                  "timeBasis": {
+                    "value": "DAY",
+                    "span": {
+                      "start": 0,
+                      "end": 2,
+                      "text": "每天"
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "assertionId": "grains-tubers",
+                    "subjectSpan": {
+                      "start": 4,
+                      "end": 9,
+                      "text": "谷薯类食物"
+                    },
+                    "measurementSpan": {
+                      "start": 9,
+                      "end": 17,
+                      "text": "250～400克"
+                    }
+                  },
+                  {
+                    "assertionId": "whole-grains-beans",
+                    "subjectSpan": {
+                      "start": 20,
+                      "end": 27,
+                      "text": "全谷物和杂豆类"
+                    },
+                    "measurementSpan": {
+                      "start": 27,
+                      "end": 34,
+                      "text": "50～150克"
+                    }
+                  },
+                  {
+                    "assertionId": "tubers",
+                    "subjectSpan": {
+                      "start": 35,
+                      "end": 37,
+                      "text": "薯类"
+                    },
+                    "measurementSpan": {
+                      "start": 37,
+                      "end": 44,
+                      "text": "50～100克"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "书中说明活动量、身高等会影响在范围内取高值或低值。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-004",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "蔬菜",
+    "question": "书中引用的蔬菜每日目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：每日蔬菜300～500克，深色蔬菜占一半。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DOUBLE_CHECKED",
+    "verifiedAt": "2026-09-07",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对蔬果、奶制品和豆制品的要求：多吃",
+        "epubFile": "index_split_069.html",
+        "tocPosition": 68,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每天摄入300～500克蔬菜",
+          "深色蔬菜应占1/2"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "餐餐有蔬菜，保证每天摄入300～500克蔬菜，深色蔬菜应占1/2；",
+            "assertions": [
+              {
+                "id": "vegetables",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "蔬菜",
+                "min": 300,
+                "max": 500,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "每日蔬菜300～500克",
+                  "referenceValue": "蔬菜：300～500克/日"
+                }
+              },
+              {
+                "id": "dark-vegetables",
+                "kind": "FRACTION",
+                "claimScope": "BOTH",
+                "subject": "深色蔬菜",
+                "numerator": 1,
+                "denominator": 2,
+                "comparator": "EQ",
+                "targetComparators": {
+                  "referenceValue": {
+                    "comparator": "APPROX",
+                    "reason": "原文写作“占1/2”，速查使用“约”保留膳食执行的近似表达。"
+                  }
+                },
+                "targetFragments": {
+                  "statement": "深色蔬菜占一半",
+                  "referenceValue": "深色蔬菜约1/2"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "vegetables",
+                "span": {
+                  "start": 6,
+                  "end": 22,
+                  "text": "保证每天摄入300～500克蔬菜"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "dark-vegetables",
+                "span": {
+                  "start": 23,
+                  "end": 32,
+                  "text": "深色蔬菜应占1/2"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": []
+  },
+  {
+    "id": "B1-FOOD-005",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "水果",
+    "question": "书中引用的水果每日目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：每日新鲜水果200～350克，果汁不能代替鲜果。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对蔬果、奶制品和豆制品的要求：多吃",
+        "epubFile": "index_split_069.html",
+        "tocPosition": 68,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每天摄入200～350克新鲜水果",
+          "果汁不能代替鲜果"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "天天吃水果，保证每天摄入200～350克新鲜水果，果汁不能代替鲜果；",
+            "assertions": [
+              {
+                "id": "fresh-fruit",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "新鲜水果",
+                "min": 200,
+                "max": 350,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "每日新鲜水果200～350克",
+                  "referenceValue": "新鲜水果200～350克/日"
+                }
+              },
+              {
+                "id": "juice-not-fruit",
+                "kind": "TEXT",
+                "claimScope": "BOTH",
+                "text": "果汁不能代替鲜果",
+                "targetFragments": {
+                  "statement": "果汁不能代替鲜果",
+                  "referenceValue": "果汁不能代替鲜果"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "fresh-fruit",
+                "span": {
+                  "start": 6,
+                  "end": 24,
+                  "text": "保证每天摄入200～350克新鲜水果"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "juice-not-fruit",
+                "span": {
+                  "start": 25,
+                  "end": 33,
+                  "text": "果汁不能代替鲜果"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "果汁不能计作等价鲜果。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-006",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "奶类",
+    "question": "书中引用的奶类每日目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：奶制品摄入量约相当于每日300克液态奶。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DOUBLE_CHECKED",
+    "verifiedAt": "2026-09-07",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对蔬果、奶制品和豆制品的要求：多吃",
+        "epubFile": "index_split_069.html",
+        "tocPosition": 68,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每天摄入300克液态奶"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "吃各种各样的奶制品，相当于应该每天摄入300克液态奶；",
+            "assertions": [
+              {
+                "id": "milk",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "液态奶",
+                "value": 300,
+                "unit": "克",
+                "comparator": "EQ",
+                "timeBasis": "DAY",
+                "targetComparators": {
+                  "statement": {
+                    "comparator": "APPROX",
+                    "reason": "原文以液态奶等值折算，摘要使用“约”表达不同奶制品的换算误差。"
+                  },
+                  "referenceValue": {
+                    "comparator": "APPROX",
+                    "reason": "原文以液态奶等值折算，摘要使用“约”表达不同奶制品的换算误差。"
+                  }
+                },
+                "targetFragments": {
+                  "statement": "书中引用《中国居民膳食指南（2016）》：奶制品摄入量约相当于每日300克液态奶。",
+                  "referenceValue": "奶类：约折合300克液态奶/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "milk",
+                "span": {
+                  "start": 10,
+                  "end": 26,
+                  "text": "相当于应该每天摄入300克液态奶"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": []
+  },
+  {
+    "id": "B1-FOOD-008",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "鱼禽蛋肉周摄入量",
+    "question": "书中引用的鱼、畜禽肉和蛋类每周目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：每周鱼280～525克，每周畜禽肉280～525克，每周蛋类280～350克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对鱼禽蛋肉的要求：适量，不弃蛋黄",
+        "epubFile": "index_split_070.html",
+        "tocPosition": 69,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每周吃鱼280～525克",
+          "畜禽肉280～525克",
+          "蛋类280～350克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "每周吃鱼280～525克，畜禽肉280～525克，蛋类280～350克，平均每天摄入总量120～200克；",
+            "assertions": [
+              {
+                "id": "fish",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "鱼",
+                "min": 280,
+                "max": 525,
+                "unit": "克",
+                "timeBasis": "WEEK",
+                "targetFragments": {
+                  "statement": "每周鱼280～525克",
+                  "referenceValue": "鱼280～525克/周"
+                }
+              },
+              {
+                "id": "meat",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "畜禽肉",
+                "min": 280,
+                "max": 525,
+                "unit": "克",
+                "timeBasis": "WEEK",
+                "targetFragments": {
+                  "statement": "每周畜禽肉280～525克",
+                  "referenceValue": "畜禽肉280～525克/周"
+                }
+              },
+              {
+                "id": "eggs",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "蛋类",
+                "min": 280,
+                "max": 350,
+                "unit": "克",
+                "timeBasis": "WEEK",
+                "targetFragments": {
+                  "statement": "每周蛋类280～350克",
+                  "referenceValue": "蛋类280～350克/周"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "ORDERED_LIST",
+                "span": {
+                  "start": 0,
+                  "end": 35,
+                  "text": "每周吃鱼280～525克，畜禽肉280～525克，蛋类280～350克"
+                },
+                "sharedBindings": {
+                  "timeBasis": {
+                    "value": "WEEK",
+                    "span": {
+                      "start": 0,
+                      "end": 2,
+                      "text": "每周"
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "assertionId": "fish",
+                    "subjectSpan": {
+                      "start": 3,
+                      "end": 4,
+                      "text": "鱼"
+                    },
+                    "measurementSpan": {
+                      "start": 4,
+                      "end": 12,
+                      "text": "280～525克"
+                    }
+                  },
+                  {
+                    "assertionId": "meat",
+                    "subjectSpan": {
+                      "start": 13,
+                      "end": 16,
+                      "text": "畜禽肉"
+                    },
+                    "measurementSpan": {
+                      "start": 16,
+                      "end": 24,
+                      "text": "280～525克"
+                    }
+                  },
+                  {
+                    "assertionId": "eggs",
+                    "subjectSpan": {
+                      "start": 25,
+                      "end": 27,
+                      "text": "蛋类"
+                    },
+                    "measurementSpan": {
+                      "start": 27,
+                      "end": 35,
+                      "text": "280～350克"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": []
+  },
+  {
+    "id": "B1-FOOD-009",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "鱼禽蛋肉日均总量",
+    "question": "书中引用的鱼禽蛋肉平均每日合计量是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：鱼禽蛋肉平均每日合计120～200克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对鱼禽蛋肉的要求：适量，不弃蛋黄",
+        "epubFile": "index_split_070.html",
+        "tocPosition": 69,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "平均每天摄入总量120～200克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "每周吃鱼280～525克，畜禽肉280～525克，蛋类280～350克，平均每天摄入总量120～200克；",
+            "assertions": [
+              {
+                "id": "animal-food-total",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "摄入总量",
+                "min": 120,
+                "max": 200,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "书中引用《中国居民膳食指南（2016）》：鱼禽蛋肉平均每日合计120～200克。",
+                  "referenceValue": "鱼禽蛋肉合计：平均120～200克/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "animal-food-total",
+                "span": {
+                  "start": 36,
+                  "end": 52,
+                  "text": "平均每天摄入总量120～200克"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "书中进一步解释为约1个鸡蛋加100～150克瘦肉和鱼。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-010",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "食盐",
+    "question": "书中引用的成人每日食盐上限是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：成人每日食盐不超过6克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对烟糖酒的要求：限量",
+        "epubFile": "index_split_071.html",
+        "tocPosition": 70,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "成人每天食盐不超过6克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "成人每天食盐不超过6克，每天烹调油25～30克；",
+            "assertions": [
+              {
+                "id": "salt",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "食盐",
+                "value": 6,
+                "unit": "克",
+                "comparator": "LTE",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "书中引用《中国居民膳食指南（2016）》：成人每日食盐不超过6克。",
+                  "referenceValue": "食盐（书中引用2016版指南）：不超过6克/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "salt",
+                "span": {
+                  "start": 0,
+                  "end": 11,
+                  "text": "成人每天食盐不超过6克"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是书中引用的2016版指南口径。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-011",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "烹调油",
+    "question": "书中引用的每日烹调油目标是多少？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：每日烹调油25～30克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对烟糖酒的要求：限量",
+        "epubFile": "index_split_071.html",
+        "tocPosition": 70,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "每天烹调油25～30克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "成人每天食盐不超过6克，每天烹调油25～30克；",
+            "assertions": [
+              {
+                "id": "cooking-oil",
+                "kind": "RANGE",
+                "claimScope": "BOTH",
+                "subject": "烹调油",
+                "min": 25,
+                "max": 30,
+                "unit": "克",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "书中引用《中国居民膳食指南（2016）》：每日烹调油25～30克。",
+                  "referenceValue": "烹调油：25～30克/日"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "cooking-oil",
+                "span": {
+                  "start": 12,
+                  "end": 23,
+                  "text": "每天烹调油25～30克"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "烹调油不等于全天全部脂肪。"
+    ]
+  },
+  {
+    "id": "B1-FOOD-013",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "饮酒限量",
+    "question": "书中引用的饮酒限制是什么？",
+    "answer": "书中引用《中国居民膳食指南（2016）》：儿童、少年、孕妇和哺乳期女性不应饮酒；男性每日酒精不超过25克；女性每日酒精不超过15克。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_QUOTED_GUIDE",
+    "applicability": "SPECIFIC_POPULATION",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "2016版本对烟糖酒的要求：限量",
+        "epubFile": "index_split_071.html",
+        "tocPosition": 70,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "儿童、少年、孕妇和哺乳期女性不应饮酒",
+          "男性一天饮用酒的酒精量不超过25克",
+          "女性不超过15克"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "儿童、少年、孕妇和哺乳期女性不应饮酒。成人如果饮酒，男性一天饮用酒的酒精量不超过25克，女性不超过15克。",
+            "assertions": [
+              {
+                "id": "no-alcohol",
+                "kind": "TEXT",
+                "claimScope": "BOTH",
+                "text": "孕妇和哺乳期女性不应饮酒",
+                "targetFragments": {
+                  "statement": "孕妇和哺乳期女性不应饮酒",
+                  "referenceValue": "孕妇和哺乳期女性不应饮酒"
+                }
+              },
+              {
+                "id": "male-alcohol",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "男性",
+                "value": 25,
+                "unit": "克",
+                "comparator": "LTE",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "男性每日酒精不超过25克",
+                  "referenceValue": "男性每日酒精不超过25克"
+                }
+              },
+              {
+                "id": "female-alcohol",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "女性",
+                "value": 15,
+                "unit": "克",
+                "comparator": "LTE",
+                "timeBasis": "DAY",
+                "targetFragments": {
+                  "statement": "女性每日酒精不超过15克",
+                  "referenceValue": "女性每日酒精不超过15克"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "ORDERED_LIST",
+                "span": {
+                  "start": 26,
+                  "end": 52,
+                  "text": "男性一天饮用酒的酒精量不超过25克，女性不超过15克"
+                },
+                "sharedBindings": {
+                  "timeBasis": {
+                    "value": "DAY",
+                    "span": {
+                      "start": 28,
+                      "end": 30,
+                      "text": "一天"
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "assertionId": "male-alcohol",
+                    "subjectSpan": {
+                      "start": 26,
+                      "end": 28,
+                      "text": "男性"
+                    },
+                    "measurementSpan": {
+                      "start": 30,
+                      "end": 43,
+                      "text": "饮用酒的酒精量不超过25克"
+                    }
+                  },
+                  {
+                    "assertionId": "female-alcohol",
+                    "subjectSpan": {
+                      "start": 44,
+                      "end": 46,
+                      "text": "女性"
+                    },
+                    "measurementSpan": {
+                      "start": 46,
+                      "end": 52,
+                      "text": "不超过15克"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "no-alcohol",
+                "span": {
+                  "start": 0,
+                  "end": 18,
+                  "text": "儿童、少年、孕妇和哺乳期女性不应饮酒"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "这是书中引用的旧版指南口径，不应解读为鼓励饮酒。"
+    ]
+  },
+  {
+    "id": "B1-BREAKFAST-001",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "早餐能量",
+    "question": "作者建议早餐能量占全天多少？",
+    "answer": "作者的早餐方法要求早餐能量占全天总能量1/3～1/2；早餐能量至少占全天总能量1/3。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "早餐一定要吃够100分",
+        "epubFile": "index_split_076.html",
+        "tocPosition": 75,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "早餐的能量要占一天总能量的1/3～1/2",
+          "早餐至少要占1/3"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "早餐的能量要占一天总能量的1/3～1/2。我们可以把一天所要吃的食物能量先计算一下，早餐至少要占1/3；如果你晚上吃得很少，那么早餐能量要占全天能量的1/2。",
+            "assertions": [
+              {
+                "id": "breakfast-range",
+                "kind": "FRACTION_RANGE",
+                "claimScope": "BOTH",
+                "subject": "早餐的能量",
+                "minNumerator": 1,
+                "minDenominator": 3,
+                "maxNumerator": 1,
+                "maxDenominator": 2,
+                "targetFragments": {
+                  "statement": "早餐能量占全天总能量1/3～1/2",
+                  "referenceValue": "早餐能量约占全天1/3～1/2"
+                }
+              },
+              {
+                "id": "breakfast-minimum",
+                "kind": "FRACTION",
+                "claimScope": "BOTH",
+                "subject": "早餐",
+                "numerator": 1,
+                "denominator": 3,
+                "comparator": "GTE",
+                "targetFragments": {
+                  "statement": "早餐能量至少占全天总能量1/3",
+                  "referenceValue": "早餐能量至少占全天1/3"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "breakfast-range",
+                "span": {
+                  "start": 0,
+                  "end": 20,
+                  "text": "早餐的能量要占一天总能量的1/3～1/2"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "breakfast-minimum",
+                "span": {
+                  "start": 42,
+                  "end": 51,
+                  "text": "早餐至少要占1/3"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": [
+      "晚餐较少时，作者提出早餐可接近全天1/2。"
+    ]
+  },
+  {
+    "id": "B1-BREAKFAST-003",
+    "coverageSectionId": "B1-PART-03",
+    "topic": "早餐食物类别评分",
+    "question": "早餐结构评分包含哪五类食物？",
+    "answer": "早餐结构分为粮食、动物性食物、蔬菜、水果和油脂五大类；每一类10分。",
+    "claimType": "NUMERIC",
+    "sourceKind": "BOOK_DIRECT",
+    "applicability": "HEALTHY_ADULTS",
+    "verificationStatus": "DIRECT_TEXT_CHECKED",
+    "verifiedAt": "2026-09-03",
+    "sources": [
+      {
+        "bookId": "BOOK_1",
+        "bookTitle": "你是你吃出来的",
+        "part": "PART 03",
+        "chapter": "早餐一定要吃够100分",
+        "epubFile": "index_split_076.html",
+        "tocPosition": 75,
+        "tocTotal": 141,
+        "sourceKeywords": [
+          "粮食类、动物性食物类、蔬菜类、水果类和油脂类",
+          "每一类算10分"
+        ],
+        "evidenceFragments": [
+          {
+            "id": "e1",
+            "text": "我把食物分成五大类：粮食类、动物性食物类、蔬菜类、水果类和油脂类，每一类算10分。",
+            "assertions": [
+              {
+                "id": "five-categories",
+                "kind": "TEXT",
+                "claimScope": "BOTH",
+                "text": "五大类",
+                "targetFragments": {
+                  "statement": "五大类",
+                  "referenceValue": "五大类"
+                }
+              },
+              {
+                "id": "each-category",
+                "kind": "QUANTITY",
+                "claimScope": "BOTH",
+                "subject": "每一类",
+                "value": 10,
+                "unit": "分",
+                "comparator": "EQ",
+                "timeBasis": "NONE",
+                "targetFragments": {
+                  "statement": "每一类10分",
+                  "referenceValue": "每一类10分"
+                }
+              }
+            ],
+            "evidenceBindings": [
+              {
+                "id": "b1",
+                "kind": "CONTIGUOUS",
+                "assertionId": "five-categories",
+                "span": {
+                  "start": 0,
+                  "end": 32,
+                  "text": "我把食物分成五大类：粮食类、动物性食物类、蔬菜类、水果类和油脂类"
+                }
+              },
+              {
+                "id": "b2",
+                "kind": "CONTIGUOUS",
+                "assertionId": "each-category",
+                "span": {
+                  "start": 33,
+                  "end": 40,
+                  "text": "每一类算10分"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conflicts": [],
+    "notes": []
+  }
+]

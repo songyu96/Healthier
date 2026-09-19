@@ -1,0 +1,20 @@
+{
+  "books": [
+    {
+      "bookId": "BOOK_1",
+      "bookTitle": "你是你吃出来的",
+      "fileName": "你是你吃出来的.epub",
+      "sha256": "0e7cf12645873942a6011c49d14fdb149e4eee509e8a0ce3e1e991312c954f2e",
+      "tocFile": "toc.ncx",
+      "tocTotal": 141
+    },
+    {
+      "bookId": "BOOK_2",
+      "bookTitle": "你是你吃出来的2：慢病康复的饮食密码",
+      "fileName": "你是你吃出来的2.epub",
+      "sha256": "2497153244a1016f0b401f86b3979a3a6ae08f7028a6b61d29a091a2e0beb2c6",
+      "tocFile": "toc.ncx",
+      "tocTotal": 226
+    }
+  ]
+}

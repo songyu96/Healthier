@@ -1,0 +1,736 @@
+{
+  "updatedAt": "2026-09-08",
+  "statusDefinitions": {
+    "NOT_STARTED": "尚未系统处理",
+    "PARTIAL": "已经整理一部分，不能声称完整",
+    "VERIFIED": "该维度已按原书完成核对",
+    "NOT_APPLICABLE": "该维度不适用"
+  },
+  "books": [
+    {
+      "bookId": "BOOK_1",
+      "bookTitle": "你是你吃出来的",
+      "tocTotal": 141,
+      "sections": [
+        {
+          "sectionId": "B1-FRONTMATTER",
+          "section": "序言、前言",
+          "epubRange": "index_split_002～003",
+          "handbookTargets": [],
+          "note": "非知识正文，不收录",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "NOT_APPLICABLE",
+            "numericClaims": "NOT_APPLICABLE",
+            "allClaims": "NOT_APPLICABLE"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 1,
+                  "endPosition": 2,
+                  "expectedCount": 2,
+                  "sha256": "b717b048943758a2e883f731ad82a17c022f856e7ece4c7f1b778a0ed0014e76"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": [],
+              "completionCriterion": "非知识正文，不建立原子知识清单"
+            }
+          }
+        },
+        {
+          "sectionId": "B1-PART-01",
+          "section": "PART 01 慢病时代",
+          "epubRange": "index_split_004～018",
+          "handbookTargets": [
+            "knowledge-map.md",
+            "nutrients/energy.md"
+          ],
+          "note": "已整理核心模型，未逐条审计全部论证",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "PARTIAL",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 3,
+                  "endPosition": 17,
+                  "expectedCount": 15,
+                  "sha256": "9058b0c6a199a9ff054a8153abadc120feb5b3d904355d05a14204d0e58f67d3"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B1-PART-02",
+          "section": "PART 02 能量与七大营养素",
+          "epubRange": "index_split_019～063",
+          "handbookTargets": [
+            "nutrients/"
+          ],
+          "note": "本轮优先逐条核对关键数字，尚未覆盖全部正文观点",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "PARTIAL",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 18,
+                  "endPosition": 62,
+                  "expectedCount": 45,
+                  "sha256": "dfbb5168a02e4a33afa7ebb4b755047fc5795f1d3a5c808db3a6a8b56ac56f4a"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "PARTIAL",
+              "includedClaimIds": [
+                "B1-ENERGY-001",
+                "B1-ENERGY-002",
+                "B1-ENERGY-003",
+                "B1-FAT-001",
+                "B1-FAT-002",
+                "B1-FAT-004",
+                "B1-FAT-005",
+                "B1-FAT-006",
+                "B1-FAT-007",
+                "B1-FAT-009",
+                "B1-FIBER-001",
+                "B1-WATER-001"
+              ]
+            },
+            "allClaims": {
+              "status": "PARTIAL",
+              "includedClaimIds": [
+                "B1-ENERGY-001",
+                "B1-ENERGY-002",
+                "B1-ENERGY-003",
+                "B1-FAT-001",
+                "B1-FAT-002",
+                "B1-FAT-004",
+                "B1-FAT-005",
+                "B1-FAT-006",
+                "B1-FAT-007",
+                "B1-FAT-009",
+                "B1-FIBER-001",
+                "B1-WATER-001"
+              ],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B1-PART-03",
+          "section": "PART 03 中国式平衡膳食",
+          "epubRange": "index_split_064～093",
+          "handbookTargets": [
+            "food-and-meals.md",
+            "populations.md"
+          ],
+          "note": "主要食物与三餐数字已进入首批核对",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "PARTIAL",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 63,
+                  "endPosition": 92,
+                  "expectedCount": 30,
+                  "sha256": "7ce83185e39743a2543ab6ad59afd14e221f298d13df57501158c87cb3555c86"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "PARTIAL",
+              "includedClaimIds": [
+                "B1-BREAKFAST-001",
+                "B1-BREAKFAST-003",
+                "B1-FOOD-001",
+                "B1-FOOD-002",
+                "B1-FOOD-003",
+                "B1-FOOD-004",
+                "B1-FOOD-005",
+                "B1-FOOD-006",
+                "B1-FOOD-008",
+                "B1-FOOD-009",
+                "B1-FOOD-010",
+                "B1-FOOD-011",
+                "B1-FOOD-013",
+                "B1-PROTEIN-001",
+                "B1-PROTEIN-002"
+              ]
+            },
+            "allClaims": {
+              "status": "PARTIAL",
+              "includedClaimIds": [
+                "B1-BREAKFAST-001",
+                "B1-BREAKFAST-003",
+                "B1-FOOD-001",
+                "B1-FOOD-002",
+                "B1-FOOD-003",
+                "B1-FOOD-004",
+                "B1-FOOD-005",
+                "B1-FOOD-006",
+                "B1-FOOD-008",
+                "B1-FOOD-009",
+                "B1-FOOD-010",
+                "B1-FOOD-011",
+                "B1-FOOD-013",
+                "B1-PROTEIN-001",
+                "B1-PROTEIN-002"
+              ],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B1-PART-04",
+          "section": "PART 04 具体食物选择",
+          "epubRange": "index_split_094～123",
+          "handbookTargets": [
+            "food-and-meals.md"
+          ],
+          "note": "已形成主题摘要，未逐章建立全部原子记录",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "PARTIAL",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 93,
+                  "endPosition": 122,
+                  "expectedCount": 30,
+                  "sha256": "933bf98c783c51bf6e78b1700163382c7f8201131f3eb2c9490b32e7543db12c"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B1-PART-05",
+          "section": "PART 05 四类组织与疾病解释",
+          "epubRange": "index_split_124～141",
+          "handbookTargets": [
+            "knowledge-map.md",
+            "diseases/"
+          ],
+          "note": "仅做概要整理，强医学因果表述待核验",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 123,
+                  "endPosition": 140,
+                  "expectedCount": 18,
+                  "sha256": "6888b60e6c905d2c9ccf6fad317df7372eba17113235954b8371c47e55b917f6"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B1-AFTERWORD",
+          "section": "后记",
+          "epubRange": "index_split_142",
+          "handbookTargets": [],
+          "note": "非知识正文，不收录",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "NOT_APPLICABLE",
+            "numericClaims": "NOT_APPLICABLE",
+            "allClaims": "NOT_APPLICABLE"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 141,
+                  "endPosition": 141,
+                  "expectedCount": 1,
+                  "sha256": "e2e456533f52a028bb6e89ed458e4306c668cde46a8353751e305c7bc19de3c4"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": [],
+              "completionCriterion": "非知识正文，不建立原子知识清单"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "bookId": "BOOK_2",
+      "bookTitle": "你是你吃出来的2：慢病康复的饮食密码",
+      "tocTotal": 226,
+      "sections": [
+        {
+          "sectionId": "B2-FRONTMATTER",
+          "section": "书名、版权、推荐序、自序、目录",
+          "epubRange": "part0000～part0005",
+          "handbookTargets": [],
+          "note": "非主要知识正文，不收录",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "NOT_APPLICABLE",
+            "numericClaims": "NOT_APPLICABLE",
+            "allClaims": "NOT_APPLICABLE"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 1,
+                  "endPosition": 6,
+                  "expectedCount": 6,
+                  "sha256": "90e956c4a4ebda04f19cd692cc4cd4369e4b82556f13ed780af5cd84af04abdf"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_APPLICABLE",
+              "includedClaimIds": [],
+              "completionCriterion": "非知识正文，不建立原子知识清单"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-01",
+          "section": "PART 01 营养诊疗流程",
+          "epubRange": "part0006",
+          "handbookTargets": [
+            "nutrition-care-process.md"
+          ],
+          "note": "流程已整理，尚未逐条建立原子记录",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 7,
+                  "endPosition": 14,
+                  "expectedCount": 8,
+                  "sha256": "7da426f2a01bd2b9f82a9d7faa80f13733b1db2c759a9d7500f7640333157af2"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-02",
+          "section": "PART 02 高血压",
+          "epubRange": "part0007",
+          "handbookTargets": [
+            "diseases/hypertension.md"
+          ],
+          "note": "概要整理，疾病数字未系统审计",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 15,
+                  "endPosition": 50,
+                  "expectedCount": 36,
+                  "sha256": "348ab7e27687007e882c73f6fdfce26f2d9962e5b72fdf496f7c80c41d7f2af8"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-03",
+          "section": "PART 03 血脂异常",
+          "epubRange": "part0008",
+          "handbookTargets": [
+            "diseases/dyslipidemia.md"
+          ],
+          "note": "概要整理，疾病数字未系统审计",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 51,
+                  "endPosition": 73,
+                  "expectedCount": 23,
+                  "sha256": "e97da608f522fd0b69ec023d735839edc425c3aa3712cbec0ef3e7438948f9ed"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-04",
+          "section": "PART 04 血糖和糖尿病",
+          "epubRange": "part0009",
+          "handbookTargets": [
+            "diseases/diabetes.md"
+          ],
+          "note": "概要整理，疾病数字未系统审计",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 74,
+                  "endPosition": 115,
+                  "expectedCount": 42,
+                  "sha256": "1e4ff9a96e70b665f0eea91e17b63e3703826dd66ce5276d7ea2bb359e477186"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-05",
+          "section": "PART 05 慢性肾病",
+          "epubRange": "part0010",
+          "handbookTargets": [
+            "diseases/kidney-disease.md"
+          ],
+          "note": "少量分期数字已核对，仍不能作为完整疾病方案",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "PARTIAL",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 116,
+                  "endPosition": 138,
+                  "expectedCount": 23,
+                  "sha256": "775682cbdf87e43bc46e6c3cb26cd457434aced841d2abeb09a0189874a26ced"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-06",
+          "section": "PART 06 痛风",
+          "epubRange": "part0011",
+          "handbookTargets": [
+            "diseases/gout.md"
+          ],
+          "note": "概要整理，疾病数字未系统审计",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 139,
+                  "endPosition": 164,
+                  "expectedCount": 26,
+                  "sha256": "700129d84406ce7e57a5a1f0a222e0d052d72d3c03740dbb19044dc18bd2a296"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-07",
+          "section": "PART 07 肿瘤",
+          "epubRange": "part0012",
+          "handbookTargets": [
+            "diseases/cancer.md"
+          ],
+          "note": "部分营养数字已抽样，未完成逐条审计",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 165,
+                  "endPosition": 209,
+                  "expectedCount": 45,
+                  "sha256": "57dc6ee5f458472f9ea08f88d0ebfcf71e2cecd0e171657e715257ff45db8433"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        },
+        {
+          "sectionId": "B2-PART-08",
+          "section": "PART 08 心脏疾病",
+          "epubRange": "part0013",
+          "handbookTargets": [
+            "diseases/heart-disease.md"
+          ],
+          "note": "部分营养数字已抽样，未完成逐条审计",
+          "readerCoverage": {
+            "outline": "VERIFIED",
+            "corePrinciples": "PARTIAL",
+            "numericClaims": "NOT_STARTED",
+            "allClaims": "NOT_STARTED"
+          },
+          "auditedCoverage": {
+            "outline": {
+              "status": "VERIFIED",
+              "expectedOutlineEntries": [
+                {
+                  "startPosition": 210,
+                  "endPosition": 226,
+                  "expectedCount": 17,
+                  "sha256": "f0aa5786f3b5f365649c99016193afbc1ed0fed1cb829a03939bbbec14e89b95"
+                }
+              ]
+            },
+            "corePrinciples": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "numericClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": []
+            },
+            "allClaims": {
+              "status": "NOT_STARTED",
+              "includedClaimIds": [],
+              "completionCriterion": "尚未建立全量预期知识清单，不能标记为VERIFIED"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

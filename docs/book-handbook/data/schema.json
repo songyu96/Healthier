@@ -1,0 +1,508 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://healthier.local/schemas/book-claim.schema.json",
+  "title": "Book knowledge claim",
+  "description": "单条原书知识。JSON Schema 校验字段结构；已核验 NUMERIC/FORMULA 是否分别由断言覆盖 statement 与 referenceValue，以及是否禁止仅使用 EVIDENCE_ONLY，由 verify-book-handbook.mjs 执行跨数组聚合校验。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "coverageSectionId",
+    "topic",
+    "statement",
+    "question",
+    "claimType",
+    "sourceKind",
+    "sources",
+    "applicability",
+    "verificationStatus",
+    "verifiedAt",
+    "conflicts",
+    "notes"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^B[12]-[A-Z0-9-]+$"
+    },
+    "coverageSectionId": {
+      "type": "string",
+      "pattern": "^B[12]-(?:FRONTMATTER|AFTERWORD|PART-[0-9]{2})$"
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claimType": {
+      "enum": ["NUMERIC", "FORMULA", "PRINCIPLE", "DEFINITION", "CASE", "SAFETY"]
+    },
+    "sourceKind": {
+      "enum": ["BOOK_DIRECT", "BOOK_CASE", "BOOK_QUOTED_GUIDE", "EDITOR_SUMMARY", "SAFETY_NOTE"]
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "applicability": {
+      "enum": ["GENERAL_KNOWLEDGE", "HEALTHY_ADULTS", "SPECIFIC_POPULATION", "DISEASE_SPECIFIC", "SAFETY_ONLY"]
+    },
+    "verificationStatus": {
+      "enum": ["UNVERIFIED", "SOURCE_LOCATED", "DIRECT_TEXT_CHECKED", "DOUBLE_CHECKED"]
+    },
+    "verifiedAt": {
+      "type": "string",
+      "format": "date"
+    },
+    "referenceLabel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "referenceValue": {
+      "type": "string",
+      "minLength": 1
+    },
+    "conflicts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^B[12]-[A-Z0-9-]+$"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "claimType": {
+            "enum": ["NUMERIC", "FORMULA"]
+          }
+        },
+        "required": ["claimType"]
+      },
+      "then": {
+        "properties": {
+          "referenceLabel": true,
+          "referenceValue": true
+        },
+        "required": ["referenceLabel", "referenceValue"]
+      }
+    }
+  ],
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bookId",
+        "bookTitle",
+        "part",
+        "chapter",
+        "epubFile",
+        "tocPosition",
+        "tocTotal",
+        "evidenceFragments",
+        "sourceKeywords"
+      ],
+      "properties": {
+        "bookId": {
+          "enum": ["BOOK_1", "BOOK_2"]
+        },
+        "bookTitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "part": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chapter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "epubFile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tocPosition": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tocTotal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "evidenceFragments": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidenceFragment"
+          }
+        },
+        "sourceKeywords": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "sourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end", "text"],
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 1 },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "semanticReview": {
+      "type": "object",
+      "description": "只记录人工语义复核状态，不改变或豁免任何结构、位置、对象、测量及原子性校验。",
+      "additionalProperties": false,
+      "required": ["status", "reason"],
+      "properties": {
+        "status": {
+          "enum": ["HUMAN_REVIEW_REQUIRED", "HUMAN_REVIEWED"]
+        },
+        "reason": { "type": "string", "minLength": 8 },
+        "reviewedAt": { "type": "string", "format": "date" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "HUMAN_REVIEWED" } },
+            "required": ["status"]
+          },
+          "then": { "required": ["reviewedAt"] }
+        }
+      ]
+    },
+    "sharedBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "unit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "span"],
+          "properties": {
+            "value": { "type": "string", "minLength": 1 },
+            "span": { "$ref": "#/$defs/sourceSpan" }
+          }
+        },
+        "comparator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "span"],
+          "properties": {
+            "value": {
+              "enum": ["EQ", "APPROX", "GTE", "LTE", "GT", "LT", "RECOMMENDED"]
+            },
+            "span": { "$ref": "#/$defs/sourceSpan" }
+          }
+        },
+        "timeBasis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "span"],
+          "properties": {
+            "value": {
+              "enum": ["DAY", "WEEK", "PER_KG", "PER_100_ML", "PER_ITEM"]
+            },
+            "span": { "$ref": "#/$defs/sourceSpan" }
+          }
+        }
+      }
+    },
+    "contiguousEvidenceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "assertionId", "span"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^b[0-9]+$" },
+        "kind": { "const": "CONTIGUOUS" },
+        "assertionId": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+        "span": { "$ref": "#/$defs/sourceSpan" },
+        "semanticReview": { "$ref": "#/$defs/semanticReview" }
+      }
+    },
+    "orderedListItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assertionId", "subjectSpan", "measurementSpan"],
+      "properties": {
+        "assertionId": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+        "subjectSpan": { "$ref": "#/$defs/sourceSpan" },
+        "measurementSpan": { "$ref": "#/$defs/sourceSpan" }
+      }
+    },
+    "orderedListEvidenceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "span", "sharedBindings", "items"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^b[0-9]+$" },
+        "kind": { "const": "ORDERED_LIST" },
+        "span": { "$ref": "#/$defs/sourceSpan" },
+        "sharedBindings": { "$ref": "#/$defs/sharedBindings" },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/orderedListItem" }
+        },
+        "semanticReview": { "$ref": "#/$defs/semanticReview" }
+      }
+    },
+    "evidenceBinding": {
+      "oneOf": [
+        { "$ref": "#/$defs/contiguousEvidenceBinding" },
+        { "$ref": "#/$defs/orderedListEvidenceBinding" }
+      ]
+    },
+    "evidenceFragment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "assertions", "evidenceBindings"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^e[0-9]+$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assertions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/assertion"
+          }
+        },
+        "evidenceBindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evidenceBinding" }
+        }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "claimScope"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "kind": {
+          "enum": ["QUANTITY", "RANGE", "RATIO", "FORMULA", "FRACTION", "FRACTION_RANGE", "SELECTION", "TEXT"]
+        },
+        "claimScope": {
+          "description": "声明该原子断言绑定的结论字段。BOTH 同时绑定 statement 和 referenceLabel+referenceValue；EVIDENCE_ONLY 仅记录原文上下文，不能单独支撑已核验的 NUMERIC/FORMULA。",
+          "enum": ["BOTH", "STATEMENT_ONLY", "REFERENCE_ONLY", "EVIDENCE_ONLY"]
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjects": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "value": {
+          "type": "number"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "comparator": {
+          "enum": ["EQ", "APPROX", "GTE", "LTE", "GT", "LT", "RECOMMENDED"]
+        },
+        "targetComparators": {
+          "description": "仅当结论摘要与原文采用白名单内的不同精度表达时声明；未指定的目标继承 comparator。转换兼容性和DOUBLE_CHECKED状态由验证器强制执行。",
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "statement": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["comparator", "reason"],
+              "properties": {
+                "comparator": {
+                  "enum": ["EQ", "APPROX", "GTE", "LTE", "GT", "LT", "RECOMMENDED"]
+                },
+                "reason": { "type": "string", "minLength": 8 }
+              }
+            },
+            "referenceValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["comparator", "reason"],
+              "properties": {
+                "comparator": {
+                  "enum": ["EQ", "APPROX", "GTE", "LTE", "GT", "LT", "RECOMMENDED"]
+                },
+                "reason": { "type": "string", "minLength": 8 }
+              }
+            }
+          }
+        },
+        "targetFragments": {
+          "description": "断言在结论字段中的最小原子片段。片段必须是对应目标的真实子串，并独立包含该断言所需的对象与测量表达。",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "statement": { "type": "string", "minLength": 1 },
+            "referenceValue": { "type": "string", "minLength": 1 }
+          }
+        },
+        "timeBasis": {
+          "enum": ["NONE", "DAY", "WEEK", "PER_KG", "PER_100_ML", "PER_ITEM"]
+        },
+        "ratioValues": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]+(?:\\.[0-9]+)?(?:～[0-9]+(?:\\.[0-9]+)?)?$"
+          }
+        },
+        "numerator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minNumerator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minDenominator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxNumerator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxDenominator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selection": {
+          "enum": ["MIN", "MAX"]
+        },
+        "result": {
+          "type": "number"
+        },
+        "expression": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"claimScope": {"const": "BOTH"}}, "required": ["claimScope"]},
+          "then": {
+            "required": ["targetFragments"],
+            "properties": {"targetFragments": {"type": "object", "required": ["statement", "referenceValue"]}}
+          }
+        },
+        {
+          "if": {"properties": {"claimScope": {"const": "STATEMENT_ONLY"}}, "required": ["claimScope"]},
+          "then": {
+            "required": ["targetFragments"],
+            "properties": {"targetFragments": {"type": "object", "required": ["statement"]}}
+          }
+        },
+        {
+          "if": {"properties": {"claimScope": {"const": "REFERENCE_ONLY"}}, "required": ["claimScope"]},
+          "then": {
+            "required": ["targetFragments"],
+            "properties": {"targetFragments": {"type": "object", "required": ["referenceValue"]}}
+          }
+        },
+        {
+          "if": {"properties": {"claimScope": {"const": "EVIDENCE_ONLY"}}, "required": ["claimScope"]},
+          "then": {"not": {"required": ["targetFragments"]}}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "QUANTITY"}}, "required": ["kind"]},
+          "then": {"required": ["subject", "value", "unit", "comparator", "timeBasis"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "RANGE"}}, "required": ["kind"]},
+          "then": {"required": ["subject", "min", "max", "unit", "timeBasis"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "RATIO"}}, "required": ["kind"]},
+          "then": {"required": ["subjects", "ratioValues"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "FORMULA"}}, "required": ["kind"]},
+          "then": {"required": ["expression"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "FRACTION"}}, "required": ["kind"]},
+          "then": {"required": ["subject", "numerator", "denominator", "comparator"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "FRACTION_RANGE"}}, "required": ["kind"]},
+          "then": {"required": ["subject", "minNumerator", "minDenominator", "maxNumerator", "maxDenominator"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "SELECTION"}}, "required": ["kind"]},
+          "then": {"required": ["subject", "min", "max", "unit", "selection", "result"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "TEXT"}}, "required": ["kind"]},
+          "then": {"required": ["text"]}
+        }
+      ]
+    }
+  }
+}
