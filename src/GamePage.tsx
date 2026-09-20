@@ -41,7 +41,8 @@ import {
   type GameUnlockId
 } from "./game";
 import { avatarProportions, swimPresentation } from "./gamePresentation";
-import OceanScene, { AvatarThumbnail } from "./OceanScene";
+import { AvatarThumbnail } from "./OceanScene";
+import OceanExperience from "./OceanExperience";
 
 const CATEGORY_LABELS: Record<GameGoalCategory, string> = {
   FITNESS: "健身",
@@ -177,7 +178,7 @@ export default function GamePage() {
     <section className="page-intro"><span className="eyebrow">海洋旅程</span><h1>让每一天推动一小段旅程</h1>
       <p>记录饮食、练习自己的目标，游得更远并认识海洋伙伴。旅程从开启当天算起，不追溯以前的记录。</p>
     </section>
-    <section className="card game-start-card"><OceanScene progress={0} avatarStyle={previewAvatar} pace="EASY" proportions={proportions} luminousWater={false} dolphin={false} butterfly={false} />
+    <section className="card game-start-card"><OceanExperience progress={0} avatarStyle={previewAvatar} pace="EASY" proportions={proportions} luminousWater={false} dolphin={false} butterfly={false} />
       <AvatarPicker value={previewAvatar} onSelect={setPreviewAvatar} disabled={busy} />
       <button className="primary" type="button" disabled={busy || !previewAvatar} onClick={() => previewAvatar && void run(() => startGame(today, previewAvatar), "海洋旅程已开启。")}>开启海洋旅程</button>
     </section>
@@ -210,7 +211,7 @@ export default function GamePage() {
       <p>{gameWeightDescription(dietMode, Boolean(currentWeek?.goalPlannedSessions))} 少记录或休息不会扣除已经获得的伙伴和泳姿。</p>
     </section>
     <section className="card game-scene-card">
-      <OceanScene progress={(currentWeek?.points ?? 0) / 100} avatarStyle={state.avatarStyle} pace={presentation.pace} proportions={proportions} luminousWater={presentation.luminousWater} dolphin={Boolean(snapshot?.unlocks.includes("DOLPHIN"))} butterfly={Boolean(snapshot?.unlocks.includes("BUTTERFLY"))} />
+      <OceanExperience progress={(currentWeek?.points ?? 0) / 100} avatarStyle={state.avatarStyle} pace={presentation.pace} proportions={proportions} luminousWater={presentation.luminousWater} dolphin={Boolean(snapshot?.unlocks.includes("DOLPHIN"))} butterfly={Boolean(snapshot?.unlocks.includes("BUTTERFLY"))} />
       <div className="game-progress"><div><span>当前可核算里程</span><strong>{snapshot?.mileage.toFixed(1) ?? "0.0"} 分</strong></div>
         <div><span>今日游泳状态</span><strong>{presentation.label}</strong></div></div>
       <p className="helper">本周前进 {currentWeek?.points.toFixed(1) ?? "0.0"} / 100 分。</p>

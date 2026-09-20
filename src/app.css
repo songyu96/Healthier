@@ -398,6 +398,37 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .game-checkin-list input { min-width: 0; }
 .game-checkin-list button { width: auto; }
 
+.ocean-experience { min-width: 0; }
+.ocean-viewport { position: relative; height: clamp(380px, 48vw, 520px); overflow: hidden; border-radius: 18px; background: linear-gradient(#b1d1df, #197b87); isolation: isolate; }
+.ocean-viewport canvas { display: block; touch-action: none; }
+.ocean-viewport::after { position: absolute; inset: 0; content: ""; pointer-events: none; background: linear-gradient(180deg, rgba(5, 34, 49, .15), transparent 38%, transparent 68%, rgba(5, 34, 49, .58)); }
+.ocean-3d-heading { position: absolute; top: 24px; left: 26px; color: #f5fcf8; pointer-events: none; text-shadow: 0 1px 12px rgba(16, 51, 62, .25); z-index: 1; }
+.ocean-coordinate { font-size: 10px; font-weight: 700; letter-spacing: .22em; }
+.ocean-3d-heading h2 { margin: 7px 0 10px; color: inherit; font-size: clamp(25px, 4vw, 36px); font-weight: 500; letter-spacing: .06em; }
+.ocean-scene-tag { display: inline-flex; align-items: center; gap: 9px; font-size: 10px; letter-spacing: .06em; padding: 7px 10px; background: rgba(13, 53, 66, .3); border: 1px solid rgba(255, 255, 255, .28); border-radius: 20px; backdrop-filter: blur(8px); }
+.ocean-scene-tag i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+.ocean-3d-footer { position: absolute; z-index: 1; bottom: 22px; left: 26px; right: 26px; display: flex; align-items: end; justify-content: space-between; color: #f0fcf4; pointer-events: none; }
+.ocean-3d-footer > div { display: grid; gap: 5px; }
+.ocean-3d-footer span { font-size: 10px; letter-spacing: .12em; opacity: .78; }
+.ocean-3d-footer b { font-size: 18px; letter-spacing: .04em; font-weight: 500; }
+.ocean-route { text-align: right; }
+.ocean-route b { font-size: 26px; font-variant-numeric: tabular-nums; }
+.ocean-route small { font-size: 12px; opacity: .7; }
+.ocean-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+.ocean-controls button { width: auto; min-height: 36px; padding: 8px 11px; border: 1px solid transparent; border-radius: 9px; color: #47635f; background: transparent; font-size: 11px; font-weight: 600; cursor: pointer; }
+.ocean-controls button:hover { background: #e8f0ec; }
+.ocean-controls button:focus-visible { outline: 2px solid #2c756d; outline-offset: 3px; }
+.ocean-view-buttons { display: flex; gap: 3px; padding: 3px; border: 1px solid #d9e3dd; border-radius: 12px; background: #f0f4f0; }
+.ocean-view-buttons button[aria-pressed="true"] { color: #fff; background: #245c51; box-shadow: 0 2px 5px #174e4520; }
+.ocean-render-controls { display: flex; margin-left: auto; gap: 2px; }
+.ocean-render-controls button[aria-pressed="true"] { background: #e8eee6; }
+.ocean-controls .ocean-mode-button { border-color: #d9e3dd; }
+.ocean-interaction-hint { margin: 9px 0 3px; font-size: 10px; line-height: 1.7; color: #76847c; }
+.ocean-loading { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin: 0; background: linear-gradient(155deg, #c2dae0, #408d98 65%, #296874); color: #fff; font-size: 12px; }
+.ocean-loading b { font-size: 18px; font-weight: 500; letter-spacing: .08em; }
+.ocean-loading-ring { width: 30px; height: 30px; border: 1px solid #ffffff55; border-top-color: #fff; border-radius: 50%; animation: ocean-loading-turn 1.4s linear infinite; }
+@keyframes ocean-loading-turn { to { transform: rotate(360deg); } }
+
 @media (max-width: 620px) {
   main { width: min(100% - 20px, 760px); }
   .page-stack { padding-top: 12px; }
@@ -438,6 +469,12 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .ocean-stage-marker { right: 12px; bottom: 12px; }
   .game-avatar-picker { align-items: stretch; flex-direction: column; }
   .game-avatar-options { width: 100%; }
+  .ocean-viewport { height: 380px; border-radius: 13px; }
+  .ocean-3d-heading { top: 18px; left: 18px; }
+  .ocean-3d-footer { bottom: 18px; left: 18px; right: 18px; }
+  .ocean-render-controls { margin-left: 0; }
+  .ocean-controls { gap: 5px; }
+  .ocean-controls button { padding: 7px 9px; }
   .game-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-checkin-list form { grid-template-columns: minmax(0, 1fr) 95px; }
   .game-checkin-list form button { grid-row: 2; }

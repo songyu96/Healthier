@@ -17,11 +17,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.7.0",
     "dexie": "4.4.5",
     "dexie-react-hooks": "4.4.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router-dom": "7.18.2",
+    "three": "^0.186.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
@@ -29,6 +31,7 @@
     "@types/node": "26.3.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "6.1.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
