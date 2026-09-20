@@ -1,5 +1,5 @@
 import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, Material, Mesh, MeshStandardMaterial, PlaneGeometry, Points, PointsMaterial, SphereGeometry, TubeGeometry, CatmullRomCurve3, Vector3 } from "three";
-import { MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, seaHeight, type OceanQuality, type RoutePose } from "./swimMotion";
+import { MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, type OceanQuality, type RoutePose } from "./swimMotion";
 import { createWater } from "./createWater";
 
 function noise(x: number, z: number): number {
@@ -99,9 +99,10 @@ export function createCoast(quality: OceanQuality) {
   group.add(spray);
   return {
     group,
+    heightAt: water.heightAt,
     update(time: number, phase: number, pose: RoutePose, energetic: boolean, luminous: boolean) {
       water.update(time, pose, energetic, luminous);
-      buoys.forEach((buoy) => { buoy.position.y = 0.06 + seaHeight(buoy.position.x, buoy.position.z, time); });
+      buoys.forEach((buoy) => { buoy.position.y = 0.06 + water.heightAt(buoy.position.x, buoy.position.z, time); });
       const c = Math.cos(pose.heading), s = Math.sin(pose.heading);
       for (let i = 0; i < 60; i++) {
         const side = i % 2 ? -1 : 1;
@@ -111,7 +112,7 @@ export function createCoast(quality: OceanQuality) {
         const z = 0.8 - elapsed * 0.8 + Math.cos(i * 2.17) * 0.05;
         const worldX = pose.x + x*c + z*s, worldZ = pose.z - x*s + z*c;
         sprayPositions[i * 3] = worldX;
-        sprayPositions[i * 3 + 1] = elapsed < 0.3 ? seaHeight(worldX, worldZ, time) + Math.sin(elapsed / 0.3 * Math.PI) * 0.12 : -100;
+        sprayPositions[i * 3 + 1] = elapsed < 0.3 ? water.heightAt(worldX, worldZ, time) + Math.sin(elapsed / 0.3 * Math.PI) * 0.12 : -100;
         sprayPositions[i * 3 + 2] = worldZ;
       }
       // Float32BufferAttribute copies its input, so update the live GPU attribute.

@@ -1,15 +1,17 @@
-import { Mesh, PlaneGeometry, ShaderMaterial, Vector2, Vector3 } from "three";
+import { Float32BufferAttribute, Mesh, PlaneGeometry, ShaderMaterial, Vector2, Vector3 } from "three";
 import { SEA_HEIGHT_GLSL, type OceanQuality, type RoutePose } from "./swimMotion";
+import { createWaterGrid, renderedWaterHeight } from "./waterSampling";
 
 export function createWater(quality: OceanQuality) {
-  const segments = quality === "LOW" ? 128 : 224;
+  const grid = createWaterGrid(quality);
+  const { segments, axis, spacing } = grid;
   const geometry = new PlaneGeometry(2, 2, segments, segments);
   geometry.rotateX(-Math.PI / 2);
   const positions = geometry.getAttribute("position");
   for (let i = 0; i < positions.count; i++) {
-    const spread = (v: number) => Math.sign(v) * (Math.abs(v) * 10 + Math.pow(Math.abs(v), 3) * 590);
-    positions.setXYZ(i, spread(positions.getX(i)), 0, spread(positions.getZ(i)));
+    positions.setXYZ(i, axis[i % (segments + 1)], 0, axis[Math.floor(i / (segments + 1))]);
   }
+  geometry.setAttribute("gridSpacing", new Float32BufferAttribute(spacing, 1));
   geometry.computeBoundingSphere();
   const uniforms = {
     oceanTime: { value: 0 }, origin: { value: new Vector2() },
@@ -20,11 +22,14 @@ export function createWater(quality: OceanQuality) {
     vertexShader: `
       uniform float oceanTime;
       uniform vec2 origin;
+      attribute float gridSpacing;
       varying vec3 worldPoint;
+      varying float sampleSpacing;
       ${SEA_HEIGHT_GLSL}
       void main() {
         vec2 p = position.xz + origin;
-        vec3 displaced = vec3(position.x, seaHeight(p, oceanTime), position.z);
+        sampleSpacing = gridSpacing;
+        vec3 displaced = vec3(position.x, seaHeight(p, oceanTime, gridSpacing), position.z);
         worldPoint = (modelMatrix * vec4(displaced, 1.0)).xyz;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
       }
@@ -35,6 +40,7 @@ export function createWater(quality: OceanQuality) {
       uniform float wakeStrength;
       uniform float warmth;
       varying vec3 worldPoint;
+      varying float sampleSpacing;
       ${SEA_HEIGHT_GLSL}
       float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
       float noise(vec2 p) {
@@ -48,7 +54,14 @@ export function createWater(quality: OceanQuality) {
       }
       void main() {
         vec2 p = worldPoint.xz;
-        vec3 wave = seaSample(p, oceanTime);
+        vec4 wave = seaSample(p, oceanTime, sampleSpacing);
+        // Include the derivative of the spatial LOD fade, not only the retained wave slopes.
+        vec2 px = dFdx(p), py = dFdy(p);
+        float determinant = px.x*py.y-px.y*py.x;
+        vec2 spacingSlope = abs(determinant)>0.00000001
+          ? vec2(dFdx(sampleSpacing)*py.y-dFdy(sampleSpacing)*px.y, px.x*dFdy(sampleSpacing)-py.x*dFdx(sampleSpacing))/determinant
+          : vec2(0.0);
+        wave.yz += wave.w*spacingSlope;
         float distanceToEye = length(cameraPosition - worldPoint);
         float detail = 1.0 - smoothstep(12.0, 80.0, distanceToEye);
         // Advected noise gradients break up long regular wave bands. Fade subpixel detail.
@@ -57,7 +70,6 @@ export function createWater(quality: OceanQuality) {
         vec2 ripple = noiseSlope(p*3.2+vec2(oceanTime*0.4,oceanTime*0.18))*0.2*(1.0-smoothstep(0.25,0.75,footprint*3.2));
         ripple += transpose(rotation)*noiseSlope(rotation*p*7.1+vec2(-oceanTime*0.28,oceanTime*0.34))*0.085*(1.0-smoothstep(0.25,0.75,footprint*7.1));
         ripple += noiseSlope(p*15.4+vec2(oceanTime*0.3,-oceanTime*0.2))*0.035*(1.0-smoothstep(0.25,0.75,footprint*15.4));
-        wave.yz *= mix(0.15,1.0,1.0-smoothstep(35.0,170.0,distanceToEye));
         vec3 n = normalize(vec3(-wave.y-ripple.x*detail,1.0,-wave.z-ripple.y*detail));
         vec3 eye = normalize(cameraPosition-worldPoint);
         float fresnel = 0.025 + 0.975*pow(1.0-max(dot(n,eye),0.0),5.0);
@@ -96,6 +108,10 @@ export function createWater(quality: OceanQuality) {
   mesh.frustumCulled = false;
   return {
     mesh,
+    heightAt(x: number, z: number, time: number) {
+      const origin = uniforms.origin.value;
+      return renderedWaterHeight(grid, x - origin.x, z - origin.y, origin.x, origin.y, time);
+    },
     update(time: number, pose: RoutePose, energetic: boolean, luminous: boolean) {
       uniforms.oceanTime.value = time;
       uniforms.origin.value.set(pose.x,pose.z);

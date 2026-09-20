@@ -1,7 +1,7 @@
 import { Bone, BufferGeometry, Color, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Quaternion, SphereGeometry, TorusGeometry, Vector3, SkinnedMesh } from "three";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 import type { OceanSceneProps } from "../OceanScene";
-import { armDirections, seaHeight, type RoutePose } from "./swimMotion";
+import { armDirections, type RoutePose } from "./swimMotion";
 
 export function createSwimmer(source: Object3D) {
   const model = clone(source);
@@ -75,9 +75,9 @@ export function createSwimmer(source: Object3D) {
     capMaterial.color.set(female ? "#f3a185" : "#bbd85c");
     model.scale.set(props.proportions.bodyWidth * (female ? 0.97 : 1.03), props.proportions.strokeReach, 1);
   }
-  function update(time: number, phase: number, pose: RoutePose) {
+  function update(time: number, phase: number, pose: RoutePose, waterHeight: (x: number, z: number, time: number) => number) {
     const c = Math.cos(pose.heading), s = Math.sin(pose.heading);
-    const height = (x: number, z: number) => seaHeight(pose.x + x*c + z*s, pose.z - x*s + z*c, time);
+    const height = (x: number, z: number) => waterHeight(pose.x + x*c + z*s, pose.z - x*s + z*c, time);
     group.position.set(pose.x, 0.055 + height(0, 0), pose.z);
     group.rotation.set((height(0, -0.6) - height(0, 0.6)) / 1.2, pose.heading, (height(0.4, 0) - height(-0.4, 0)) / 0.8, "YXZ");
     prone.rotation.y = Math.sin(phase) * 0.12;

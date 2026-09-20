@@ -114,8 +114,8 @@ function World(props: Props) {
   useFrame((_, delta) => {
     clock.current = advanceSwim(clock.current, delta, props.pace, props.paused || !props.active);
     const pose = routePose(clock.current.distance);
-    swimmer.update(clock.current.time, clock.current.phase, pose);
     coast.update(clock.current.time, clock.current.phase, pose, props.pace === "SURGE", props.luminousWater);
+    swimmer.update(clock.current.time, clock.current.phase, pose, coast.heightAt);
   }, -2);
   return <><CameraRig request={props.cameraRequest} paused={props.paused} clock={clock} /><primitive object={coast.group} /><primitive object={swimmer.group} /></>;
 }
