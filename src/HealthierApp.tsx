@@ -111,6 +111,7 @@ import {
   type SyncImportStatus
 } from "./sync";
 import { AppProvider, useApp } from "./context/AppContext";
+import GamePage from "./GamePage";
 
 const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
   BEDRIDDEN: "卧床（25 kcal/kg）",
@@ -380,6 +381,7 @@ function Layout({ children }: PropsWithChildren) {
       <main>{children}</main>
       <nav className="bottom-nav" aria-label="主要页面">
         <NavLink to="/" end>今日</NavLink>
+        <NavLink to="/game">旅程</NavLink>
         <NavLink to="/calculator">计算器</NavLink>
         <NavLink to="/history">周总结</NavLink>
         <NavLink to="/foods">食物库</NavLink>
@@ -893,6 +895,7 @@ function TodayPage() {
   return (
     <div className="page-stack today-page">
       <PageIntro eyebrow={today} title={`今天，${profile.name || "给自己吃好一点"}`} description="记录事实，看到缺口，再决定下一餐。所有数据只保存在这台设备。" />
+      <NavLink className="card game-today-link" to="/game"><span><b>海洋旅程</b><small>饮食记录与每周目标，让角色继续向前游</small></span><span aria-hidden="true">→</span></NavLink>
       <QuickMealCard
         foods={foods}
         favoriteFoodIds={favoriteFoodIds}
@@ -1937,6 +1940,7 @@ export default function HealthierApp() {
       <Layout>
         <Routes>
           <Route path="/" element={<TodayPage />} />
+          <Route path="/game" element={<GamePage />} />
           <Route path="/calculator" element={<CalculatorPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/foods" element={<FoodsPage />} />

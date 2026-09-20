@@ -8,6 +8,7 @@ import {
   QUANTITY_UNITS
 } from "./domain";
 import { nutritionFactsSchema } from "./backupNutritionSchema";
+import { gameStateSchema } from "./gameSchema";
 
 const finiteNonNegative = z.number().finite().nonnegative();
 const finitePositive = z.number().finite().positive();
@@ -215,6 +216,12 @@ const settingSchema = z.object({
   }
   if (setting.key === "restoreRollback" && typeof setting.value !== "string") {
     context.addIssue({ code: "custom", message: "恢复回滚点必须是加密字符串" });
+  }
+  if (setting.key === "game:state" && !gameStateSchema.safeParse(setting.value).success) {
+    context.addIssue({ code: "custom", message: "海洋旅程数据格式无效" });
+  }
+  if (setting.key.startsWith("game:") && setting.key !== "game:state") {
+    context.addIssue({ code: "custom", message: "未知的海洋旅程设置键" });
   }
 });
 

@@ -16,6 +16,8 @@ import {
 } from "./domain";
 import { mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
 import { MEAL_DRAFT_SETTING_KEY } from "./syncScope";
+import { goalVersionOn, nextWeekStart, shiftDate, type GameCheckin, type GameGoalVersion, type GameState, type GameUnlockId } from "./game";
+import { gameStateSchema, isGameDateKey } from "./gameSchema";
 
 export { MEAL_DRAFT_SETTING_KEY } from "./syncScope";
 
@@ -329,4 +331,112 @@ export async function setSetting<T>(key: string, value: T): Promise<void> {
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
   const setting = await db.settings.get(key);
   return setting ? setting.value as T : fallback;
+}
+
+export const GAME_STATE_SETTING_KEY = "game:state";
+
+export async function loadGameState(): Promise<GameState | undefined> {
+  const setting = await db.settings.get(GAME_STATE_SETTING_KEY);
+  return setting ? gameStateSchema.parse(setting.value) : undefined;
+}
+
+function requireGameDate(date: string): void {
+  if (!isGameDateKey(date)) throw new Error("游戏日期无效。");
+}
+
+async function changeGameState(change: (state: GameState) => GameState): Promise<GameState> {
+  return db.transaction("rw", db.settings, async () => {
+    const state = await loadGameState();
+    if (!state) throw new Error("请先开启海洋旅程。");
+    const next = gameStateSchema.parse(change(state));
+    await db.settings.put({ key: GAME_STATE_SETTING_KEY, value: next });
+    return next;
+  });
+}
+
+export async function startGame(date: string): Promise<GameState> {
+  requireGameDate(date);
+  return db.transaction("rw", db.settings, async () => {
+    const existing = await loadGameState();
+    if (existing) return existing;
+    const state: GameState = { startedOn: date, goals: [], checkins: [], unlocks: [] };
+    await db.settings.put({ key: GAME_STATE_SETTING_KEY, value: state });
+    return state;
+  });
+}
+
+export async function addGameGoal(version: Omit<GameGoalVersion, "effectiveOn">, today: string): Promise<GameState> {
+  requireGameDate(today);
+  return changeGameState((state) => ({
+    ...state,
+    goals: [...state.goals, {
+      id: crypto.randomUUID(),
+      startedOn: today,
+      versions: [{ ...version, effectiveOn: today }]
+    }]
+  }));
+}
+
+export async function updateGameGoal(
+  goalId: string,
+  version: Omit<GameGoalVersion, "effectiveOn">,
+  today: string
+): Promise<GameState> {
+  requireGameDate(today);
+  return changeGameState((state) => {
+    const goal = state.goals.find((item) => item.id === goalId);
+    if (!goal || !goalVersionOn(goal, today)) throw new Error("目标不存在或已停用。");
+    const effectiveOn = nextWeekStart(today);
+    return {
+      ...state,
+      goals: state.goals.map((item) => item.id === goalId ? {
+        ...item,
+        versions: [...item.versions.filter((entry) => entry.effectiveOn < effectiveOn), { ...version, effectiveOn }]
+      } : item)
+    };
+  });
+}
+
+export async function archiveGameGoal(goalId: string, today: string): Promise<GameState> {
+  requireGameDate(today);
+  return changeGameState((state) => {
+    const goal = state.goals.find((item) => item.id === goalId);
+    if (!goal || !goalVersionOn(goal, today)) throw new Error("目标不存在或已停用。");
+    return {
+      ...state,
+      goals: state.goals.map((item) => item.id === goalId ? { ...item, archivedOn: shiftDate(today, 1) } : item)
+    };
+  });
+}
+
+export async function setGameCheckin(checkin: GameCheckin, today: string): Promise<GameState> {
+  requireGameDate(today);
+  requireGameDate(checkin.date);
+  if (checkin.date > today) throw new Error("不能提前打卡未来日期。");
+  return changeGameState((state) => {
+    const goal = state.goals.find((item) => item.id === checkin.goalId);
+    if (!goal || !goalVersionOn(goal, checkin.date)) throw new Error("所选日期的目标无效。");
+    return {
+      ...state,
+      checkins: [
+        ...state.checkins.filter((item) => item.goalId !== checkin.goalId || item.date !== checkin.date),
+        checkin
+      ]
+    };
+  });
+}
+
+export async function deleteGameCheckin(goalId: string, date: string): Promise<GameState> {
+  requireGameDate(date);
+  return changeGameState((state) => ({
+    ...state,
+    checkins: state.checkins.filter((item) => item.goalId !== goalId || item.date !== date)
+  }));
+}
+
+export async function recordGameUnlocks(unlocks: GameUnlockId[]): Promise<GameState> {
+  return changeGameState((state) => ({
+    ...state,
+    unlocks: [...new Set([...state.unlocks, ...unlocks])]
+  }));
 }
