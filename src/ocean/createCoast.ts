@@ -1,5 +1,5 @@
 import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, Material, Mesh, MeshStandardMaterial, PlaneGeometry, Points, PointsMaterial, SphereGeometry, TubeGeometry, CatmullRomCurve3, Vector3 } from "three";
-import { routePose, ROUTE_RADIUS, seaHeight, type OceanQuality, type RoutePose } from "./swimMotion";
+import { MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, seaHeight, type OceanQuality, type RoutePose } from "./swimMotion";
 import { createWater } from "./createWater";
 
 function noise(x: number, z: number): number {
@@ -16,7 +16,10 @@ function island(x: number, z: number, radius: number, height: number, seed: numb
     const px = positions.getX(i), pz = positions.getZ(i);
     const distance = Math.sqrt(px * px + pz * pz * 1.3) / radius;
     const edge = 1 - distance + noise(px * 0.24 + seed, pz * 0.23) * 0.13;
-    const y = Math.pow(Math.max(0, edge), 1.6) * height + noise(px * 0.42 + seed, pz * 0.45) * Math.max(0, edge) * 1.9 - 0.28;
+    // Lower the offshore skirt below every wave trough without moving the island inland.
+    const skirt = Math.max(0, Math.min(1, (0.15 - edge) / 0.15));
+    const seabedDrop = (MAX_SEA_HEIGHT + 0.5) * skirt * skirt * (3 - 2 * skirt);
+    const y = Math.pow(Math.max(0, edge), 1.6) * height + noise(px * 0.42 + seed, pz * 0.45) * Math.max(0, edge) * 1.9 - 0.28 - seabedDrop;
     positions.setY(i, y);
     const rocky = noise(px * 0.48, pz * 0.48 + seed) > 0.1;
     const color = y < 0.65 ? sand.clone() : (rocky ? stone.clone() : green.clone());
