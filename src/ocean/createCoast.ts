@@ -1,36 +1,9 @@
-import { BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, PlaneGeometry, Points, PointsMaterial, RepeatWrapping, RGBAFormat, SphereGeometry, TubeGeometry, CatmullRomCurve3, Vector2, Vector3 } from "three";
-import { SEA_HEIGHT_GLSL, seaHeight, type OceanQuality } from "./swimMotion";
+import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, Material, Mesh, MeshStandardMaterial, PlaneGeometry, Points, PointsMaterial, SphereGeometry, TubeGeometry, CatmullRomCurve3, Vector3 } from "three";
+import { routePose, ROUTE_RADIUS, seaHeight, type OceanQuality, type RoutePose } from "./swimMotion";
+import { createWater } from "./createWater";
 
 function noise(x: number, z: number): number {
   return Math.sin(x * 1.7 + Math.sin(z * 0.83)) * 0.5 + Math.sin(z * 2.13 - x * 0.37) * 0.25 + Math.sin(x * 4.17 + z * 3.16) * 0.125;
-}
-
-function waterNormals() {
-  const size = 256;
-  const data = new Uint8Array(size * size * 4);
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    const u = x / size * Math.PI * 2, v = y / size * Math.PI * 2;
-    let dx = 0, dy = 0;
-    for (let wave = 1; wave <= 9; wave++) {
-      const nx = wave * 2 + 1, ny = wave % 2 ? wave + 2 : -wave - 1;
-      const ripple = Math.cos(u * nx + v * ny + wave * 1.17) / (wave * 9);
-      dx += ripple * nx; dy += ripple * ny;
-    }
-    const normal = new Vector3(-dx * 0.22, -dy * 0.22, 1).normalize();
-    const at = (y * size + x) * 4;
-    data[at] = (normal.x * 0.5 + 0.5) * 255;
-    data[at + 1] = (normal.y * 0.5 + 0.5) * 255;
-    data[at + 2] = (normal.z * 0.5 + 0.5) * 255;
-    data[at + 3] = 255;
-  }
-  const texture = new DataTexture(data, size, size, RGBAFormat);
-  texture.wrapS = texture.wrapT = RepeatWrapping;
-  texture.repeat.set(700, 700);
-  texture.magFilter = LinearFilter;
-  texture.minFilter = LinearMipmapLinearFilter;
-  texture.generateMipmaps = true;
-  texture.needsUpdate = true;
-  return texture;
 }
 
 function island(x: number, z: number, radius: number, height: number, seed: number) {
@@ -87,39 +60,8 @@ function palm(x: number, y: number, z: number, height: number, seed: number) {
 
 export function createCoast(quality: OceanQuality) {
   const group = new Group();
-  const normalMap = waterNormals();
-  const timeUniform = { value: 0 };
-  const wakeUniform = { value: 0.55 };
-  const segments = quality === "LOW" ? 96 : 164;
-  const geometry = new PlaneGeometry(2, 2, segments, segments);
-  geometry.rotateX(-Math.PI / 2);
-  const positions = geometry.getAttribute("position"), uvs = geometry.getAttribute("uv");
-  for (let i = 0; i < positions.count; i++) {
-    const x = Math.sign(positions.getX(i)) * Math.pow(Math.abs(positions.getX(i)), 3) * 600;
-    const z = Math.sign(positions.getZ(i)) * Math.pow(Math.abs(positions.getZ(i)), 3) * 600;
-    positions.setXYZ(i, x, 0, z); uvs.setXY(i, x / 1200 + 0.5, z / 1200 + 0.5);
-  }
-  geometry.computeBoundingSphere();
-  const waterMaterial = new MeshPhysicalMaterial({ color: "#087784", roughness: 0.3, metalness: 0.05, normalMap, normalScale: new Vector2(0.3, 0.3), envMapIntensity: 0.12, transparent: true, opacity: 0.87, depthWrite: false, clearcoat: 0.1, clearcoatRoughness: 0.2 });
-  waterMaterial.onBeforeCompile = (shader) => {
-    shader.uniforms.oceanTime = timeUniform;
-    shader.uniforms.wakeStrength = wakeUniform;
-    shader.vertexShader = `uniform float oceanTime; varying vec3 vOceanPosition; ${SEA_HEIGHT_GLSL}\n${shader.vertexShader}`
-      .replace("#include <begin_vertex>", "vec3 transformed = vec3(position.x, seaHeight(position.xz, oceanTime), position.z); vOceanPosition = transformed;")
-      .replace("#include <beginnormal_vertex>", `float e = 0.03; float h = seaHeight(position.xz, oceanTime); vec3 objectNormal = normalize(vec3((h-seaHeight(position.xz+vec2(e,0.0),oceanTime))/e,1.0,(h-seaHeight(position.xz+vec2(0.0,e),oceanTime))/e));`);
-    shader.fragmentShader = `uniform float oceanTime; uniform float wakeStrength; varying vec3 vOceanPosition;\n${shader.fragmentShader}`
-      .replace("#include <color_fragment>", `#include <color_fragment>
-        float behind = -vOceanPosition.z - 0.35;
-        float trail = exp(-abs(abs(vOceanPosition.x) - (0.18 + behind * 0.21)) * 34.0);
-        float foam = trail * smoothstep(0.0,0.3,behind) * (1.0-smoothstep(0.8,4.8,behind));
-        foam *= pow(0.5+0.5*sin(behind*28.0 + oceanTime*6.0 + vOceanPosition.x*15.0),2.0) * wakeStrength;
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.64,0.8,0.73), foam);
-      `);
-  };
-  const water = new Mesh(geometry, waterMaterial);
-  water.name = "OceanSurface";
-  water.renderOrder = 2;
-  group.add(water);
+  const water = createWater(quality);
+  group.add(water.mesh);
   const seabed = new Mesh(new PlaneGeometry(1200, 1200), new MeshStandardMaterial({ color: "#2a747d", roughness: 1 }));
   seabed.rotation.x = -Math.PI / 2; seabed.position.y = -4;
   group.add(seabed);
@@ -136,9 +78,15 @@ export function createCoast(quality: OceanQuality) {
     rock.scale.set(0.65 + (i % 3) * 0.2, 0.38 + (i % 4) * 0.11, 0.5 + (i % 5) * 0.13);
     rock.rotation.set(i, i * 0.7, i * 0.1); group.add(rock);
   }
-  const buoy = new Mesh(new SphereGeometry(0.18, 20, 12), new MeshStandardMaterial({ color: "#d77542", roughness: 0.5 }));
-  buoy.position.set(-2.8, 0.05, 7);
-  group.add(buoy);
+  const buoyGeometry = new SphereGeometry(0.18, 20, 12);
+  const buoyMaterial = new MeshStandardMaterial({ color: "#e18b46", roughness: 0.5 });
+  const buoys = Array.from({ length: 36 }, (_, i) => {
+    const pose = routePose(7 + i / 36 * ROUTE_RADIUS * Math.PI * 2);
+    const buoy = new Mesh(buoyGeometry, buoyMaterial);
+    buoy.position.set(pose.x - Math.cos(pose.heading) * 2.8, 0, pose.z + Math.sin(pose.heading) * 2.8);
+    group.add(buoy);
+    return buoy;
+  });
 
   const sprayGeometry = new BufferGeometry();
   const sprayPositions = new Float32Array(60 * 3);
@@ -148,33 +96,34 @@ export function createCoast(quality: OceanQuality) {
   group.add(spray);
   return {
     group,
-    update(time: number, phase: number, energetic: boolean, luminous: boolean) {
-      timeUniform.value = time;
-      normalMap.offset.set(time * 0.004, time * -0.003);
-      wakeUniform.value = energetic ? 0.95 : 0.5;
-      waterMaterial.envMapIntensity = luminous ? 0.16 : 0.12;
-      buoy.position.y = 0.06 + seaHeight(-2.8, 7, time);
+    update(time: number, phase: number, pose: RoutePose, energetic: boolean, luminous: boolean) {
+      water.update(time, pose, energetic, luminous);
+      buoys.forEach((buoy) => { buoy.position.y = 0.06 + seaHeight(buoy.position.x, buoy.position.z, time); });
+      const c = Math.cos(pose.heading), s = Math.sin(pose.heading);
       for (let i = 0; i < 60; i++) {
         const side = i % 2 ? -1 : 1;
         const elapsed = ((phase / (Math.PI * 2) + i * 0.017 + (side === 1 ? 0 : 0.5)) % 1 + 1) % 1;
         const spread = Math.sin(i * 7.91);
-        sprayPositions[i * 3] = side * 0.24 + spread * elapsed * 0.16;
-        sprayPositions[i * 3 + 1] = elapsed < 0.3 ? seaHeight(side * 0.24, 0.7, time) + Math.sin(elapsed / 0.3 * Math.PI) * 0.12 : -1;
-        sprayPositions[i * 3 + 2] = 0.8 - elapsed * 0.8 + Math.cos(i * 2.17) * 0.05;
+        const x = side * 0.24 + spread * elapsed * 0.16;
+        const z = 0.8 - elapsed * 0.8 + Math.cos(i * 2.17) * 0.05;
+        const worldX = pose.x + x*c + z*s, worldZ = pose.z - x*s + z*c;
+        sprayPositions[i * 3] = worldX;
+        sprayPositions[i * 3 + 1] = elapsed < 0.3 ? seaHeight(worldX, worldZ, time) + Math.sin(elapsed / 0.3 * Math.PI) * 0.12 : -100;
+        sprayPositions[i * 3 + 2] = worldZ;
       }
       // Float32BufferAttribute copies its input, so update the live GPU attribute.
       sprayGeometry.getAttribute("position").array.set(sprayPositions);
       sprayGeometry.getAttribute("position").needsUpdate = true;
     },
     dispose() {
-      const geometries = new Set<BufferGeometry>(), materials = new Set<MeshStandardMaterial | PointsMaterial>();
+      const geometries = new Set<BufferGeometry>(), materials = new Set<Material>();
       group.traverse((object) => {
         if (object instanceof Mesh || object instanceof Points) {
           geometries.add(object.geometry);
           (Array.isArray(object.material) ? object.material : [object.material]).forEach((material) => materials.add(material));
         }
       });
-      geometries.forEach((item) => item.dispose()); materials.forEach((item) => item.dispose()); normalMap.dispose();
+      geometries.forEach((item) => item.dispose()); materials.forEach((item) => item.dispose());
     }
   };
 }

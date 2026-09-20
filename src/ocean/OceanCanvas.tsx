@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { ACESFilmicToneMapping, FogExp2, PMREMGenerator, Scene, Vector3 } from "three";
 import { Sky } from "three/addons/objects/Sky.js";
@@ -7,7 +7,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type { OceanSceneProps } from "../OceanScene";
 import { createCoast } from "./createCoast";
 import { createSwimmer } from "./createSwimmer";
-import { CAMERA_VIEWS, SWIM_CYCLE_SECONDS, type OceanQuality, type OceanView } from "./swimMotion";
+import { advanceSwim, routePose, transportView, CAMERA_VIEWS, type SwimClock, type OceanQuality, type OceanView } from "./swimMotion";
 import swimmerUrl from "./assets/swimmer.glb?url";
 import { supportsOceanWebGL } from "./webglSupport";
 
@@ -20,9 +20,10 @@ interface Props extends OceanSceneProps {
   onFailure: () => void;
 }
 
-function CameraRig({ request, paused }: { request: Props["cameraRequest"]; paused: boolean }) {
+function CameraRig({ request, paused, clock }: { request: Props["cameraRequest"]; paused: boolean; clock: RefObject<SwimClock> }) {
   const { camera, gl, invalidate } = useThree();
   const controls = useRef<OrbitControls | null>(null);
+  const previousPose = useRef(routePose(0));
   useEffect(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
     orbit.enablePan = false;
@@ -39,13 +40,23 @@ function CameraRig({ request, paused }: { request: Props["cameraRequest"]; pause
   }, [camera, gl, invalidate]);
   useEffect(() => {
     const preset = CAMERA_VIEWS[request.view];
-    camera.position.fromArray(preset.position);
-    controls.current?.target.fromArray(preset.target);
+    const pose = routePose(clock.current.distance);
+    camera.position.fromArray(transportView(preset.position, routePose(0), pose));
+    controls.current?.target.fromArray(transportView(preset.target, routePose(0), pose));
+    previousPose.current = pose;
     controls.current?.update();
     invalidate();
-  }, [camera, request, invalidate]);
+  }, [camera, request, invalidate, clock]);
   useEffect(() => { if (controls.current) controls.current.enableDamping = !paused; }, [paused]);
-  useFrame(() => controls.current?.update());
+  useFrame(() => {
+    const pose = routePose(clock.current.distance);
+    camera.position.fromArray(transportView(camera.position.toArray(), previousPose.current, pose));
+    if (controls.current) {
+      controls.current.target.fromArray(transportView(controls.current.target.toArray(), previousPose.current, pose));
+      controls.current.update();
+    }
+    previousPose.current = pose;
+  }, -1);
   return null;
 }
 
@@ -89,7 +100,7 @@ function World(props: Props) {
   const gltf = useLoader(GLTFLoader, swimmerUrl);
   const coast = useMemo(() => createCoast(props.quality), [props.quality]);
   const swimmer = useMemo(() => createSwimmer(gltf.scene), [gltf.scene]);
-  const clock = useRef({ time: 0, phase: 0 });
+  const clock = useRef<SwimClock>({ time: 0, phase: 0, distance: 0 });
   const { gl, invalidate } = useThree();
   useEffect(() => { swimmer.setAppearance(props); invalidate(); }, [swimmer, props, invalidate]);
   useEffect(() => { onReady(); }, [onReady]);
@@ -101,15 +112,12 @@ function World(props: Props) {
   useEffect(() => () => coast.dispose(), [coast]);
   useEffect(() => () => swimmer.dispose(), [swimmer]);
   useFrame((_, delta) => {
-    if (!props.paused) {
-      const step = Math.min(delta, 0.05);
-      clock.current.time += step;
-      clock.current.phase += step / SWIM_CYCLE_SECONDS[props.pace] * Math.PI * 2;
-    }
-    swimmer.update(clock.current.time, clock.current.phase);
-    coast.update(clock.current.time, clock.current.phase, props.pace === "SURGE", props.luminousWater);
-  });
-  return <><primitive object={coast.group} /><primitive object={swimmer.group} /></>;
+    clock.current = advanceSwim(clock.current, delta, props.pace, props.paused || !props.active);
+    const pose = routePose(clock.current.distance);
+    swimmer.update(clock.current.time, clock.current.phase, pose);
+    coast.update(clock.current.time, clock.current.phase, pose, props.pace === "SURGE", props.luminousWater);
+  }, -2);
+  return <><CameraRig request={props.cameraRequest} paused={props.paused} clock={clock} /><primitive object={coast.group} /><primitive object={swimmer.group} /></>;
 }
 
 export default function OceanCanvas(props: Props) {
@@ -128,7 +136,6 @@ export default function OceanCanvas(props: Props) {
     }}
   >
     <Environment />
-    <CameraRig request={props.cameraRequest} paused={props.paused} />
     <Suspense fallback={null}><World {...props} /></Suspense>
   </Canvas>;
 }
