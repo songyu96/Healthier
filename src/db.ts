@@ -16,7 +16,7 @@ import {
 } from "./domain";
 import { mergeFoodRegistry } from "./domain/nutrition/foodRegistry";
 import { MEAL_DRAFT_SETTING_KEY } from "./syncScope";
-import { goalVersionOn, nextWeekStart, shiftDate, type GameCheckin, type GameGoalVersion, type GameState, type GameUnlockId } from "./game";
+import { goalVersionOn, nextWeekStart, shiftDate, type GameAvatarStyle, type GameCheckin, type GameGoalVersion, type GameState, type GameUnlockId } from "./game";
 import { gameStateSchema, isGameDateKey } from "./gameSchema";
 
 export { MEAL_DRAFT_SETTING_KEY } from "./syncScope";
@@ -354,15 +354,19 @@ async function changeGameState(change: (state: GameState) => GameState): Promise
   });
 }
 
-export async function startGame(date: string): Promise<GameState> {
+export async function startGame(date: string, avatarStyle?: GameAvatarStyle): Promise<GameState> {
   requireGameDate(date);
   return db.transaction("rw", db.settings, async () => {
     const existing = await loadGameState();
     if (existing) return existing;
-    const state: GameState = { startedOn: date, goals: [], checkins: [], unlocks: [] };
+    const state: GameState = { startedOn: date, ...(avatarStyle ? { avatarStyle } : {}), goals: [], checkins: [], unlocks: [] };
     await db.settings.put({ key: GAME_STATE_SETTING_KEY, value: state });
     return state;
   });
+}
+
+export async function setGameAvatarStyle(avatarStyle: GameAvatarStyle): Promise<GameState> {
+  return changeGameState((state) => ({ ...state, avatarStyle }));
 }
 
 export async function addGameGoal(version: Omit<GameGoalVersion, "effectiveOn">, today: string): Promise<GameState> {

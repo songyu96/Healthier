@@ -19,6 +19,7 @@ import {
   loadGameState,
   loadMealsBetween,
   recordGameUnlocks,
+  setGameAvatarStyle,
   setGameCheckin,
   startGame,
   updateGameGoal,
@@ -34,10 +35,13 @@ import {
   nextWeekStart,
   shiftDate,
   type DietMode,
+  type GameAvatarStyle,
   type GameGoalCategory,
   type GameGoalVersion,
   type GameUnlockId
 } from "./game";
+import { avatarProportions, swimPresentation } from "./gamePresentation";
+import OceanScene, { AvatarThumbnail } from "./OceanScene";
 
 const CATEGORY_LABELS: Record<GameGoalCategory, string> = {
   FITNESS: "健身",
@@ -67,37 +71,28 @@ function completedFromSettings(settings: AppSetting[], date: string): boolean {
   return value.completed === true && value.revision === (typeof revision === "number" ? revision : 0);
 }
 
-function OceanScene({ progress, dolphin, butterfly, pace }: { progress: number; dolphin: boolean; butterfly: boolean; pace: "REST" | "CRUISE" | "FAST" }) {
-  const swimmerX = 82 + Math.min(1, progress) * 420;
-  return <svg className="game-ocean" viewBox="0 0 600 245" role="img" aria-label={`游泳者${pace === "REST" ? "正在休息" : pace === "FAST" ? "快速前进" : "稳步前进"}`}>
-    <defs>
-      <linearGradient id="game-sea" x1="0" x2="0" y1="0" y2="1"><stop stopColor="#b8e8ec" /><stop offset="1" stopColor="#176b83" /></linearGradient>
-    </defs>
-    <rect width="600" height="245" rx="22" fill="url(#game-sea)" />
-    <circle cx="510" cy="42" r="24" fill="#fff2bb" opacity=".9" />
-    <path d="M0 82 Q50 69 100 82 T200 82 T300 82 T400 82 T500 82 T600 82" fill="none" stroke="#edfdf8" strokeWidth="6" opacity=".8" />
-    <path d="M0 160 Q60 146 120 160 T240 160 T360 160 T480 160 T600 160" fill="none" stroke="#9cdae1" strokeWidth="3" opacity=".5" />
-    <path d="M0 218 Q70 203 140 218 T280 218 T420 218 T560 218" fill="none" stroke="#9cdae1" strokeWidth="3" opacity=".4" />
-    <g className={`game-swimmer pace-${pace.toLowerCase()}`} transform={`translate(${swimmerX} 94)`}>
-      <circle cx="12" cy="-10" r="10" fill="#f1bd8b" />
-      <path d="M-12 3 Q8 -1 35 7" fill="none" stroke="#173f4c" strokeWidth="13" strokeLinecap="round" />
-      <path d="M-15 7 L-37 19 M22 8 L43 -8" fill="none" stroke="#f1bd8b" strokeWidth="7" strokeLinecap="round" />
-      <path d="M-8 5 L-29 28 M4 7 L-1 30" fill="none" stroke="#173f4c" strokeWidth="6" strokeLinecap="round" />
-      {butterfly && <path d="M-19 -2 Q5 -24 34 -12" fill="none" stroke="#ffffff" strokeWidth="3" />}
-    </g>
-    {dolphin && <g transform={`translate(${Math.min(510, swimmerX + 74)} 133)`} fill="#e7f5f3">
-      <path d="M-33 0 Q0 -24 31 -3 Q4 17 -33 0 Z" /><path d="M0 -10 L9 -29 L15 -8" /><path d="M-31 0 L-47 -13 L-43 4" />
-      <circle cx="22" cy="-4" r="2" fill="#204b57" />
-    </g>}
-    <circle cx="260" cy="187" r="5" fill="#f4cf8e" opacity=".7" />
-    <circle cx="268" cy="183" r="3" fill="#f4cf8e" opacity=".7" />
-    <circle cx="445" cy="203" r="6" fill="#f4cf8e" opacity=".7" />
-  </svg>;
+function AvatarPicker({ value, onSelect, disabled = false }: {
+  value?: GameAvatarStyle;
+  onSelect: (style: GameAvatarStyle) => void;
+  disabled?: boolean;
+}) {
+  return <div className="game-avatar-picker">
+    <div><span className="eyebrow">你的游泳角色</span><p>选择喜欢的角色，之后随时可以切换。</p></div>
+    <div className="game-avatar-options">{(["FEMALE", "MALE"] as const).map((style) => <button
+      className={`game-avatar-option${value === style ? " selected" : ""}`}
+      type="button"
+      key={style}
+      aria-pressed={value === style}
+      disabled={disabled}
+      onClick={() => onSelect(style)}
+    ><AvatarThumbnail avatarStyle={style} /><span>{style === "FEMALE" ? "女游泳者" : "男游泳者"}</span></button>)}</div>
+  </div>;
 }
 
 export default function GamePage() {
   const { profile } = useApp();
   const [today, setToday] = useState(() => dateKey(new Date()));
+  const [previewAvatar, setPreviewAvatar] = useState<GameAvatarStyle>();
   const [selectedDate, setSelectedDate] = useState(today);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingGoalId, setEditingGoalId] = useState<string>();
@@ -113,6 +108,7 @@ export default function GamePage() {
   );
   const foods = useMemo(() => mergeFoodRegistry(overrides), [overrides]);
   const currentTargets = useMemo(() => profile ? calculateTargets(profile) : undefined, [profile]);
+  const proportions = avatarProportions(profile);
   const dietMode: DietMode = !currentTargets ? "NO_PROFILE" : currentTargets.safetyRestricted ? "SAFETY_PAUSED" : "AVAILABLE";
 
   useEffect(() => {
@@ -181,8 +177,9 @@ export default function GamePage() {
     <section className="page-intro"><span className="eyebrow">海洋旅程</span><h1>让每一天推动一小段旅程</h1>
       <p>记录饮食、练习自己的目标，游得更远并认识海洋伙伴。旅程从开启当天算起，不追溯以前的记录。</p>
     </section>
-    <section className="card game-start-card"><OceanScene progress={0} dolphin={false} butterfly={false} pace="REST" />
-      <button className="primary" type="button" disabled={busy} onClick={() => void run(() => startGame(today), "海洋旅程已开启。")}>开启海洋旅程</button>
+    <section className="card game-start-card"><OceanScene progress={0} avatarStyle={previewAvatar} pace="EASY" proportions={proportions} luminousWater={false} dolphin={false} butterfly={false} />
+      <AvatarPicker value={previewAvatar} onSelect={setPreviewAvatar} disabled={busy} />
+      <button className="primary" type="button" disabled={busy || !previewAvatar} onClick={() => previewAvatar && void run(() => startGame(today, previewAvatar), "海洋旅程已开启。")}>开启海洋旅程</button>
     </section>
   </div>;
 
@@ -203,7 +200,7 @@ export default function GamePage() {
     dietMode
   );
   const todayPoints = Math.max(0, (currentWeek?.points ?? 0) - beforeToday.currentWeek.points);
-  const pace = todayPoints === 0 ? "REST" : todayPoints >= 20 ? "FAST" : "CRUISE";
+  const presentation = swimPresentation(todayPoints, todayDiet);
   const dietStatus = dietMode === "SAFETY_PAUSED" ? "暂不参与评价" :
     todayDiet?.status !== "ASSESSED" ? "未评估" :
       todayDiet.score === 0 ? "本日未获得饮食结构加成" : `本日饮食结构加成 ${(todayDiet.score * 100).toFixed(0)}%`;
@@ -213,11 +210,13 @@ export default function GamePage() {
       <p>{gameWeightDescription(dietMode, Boolean(currentWeek?.goalPlannedSessions))} 少记录或休息不会扣除已经获得的伙伴和泳姿。</p>
     </section>
     <section className="card game-scene-card">
-      <OceanScene progress={(currentWeek?.points ?? 0) / 100} dolphin={Boolean(snapshot?.unlocks.includes("DOLPHIN"))} butterfly={Boolean(snapshot?.unlocks.includes("BUTTERFLY"))} pace={pace} />
+      <OceanScene progress={(currentWeek?.points ?? 0) / 100} avatarStyle={state.avatarStyle} pace={presentation.pace} proportions={proportions} luminousWater={presentation.luminousWater} dolphin={Boolean(snapshot?.unlocks.includes("DOLPHIN"))} butterfly={Boolean(snapshot?.unlocks.includes("BUTTERFLY"))} />
       <div className="game-progress"><div><span>当前可核算里程</span><strong>{snapshot?.mileage.toFixed(1) ?? "0.0"} 分</strong></div>
-        <div><span>今日状态</span><strong>{pace === "REST" ? "在海面休息" : pace === "FAST" ? "快速前进" : "稳步向前"}</strong></div></div>
+        <div><span>今日游泳状态</span><strong>{presentation.label}</strong></div></div>
       <p className="helper">本周前进 {currentWeek?.points.toFixed(1) ?? "0.0"} / 100 分。</p>
       <p className="helper">历史记录修改后可核算里程会重算；已解锁内容永久保留。</p>
+      <AvatarPicker value={state.avatarStyle} onSelect={(style) => void run(() => setGameAvatarStyle(style), "游泳角色已切换。")} disabled={busy} />
+      <p className="helper">身高与体重只轻微调整角色外观；游泳节奏随打卡和可评价的饮食记录变化，不代表体能或健康判断。</p>
     </section>
     {message && <p className="notice" role="status">{message}</p>}
     <section className="card">

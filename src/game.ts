@@ -2,6 +2,7 @@ import type { DailyAssessment } from "./domain";
 
 export type GameGoalCategory = "FITNESS" | "SPORT" | "READING" | "ART" | "OTHER";
 export type GameUnlockId = "FREESTYLE" | "DOLPHIN" | "BUTTERFLY";
+export type GameAvatarStyle = "FEMALE" | "MALE";
 
 export interface GameGoalVersion {
   effectiveOn: string;
@@ -26,6 +27,7 @@ export interface GameCheckin {
 
 export interface GameState {
   startedOn: string;
+  avatarStyle?: GameAvatarStyle;
   goals: GameGoal[];
   checkins: GameCheckin[];
   unlocks: GameUnlockId[];

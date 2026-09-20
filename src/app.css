@@ -321,12 +321,57 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .game-today-link small { margin-top: 4px; color: var(--muted); font-size: 12px; }
 .game-today-link > span:last-child { font-size: 25px; }
 .game-start-card, .game-scene-card { overflow: hidden; }
-.game-start-card .primary { margin-top: 16px; }
-.game-ocean { display: block; width: 100%; height: auto; border-radius: 16px; }
-.game-swimmer { animation: game-bob 3s ease-in-out infinite; }
-.game-swimmer.pace-rest { animation: none; }
-.game-swimmer.pace-fast { animation-duration: 1.5s; }
-@keyframes game-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 5px; } }
+.game-start-card > .primary { margin-top: 18px; }
+.ocean-stage { position: relative; overflow: hidden; isolation: isolate; border-radius: 20px; background: #0b4c66; --swim-cycle: 2.7s; --bubble-cycle: 4.8s; }
+.ocean-stage.pace-steady { --swim-cycle: 1.9s; --bubble-cycle: 3.8s; }
+.ocean-stage.pace-surge { --swim-cycle: 1.2s; --bubble-cycle: 2.8s; }
+.ocean-stage-art { display: block; width: 100%; height: clamp(260px, 43vw, 370px); }
+.ocean-stage-heading { position: absolute; top: 17px; left: 20px; display: grid; gap: 4px; max-width: calc(100% - 150px); color: #173f50; text-shadow: 0 1px 9px rgba(255, 251, 230, .75); }
+.ocean-stage-heading span { font-size: 10px; font-weight: 900; letter-spacing: .16em; }
+.ocean-stage-heading b { font-family: Georgia, "Songti SC", serif; font-size: clamp(16px, 3vw, 23px); font-weight: 600; }
+.ocean-stage-marker { position: absolute; right: 18px; bottom: 18px; display: grid; justify-items: end; gap: 1px; border: 1px solid rgba(224, 251, 243, .34); border-radius: 13px; padding: 8px 11px; color: #e9fff4; background: rgba(8, 54, 74, .52); backdrop-filter: blur(8px); }
+.ocean-stage-marker span { font-size: 10px; letter-spacing: .12em; }
+.ocean-stage-marker b { font-size: 18px; }
+.swimmer-figure { --swim-suit: #d7af6d; --swim-suit-dark: #966d42; --swim-hair: #33404a; }
+.swimmer-figure.avatar-female { --swim-suit: #e58472; --swim-suit-dark: #af5656; --swim-hair: #333443; }
+.swimmer-figure.avatar-male { --swim-suit: #58bfc0; --swim-suit-dark: #256f86; --swim-hair: #273c48; }
+.ocean-stage .swimmer-motion { animation: ocean-swimmer-bob var(--swim-cycle) ease-in-out infinite; }
+.ocean-stage .swimmer-arm, .ocean-stage .swimmer-leg { transform-box: fill-box; }
+.ocean-stage .swimmer-arm-front { transform-origin: 8% 50%; animation: ocean-arm-front var(--swim-cycle) ease-in-out infinite; }
+.ocean-stage .swimmer-arm-back { transform-origin: 8% 50%; animation: ocean-arm-back var(--swim-cycle) ease-in-out infinite; }
+.ocean-stage .swimmer-leg-front { transform-origin: 90% 40%; animation: ocean-kick-front calc(var(--swim-cycle) / 2) ease-in-out infinite; }
+.ocean-stage .swimmer-leg-back { transform-origin: 90% 40%; animation: ocean-kick-back calc(var(--swim-cycle) / 2) ease-in-out infinite; }
+.ocean-stage .ocean-wave-front { animation: ocean-wave-drift 6s ease-in-out infinite alternate; }
+.ocean-stage .ocean-wave-back { animation: ocean-wave-drift 8s ease-in-out infinite alternate-reverse; }
+.ocean-stage .ocean-light-rays { opacity: .48; animation: ocean-light-pulse 8s ease-in-out infinite; }
+.ocean-stage-luminous .ocean-light-rays { opacity: .9; }
+.ocean-stage .ocean-fish-school { animation: ocean-fish-drift 9s ease-in-out infinite alternate; }
+.ocean-stage .ocean-seaweed { transform-origin: bottom center; animation: ocean-seaweed-sway 5s ease-in-out infinite alternate; }
+.ocean-stage .ocean-wake { animation: ocean-wake-pulse var(--swim-cycle) ease-in-out infinite; }
+.ocean-stage .ocean-bubble { animation: ocean-bubble-rise var(--bubble-cycle) linear infinite; }
+.ocean-stage .bubble-two { animation-delay: calc(var(--bubble-cycle) / -2); }
+.ocean-stage .ocean-dolphin { animation: ocean-dolphin-glide 4.4s ease-in-out infinite; }
+.ocean-stage .swimmer-glide { animation: ocean-glide-flash 3.5s ease-in-out infinite; }
+@keyframes ocean-swimmer-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+@keyframes ocean-arm-front { 0%, 100% { transform: rotate(-11deg); } 45% { transform: rotate(29deg); } }
+@keyframes ocean-arm-back { 0%, 100% { transform: rotate(23deg); } 50% { transform: rotate(-19deg); } }
+@keyframes ocean-kick-front { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(13deg); } }
+@keyframes ocean-kick-back { 0%, 100% { transform: rotate(12deg); } 50% { transform: rotate(-10deg); } }
+@keyframes ocean-wave-drift { from { transform: translateX(-24px); } to { transform: translateX(26px); } }
+@keyframes ocean-light-pulse { 0%, 100% { filter: brightness(.85); } 50% { filter: brightness(1.25); } }
+@keyframes ocean-fish-drift { from { transform: translateX(-12px); } to { transform: translateX(25px); } }
+@keyframes ocean-seaweed-sway { from { transform: skewX(-3deg); } to { transform: skewX(3deg); } }
+@keyframes ocean-wake-pulse { 0%, 100% { opacity: .5; transform: translateX(0); } 50% { opacity: .95; transform: translateX(-12px); } }
+@keyframes ocean-bubble-rise { 0% { opacity: 0; transform: translateY(21px) scale(.7); } 20% { opacity: .8; } 85% { opacity: .35; } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
+@keyframes ocean-dolphin-glide { 0%, 100% { translate: 0 4px; } 50% { translate: 0 -13px; } }
+@keyframes ocean-glide-flash { 0%, 100% { opacity: .2; } 50% { opacity: .9; } }
+.game-avatar-picker { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+.game-avatar-picker p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.game-avatar-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: min(100%, 310px); }
+.game-avatar-option { display: grid; justify-items: center; gap: 3px; min-width: 0; border: 1px solid #cbd6d2; border-radius: 14px; padding: 4px 8px 8px; color: var(--ink); background: #f5f8f4; font-size: 12px; font-weight: 800; }
+.game-avatar-option.selected { border: 2px solid #2c756d; padding: 3px 7px 7px; color: #164b48; background: #e3f2e9; box-shadow: 0 0 0 3px rgba(44, 117, 109, .1); }
+.game-avatar-option:focus-visible { outline: 3px solid #c8df87; outline-offset: 2px; }
+.game-avatar-thumb { display: block; width: 86px; max-width: 100%; height: 49px; }
 .game-progress { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .game-progress > div { display: grid; align-content: start; gap: 5px; min-width: 0; border-radius: 13px; padding: 13px; background: #f1f7f4; }
 .game-progress span, .game-progress small { color: var(--muted); font-size: 11px; }
@@ -387,6 +432,12 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .game-progress, .game-unlock-grid { gap: 6px; }
   .game-progress strong { font-size: 14px; }
   .game-goal-list article { align-items: flex-start; flex-direction: column; }
+  .ocean-stage-art { height: clamp(190px, 44vw, 270px); }
+  .ocean-stage-heading { top: 13px; left: 13px; max-width: calc(100% - 48px); }
+  .ocean-stage-heading b { font-size: 14px; }
+  .ocean-stage-marker { right: 12px; bottom: 12px; }
+  .game-avatar-picker { align-items: stretch; flex-direction: column; }
+  .game-avatar-options { width: 100%; }
   .game-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-checkin-list form { grid-template-columns: minmax(0, 1fr) 95px; }
   .game-checkin-list form button { grid-row: 2; }

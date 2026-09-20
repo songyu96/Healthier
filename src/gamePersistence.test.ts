@@ -9,6 +9,7 @@ import {
   GAME_STATE_SETTING_KEY,
   loadGameState,
   recordGameUnlocks,
+  setGameAvatarStyle,
   setGameCheckin,
   startGame,
   updateGameGoal
@@ -54,6 +55,24 @@ describe("ocean game persistence", () => {
     expect(backupPayloadSchema.safeParse(payload).success).toBe(true);
     const invalid = { ...payload, settings: [{ key: GAME_STATE_SETTING_KEY, value: { startedOn: "2026-08-26" } }] };
     expect(backupPayloadSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("角色选择可切换并进入备份，旧游戏数据仍可读取", async () => {
+    await startGame("2026-08-26", "FEMALE");
+    await recordGameUnlocks(["FREESTYLE"]);
+    await setGameAvatarStyle("MALE");
+    const state = (await loadGameState())!;
+    expect(state.avatarStyle).toBe("MALE");
+    expect(state.unlocks).toEqual(["FREESTYLE"]);
+    const payload = await readBackupPayload();
+    expect(payload.settings.find((setting) => setting.key === GAME_STATE_SETTING_KEY)?.value)
+      .toMatchObject({ avatarStyle: "MALE", unlocks: ["FREESTYLE"] });
+    expect(backupPayloadSchema.safeParse(payload).success).toBe(true);
+
+    const oldState = { startedOn: state.startedOn, goals: state.goals, checkins: state.checkins, unlocks: state.unlocks };
+    await db.settings.put({ key: GAME_STATE_SETTING_KEY, value: oldState });
+    expect((await loadGameState())?.avatarStyle).toBeUndefined();
+    expect(backupPayloadSchema.safeParse(await readBackupPayload()).success).toBe(true);
   });
 
   it("恢复旧的无游戏备份后默认为未开启", async () => {

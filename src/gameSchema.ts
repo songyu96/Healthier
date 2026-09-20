@@ -45,6 +45,7 @@ const checkinSchema = z.object({
 
 export const gameStateSchema = z.object({
   startedOn: gameDateSchema,
+  avatarStyle: z.enum(["FEMALE", "MALE"]).optional(),
   goals: z.array(goalSchema),
   checkins: z.array(checkinSchema),
   unlocks: z.array(z.enum(["FREESTYLE", "DOLPHIN", "BUTTERFLY"]))
