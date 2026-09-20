@@ -20,6 +20,8 @@ interface Props extends OceanSceneProps {
   onFailure: () => void;
 }
 
+const SUN_POSITION: [number, number, number] = [-30, 45, -55];
+
 function CameraRig({ request, paused, clock }: { request: Props["cameraRequest"]; paused: boolean; clock: RefObject<SwimClock> }) {
   const { camera, gl, invalidate } = useThree();
   const controls = useRef<OrbitControls | null>(null);
@@ -69,7 +71,7 @@ function Environment() {
     object.material.uniforms.rayleigh.value = 3;
     object.material.uniforms.mieCoefficient.value = 0.005;
     object.material.uniforms.mieDirectionalG.value = 0.82;
-    object.material.uniforms.sunPosition.value.copy(new Vector3(-30, 45, -55));
+    object.material.uniforms.sunPosition.value.copy(new Vector3(...SUN_POSITION));
     return object;
   }, []);
   useEffect(() => {
@@ -91,7 +93,7 @@ function Environment() {
   return <>
     <primitive object={sky} />
     <hemisphereLight args={["#d0e6ed", "#43717a", 0.7]} />
-    <directionalLight position={[-12, 16, -14]} color="#fff3da" intensity={2.5} />
+    <directionalLight position={SUN_POSITION} color="#fff3da" intensity={2.5} />
   </>;
 }
 

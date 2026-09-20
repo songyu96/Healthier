@@ -1,4 +1,4 @@
-import { Float32BufferAttribute, Mesh, PlaneGeometry, ShaderMaterial, Vector2, Vector3 } from "three";
+import { Float32BufferAttribute, Mesh, MeshPhysicalMaterial, PlaneGeometry, Vector2, Vector3 } from "three";
 import { SEA_HEIGHT_GLSL, type OceanQuality, type RoutePose } from "./swimMotion";
 import { createWaterGrid, renderedWaterHeight } from "./waterSampling";
 
@@ -17,24 +17,27 @@ export function createWater(quality: OceanQuality) {
     oceanTime: { value: 0 }, origin: { value: new Vector2() },
     swimmer: { value: new Vector3() }, wakeStrength: { value: 0.55 }, warmth: { value: 0 }
   };
-  const material = new ShaderMaterial({
-    uniforms, transparent: true, opacity: 0.94, depthWrite: false,
-    vertexShader: `
+  // Use the scene's Sky PMREM and lights, with water's dielectric reflectance.
+  const material = new MeshPhysicalMaterial({
+    color: "#12525d", metalness: 0, roughness: 0.3, ior: 1.333,
+    transparent: true, opacity: 0.93, depthWrite: false
+  });
+  material.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, uniforms);
+    shader.vertexShader = `
       uniform float oceanTime;
       uniform vec2 origin;
       attribute float gridSpacing;
       varying vec3 worldPoint;
       varying float sampleSpacing;
       ${SEA_HEIGHT_GLSL}
-      void main() {
+    ` + shader.vertexShader.replace("#include <begin_vertex>", `
         vec2 p = position.xz + origin;
         sampleSpacing = gridSpacing;
-        vec3 displaced = vec3(position.x, seaHeight(p, oceanTime, gridSpacing), position.z);
-        worldPoint = (modelMatrix * vec4(displaced, 1.0)).xyz;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
-      }
-    `,
-    fragmentShader: `
+        vec3 transformed = vec3(position.x, seaHeight(p, oceanTime, gridSpacing), position.z);
+        worldPoint = (modelMatrix * vec4(transformed, 1.0)).xyz;
+    `);
+    shader.fragmentShader = `
       uniform float oceanTime;
       uniform vec3 swimmer;
       uniform float wakeStrength;
@@ -52,7 +55,8 @@ export function createWater(quality: OceanQuality) {
         float a=hash(i), b=hash(i+vec2(1.0,0.0)), c=hash(i+vec2(0.0,1.0)), e=hash(i+vec2(1.0));
         return d*(vec2(b-a,c-a)+(a-b-c+e)*u.yx);
       }
-      void main() {
+    ` + shader.fragmentShader.replace("#include <normal_fragment_maps>", `
+        #include <normal_fragment_maps>
         vec2 p = worldPoint.xz;
         vec4 wave = seaSample(p, oceanTime, sampleSpacing);
         // Include the derivative of the spatial LOD fade, not only the retained wave slopes.
@@ -64,44 +68,34 @@ export function createWater(quality: OceanQuality) {
         wave.yz += wave.w*spacingSlope;
         float distanceToEye = length(cameraPosition - worldPoint);
         float detail = 1.0 - smoothstep(12.0, 80.0, distanceToEye);
-        // Advected noise gradients break up long regular wave bands. Fade subpixel detail.
+        // All scales travel with one wind field. Fade detail smaller than a pixel.
+        vec2 windPoint = p - vec2(0.12, 0.055)*oceanTime;
         mat2 rotation=mat2(0.8,-0.6,0.6,0.8);
         float footprint=length(fwidth(p));
-        vec2 ripple = noiseSlope(p*3.2+vec2(oceanTime*0.4,oceanTime*0.18))*0.2*(1.0-smoothstep(0.25,0.75,footprint*3.2));
-        ripple += transpose(rotation)*noiseSlope(rotation*p*7.1+vec2(-oceanTime*0.28,oceanTime*0.34))*0.085*(1.0-smoothstep(0.25,0.75,footprint*7.1));
-        ripple += noiseSlope(p*15.4+vec2(oceanTime*0.3,-oceanTime*0.2))*0.035*(1.0-smoothstep(0.25,0.75,footprint*15.4));
+        vec2 ripple = noiseSlope(windPoint*3.2)*0.09*(1.0-smoothstep(0.25,0.75,footprint*3.2));
+        ripple += transpose(rotation)*noiseSlope(rotation*windPoint*7.1)*0.035*(1.0-smoothstep(0.25,0.75,footprint*7.1));
+        ripple += noiseSlope(windPoint*15.4)*0.012*(1.0-smoothstep(0.25,0.75,footprint*15.4));
         vec3 n = normalize(vec3(-wave.y-ripple.x*detail,1.0,-wave.z-ripple.y*detail));
-        vec3 eye = normalize(cameraPosition-worldPoint);
-        float fresnel = 0.025 + 0.975*pow(1.0-max(dot(n,eye),0.0),5.0);
-        vec3 reflected = reflect(-eye,n);
-        vec3 sky = mix(vec3(0.52,0.66,0.72),vec3(0.12,0.34,0.56),smoothstep(0.0,0.7,reflected.y));
-        float swell = smoothstep(-0.25,0.28,wave.x);
-        vec3 water = mix(vec3(0.006,0.055,0.083),vec3(0.018,0.23,0.25),swell*0.65+0.2);
-        water += vec3(0.004,0.025,0.015)*warmth;
-        vec3 color = mix(water,sky,fresnel);
-        vec3 sun = normalize(vec3(-30.0,45.0,-55.0));
-        vec3 halfDirection = normalize(eye+sun);
-        float glint = pow(max(dot(n,halfDirection),0.0),220.0);
-        color += vec3(1.0,0.88,0.66)*glint*1.8;
-        color += vec3(0.07,0.19,0.17)*pow(max(dot(eye,-sun),0.0),3.0)*swell*(1.0-fresnel);
+        normal = normalize(mat3(viewMatrix)*n);
+        nonPerturbedNormal = normalize(mat3(viewMatrix)*normalize(vec3(-wave.y,1.0,-wave.z)));
+    `).replace("#include <color_fragment>", `
+        #include <color_fragment>
+        vec2 wakePoint = worldPoint.xz;
         vec2 forward = vec2(sin(swimmer.z),cos(swimmer.z));
-        vec2 relative = p-swimmer.xy;
+        vec2 relative = wakePoint-swimmer.xy;
         float behind = -dot(relative,forward)-0.3;
         float across = dot(relative,vec2(forward.y,-forward.x));
-        float turbulence = noise(p*9.0+vec2(oceanTime*0.25,-oceanTime*0.3));
+        float turbulence = noise((wakePoint-vec2(0.12,0.055)*oceanTime)*9.0);
         float wakeWidth = 0.16+max(behind,0.0)*0.18;
         float wake = exp(-pow((abs(across)-wakeWidth)/(0.07+max(behind,0.0)*0.05),2.0));
         wake *= smoothstep(0.0,0.4,behind)*(1.0-smoothstep(1.3,5.5,behind));
         float bubbles = exp(-across*across/0.09)*smoothstep(0.0,0.2,behind)*(1.0-smoothstep(0.4,2.7,behind));
         float foam = clamp((wake*0.35+bubbles*0.4)*smoothstep(0.45,0.9,turbulence)*wakeStrength,0.0,0.5);
-        color = mix(color,vec3(0.7,0.85,0.82),foam);
-        color = mix(color,vec3(0.36,0.51,0.57),1.0-exp(-distanceToEye*0.003));
-        gl_FragColor = vec4(color,0.93);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-      }
-    `
-  });
+        diffuseColor.rgb += vec3(0.004,0.015,0.01)*warmth;
+        diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.7,0.85,0.82),foam);
+    `);
+  };
+  material.customProgramCacheKey = () => "ocean-physical-v1";
   const mesh = new Mesh(geometry, material);
   mesh.name = "OceanSurface";
   mesh.renderOrder = 2;
