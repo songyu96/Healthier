@@ -18,6 +18,13 @@ describe.each<OceanQuality>(["LOW", "BALANCED"])("%s physical water", (quality) 
     };
     try {
       const first = compile(water), independent = compile(other);
+      expect(water.mesh.material).toMatchObject({
+        transmission: 0.22,
+        thickness: 3.5,
+        attenuationDistance: 5.5,
+        opacity: 1,
+        roughness: 0.38
+      });
       water.update(12, { x: 3, z: 7, heading: 0.4 }, true, true);
       const recompiled = compile(water);
       water.update(24, { x: 8, z: 9, heading: 0.8 }, false, false);
@@ -27,9 +34,11 @@ describe.each<OceanQuality>(["LOW", "BALANCED"])("%s physical water", (quality) 
         expect(uniforms.swimmer.value.toArray()).toEqual([8, 9, 0.8]);
         expect(uniforms.wakeStrength.value).toBe(0.65);
         expect(uniforms.warmth.value).toBe(0);
+        expect(uniforms.wakeSampleCount.value).toBe(2);
       }
       expect(independent.oceanTime.value).toBe(0);
       expect(independent.origin.value.toArray()).toEqual([0, 0]);
+      expect(independent.wakeSampleCount.value).toBe(0);
     } finally {
       for (const instance of [water, other]) {
         instance.mesh.geometry.dispose();
