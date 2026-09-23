@@ -1,5 +1,5 @@
 import { Float32BufferAttribute, Mesh, MeshPhysicalMaterial, PlaneGeometry, Vector2, Vector3, Vector4 } from "three";
-import { SEA_HEIGHT_GLSL, type OceanQuality, type RoutePose } from "./swimMotion";
+import { SEA_HEIGHT_GLSL, SURFACE_CURRENT, type OceanQuality, type RoutePose } from "./swimMotion";
 import { createWaterGrid, renderedWaterHeight } from "./waterSampling";
 
 const WAKE_SAMPLE_COUNT = 12;
@@ -77,19 +77,19 @@ export function createWater(quality: OceanQuality) {
         float distanceToEye = length(cameraPosition - worldPoint);
         float detail = 1.0 - smoothstep(12.0, 80.0, distanceToEye);
         // All scales travel with one wind field. Fade detail smaller than a pixel.
-        vec2 windPoint = p - vec2(0.12, 0.055)*oceanTime;
+        vec2 windPoint = p - vec2(${SURFACE_CURRENT.x.toFixed(8)}, ${SURFACE_CURRENT.z.toFixed(8)})*oceanTime;
         mat2 rotation=mat2(0.8,-0.6,0.6,0.8);
         float footprint=length(fwidth(p));
         vec2 ripple = noiseSlope(windPoint*3.2)*0.06*(1.0-smoothstep(0.25,0.75,footprint*3.2));
         ripple += transpose(rotation)*noiseSlope(rotation*windPoint*7.1)*0.02*(1.0-smoothstep(0.25,0.75,footprint*7.1));
         ripple += noiseSlope(windPoint*15.4)*0.006*(1.0-smoothstep(0.25,0.75,footprint*15.4));
-        vec3 n = normalize(vec3(-wave.y-ripple.x*detail,1.0,-wave.z-ripple.y*detail));
-        normal = normalize(mat3(viewMatrix)*n);
+        vec3 oceanNormal = normalize(vec3(-wave.y-ripple.x*detail,1.0,-wave.z-ripple.y*detail));
+        normal = normalize(mat3(viewMatrix)*oceanNormal);
         nonPerturbedNormal = normalize(mat3(viewMatrix)*normalize(vec3(-wave.y,1.0,-wave.z)));
     `).replace("#include <color_fragment>", `
         #include <color_fragment>
         vec2 wakePoint = worldPoint.xz;
-        float turbulence = noise((wakePoint-vec2(0.12,0.055)*oceanTime)*9.0);
+        float turbulence = noise((wakePoint-vec2(${SURFACE_CURRENT.x.toFixed(8)},${SURFACE_CURRENT.z.toFixed(8)})*oceanTime)*9.0);
         float wake = 0.0;
         for (int i=0;i<${WAKE_SAMPLE_COUNT};i++) {
           if (float(i)>=wakeSampleCount) break;

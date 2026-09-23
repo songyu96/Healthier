@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { advanceSwim, armDirections, seaHeight, SWIM_CYCLE_SECONDS, MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, transportView, type SwimClock } from "./swimMotion";
+import { advanceSwim, armDirections, seaHeight, sampleSwimEnvironment, SWIM_CYCLE_SECONDS, MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, transportView, type SwimClock, type SwimEnvironment } from "./swimMotion";
 import { supportsOceanWebGL } from "./webglSupport";
 
 afterEach(() => vi.restoreAllMocks());
@@ -21,17 +21,66 @@ describe("swimming motion", () => {
       expect(Math.abs(seaHeight(0, 0, time))).toBeLessThanOrEqual(MAX_SEA_HEIGHT);
     }
   });
+  it("伸展、抱水、高肘回臂各有姿态，所有交界处位置和速度连续", () => {
+    const reach = armDirections(0.15 * Math.PI * 2, 1);
+    const catchPose = armDirections(0.32 * Math.PI * 2, 1);
+    const recovery = armDirections(0.87 * Math.PI * 2, 1);
+    expect(reach.upper[1]).toBeGreaterThan(0.9);
+    expect(catchPose.lower[2]).toBeGreaterThan(0.9);
+    expect(recovery.upper[2]).toBeLessThan(-0.5);
+    expect(recovery.lower[1]).toBeGreaterThan(0.7);
+    const epsilon = 0.00001;
+    for (const key of [0, 0.15, 0.32, 0.48, 0.62, 0.74, 0.87, 1]) {
+      const phase = key * Math.PI * 2;
+      const before = armDirections(phase - epsilon, 1), at = armDirections(phase, 1), after = armDirections(phase + epsilon, 1);
+      for (const part of ["upper", "lower"] as const) for (let axis = 0; axis < 3; axis++) {
+        expect(Math.abs(after[part][axis] - before[part][axis])).toBeLessThan(0.0001);
+        expect(Math.abs((after[part][axis] - at[part][axis]) / epsilon - (at[part][axis] - before[part][axis]) / epsilon)).toBeLessThan(0.002);
+      }
+    }
+  });
 });
 describe("visual travel", () => {
   it("持续前进，节奏改变不重置位置；暂停和后台恢复不会跳跃", () => {
     let clock: SwimClock = { time: 0, phase: 0, distance: 0 };
     for (let i = 0; i < 600; i++) clock = advanceSwim(clock, 1/60, "EASY", false);
-    expect(clock.distance).toBeCloseTo(5.5, 8);
-    expect(routePose(clock.distance).z).toBeGreaterThan(5);
+    expect(clock.distance).toBeGreaterThan(4.5);
+    expect(clock.distance).toBeLessThan(6.5);
+    expect(routePose(clock.distance).z).toBeGreaterThan(4.5);
     expect(advanceSwim(clock, 60, "SURGE", true)).toEqual(clock);
     const faster = advanceSwim(clock, 1/60, "SURGE", false);
     expect(faster.distance).toBeGreaterThan(clock.distance);
     expect(advanceSwim(clock, 60, "SURGE", false).distance-clock.distance).toBeLessThan(0.06);
+  });
+  it("逆流加划频、降航速；顺流放松划频、提高航速，节奏变化不倒退", () => {
+    const clock = { time: 8, phase: 3, distance: 5 };
+    const against: SwimEnvironment = { forwardSlope: 0.12, forwardFlow: -0.2, crossFlow: 0.1, verticalVelocity: 0.1 };
+    const withFlow = { ...against, forwardSlope: -0.12, forwardFlow: 0.2 };
+    const hard = advanceSwim(clock, 1/60, "STEADY", false, against);
+    const easy = advanceSwim(clock, 1/60, "STEADY", false, withFlow);
+    expect(hard.phase).toBeGreaterThan(easy.phase);
+    expect(hard.distance).toBeLessThan(easy.distance);
+    expect(hard.phase).toBeGreaterThan(clock.phase);
+    expect(hard.distance).toBeGreaterThan(clock.distance);
+    expect(advanceSwim(clock, 30, "SURGE", true, against)).toEqual(clock);
+  });
+  it("相同节奏的不同时间有自然划频变化；海浪的垂直速度来自同一波面", () => {
+    const still = { forwardSlope: 0, forwardFlow: 0, crossFlow: 0, verticalVelocity: 0 };
+    const speeds = [0, 3, 7, 12].map(time => advanceSwim({time,phase:0,distance:0}, 0.02, "STEADY", false, still).phase);
+    expect(Math.max(...speeds) - Math.min(...speeds)).toBeGreaterThan(0.001);
+    const pose = routePose(14), time = 7.2, epsilon = 0.00001;
+    expect(sampleSwimEnvironment(pose,time).verticalVelocity).toBeCloseTo((seaHeight(pose.x,pose.z,time+epsilon)-seaHeight(pose.x,pose.z,time-epsilon))/(2*epsilon), 6);
+    expect(sampleSwimEnvironment(pose,time)).not.toEqual(sampleSwimEnvironment(pose,time+1));
+  });
+  it("30/60 帧下的环境响应接近，避免划频依赖设备帧率", () => {
+    const simulate = (fps: number) => {
+      let clock = {time:0,phase:0,distance:0};
+      for (let i=0;i<fps*12;i++) clock=advanceSwim(clock,1/fps,"STEADY",false);
+      return clock;
+    };
+    const low = simulate(30), high = simulate(60);
+    expect(Math.abs(low.distance-high.distance)).toBeLessThan(0.01);
+    expect(Math.abs(low.phase-high.phase)).toBeLessThan(0.015);
   });
   it("环形航线连续闭合，并与可见岛屿保持间距", () => {
     const loop = ROUTE_RADIUS*Math.PI*2;

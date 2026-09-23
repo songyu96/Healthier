@@ -6,12 +6,37 @@ export const SWIM_CYCLE_SECONDS: Record<SwimPace, number> = { EASY: 3.2, STEADY:
 // Visual travel is independent of saved game mileage.
 export const SWIM_SPEED: Record<SwimPace, number> = { EASY: 0.55, STEADY: 0.8, SURGE: 1.1 };
 export const ROUTE_RADIUS = 100;
+// Surface drift also advects the water shader's fine ripples (metres/second).
+export const SURFACE_CURRENT = { x: 0.12, z: 0.055 };
 export interface SwimClock { time: number; phase: number; distance: number }
 export interface RoutePose { x: number; z: number; heading: number }
-export function advanceSwim(clock: SwimClock, delta: number, pace: SwimPace, paused: boolean): SwimClock {
+export interface SwimEnvironment { forwardSlope: number; forwardFlow: number; crossFlow: number; verticalVelocity: number }
+export function sampleSwimEnvironment(pose: RoutePose, time: number): SwimEnvironment {
+  let flowX = SURFACE_CURRENT.x, flowZ = SURFACE_CURRENT.z, verticalVelocity = 0;
+  for (const wave of OCEAN_WAVES) {
+    const phase = pose.x * wave.x + pose.z * wave.z - time * wave.speed + wave.phase;
+    const orbitalSpeed = wave.amplitude * wave.speed;
+    const k = Math.hypot(wave.x, wave.z);
+    flowX += orbitalSpeed * Math.sin(phase) * wave.x / k;
+    flowZ += orbitalSpeed * Math.sin(phase) * wave.z / k;
+    verticalVelocity -= orbitalSpeed * Math.cos(phase);
+  }
+  const surface = seaSample(pose.x, pose.z, time);
+  const s = Math.sin(pose.heading), c = Math.cos(pose.heading);
+  return { forwardSlope: surface.slopeX * s + surface.slopeZ * c, forwardFlow: flowX * s + flowZ * c, crossFlow: flowX * c - flowZ * s, verticalVelocity };
+}
+export function swimLoad(environment: SwimEnvironment): number {
+  return Math.max(-0.35, Math.min(0.55, environment.forwardSlope * 2 - environment.forwardFlow * 0.8 + Math.abs(environment.crossFlow) * 0.25));
+}
+export function advanceSwim(clock: SwimClock, delta: number, pace: SwimPace, paused: boolean, environment?: SwimEnvironment): SwimClock {
   if (paused) return clock;
   const step = Math.max(0, Math.min(delta, 0.05));
-  return { time: clock.time + step, phase: clock.phase + step / SWIM_CYCLE_SECONDS[pace] * Math.PI * 2, distance: clock.distance + step * SWIM_SPEED[pace] };
+  const water = environment ?? sampleSwimEnvironment(routePose(clock.distance), clock.time);
+  const load = swimLoad(water);
+  const variation = 0.035 * Math.sin(clock.time * 0.47) + 0.02 * Math.sin(clock.time * 0.81 + 1.1);
+  const cadence = 1 + load * 0.24 + variation;
+  const speed = SWIM_SPEED[pace] * (1 - load * 0.18) + Math.max(-0.22, Math.min(0.22, water.forwardFlow)) * 0.28;
+  return { time: clock.time + step, phase: clock.phase + step / SWIM_CYCLE_SECONDS[pace] * Math.PI * 2 * cadence, distance: clock.distance + step * Math.max(0.25, speed) };
 }
 export function routePose(distance: number): RoutePose {
   const angle = distance / ROUTE_RADIUS;
@@ -93,11 +118,39 @@ vec4 seaSample(vec2 p, float t, float spacing) {
 float seaHeight(vec2 p, float t, float spacing) { return seaSample(p, t, spacing).x; }
 `;
 
-export function armDirections(phase: number, side: -1 | 1): { upper: [number, number, number]; lower: [number, number, number] } {
-  const recovery = Math.max(0, -Math.sin(phase));
-  const bend = 0.2 + recovery * 1.1;
-  return {
-    upper: [side * (0.18 + recovery * 0.48), Math.cos(phase), Math.sin(phase) * 0.9],
-    lower: [side * 0.12, Math.cos(phase - bend), Math.sin(phase - bend)]
+type Direction = [number, number, number];
+// Body coordinates: +Y toward the head, +Z into the water in the prone pose.
+// Entry, extension, catch, pull, push, exit and bent-elbow recovery.
+const STROKE_KEYS: { at: number; upper: Direction; lower: Direction }[] = [
+  { at: 0, upper: [0.18, 0.98, 0.02], lower: [-0.04, 0.99, 0.06] },
+  { at: 0.15, upper: [0.12, 0.98, 0.13], lower: [-0.06, 0.94, 0.30] },
+  { at: 0.32, upper: [0.44, 0.70, 0.55], lower: [-0.22, 0.08, 0.97] },
+  { at: 0.48, upper: [0.58, -0.24, 0.72], lower: [-0.22, -0.82, 0.52] },
+  { at: 0.62, upper: [0.20, -0.97, 0.10], lower: [-0.07, -0.99, 0.04] },
+  { at: 0.74, upper: [0.56, -0.62, -0.56], lower: [-0.28, 0.18, 0.94] },
+  { at: 0.87, upper: [0.64, 0.33, -0.69], lower: [-0.36, 0.84, 0.40] }
+];
+export function armDirections(phase: number, side: -1 | 1, load = 0): { upper: Direction; lower: Direction } {
+  const t = ((phase / (Math.PI * 2)) % 1 + 1) % 1;
+  const count = STROKE_KEYS.length;
+  const i = STROKE_KEYS.findIndex((key, index) => t >= key.at && (index === count - 1 || t < STROKE_KEYS[index + 1].at));
+  const a = STROKE_KEYS[i], b = STROKE_KEYS[(i + 1) % count];
+  const previous = STROKE_KEYS[(i + count - 1) % count], next = STROKE_KEYS[(i + 2) % count];
+  const end = i === count - 1 ? 1 : b.at;
+  const previousTime = i === 0 ? previous.at - 1 : previous.at;
+  const nextTime = i >= count - 2 ? next.at + 1 : next.at;
+  const duration = end - a.at, u = (t - a.at) / duration;
+  const interpolate = (part: "upper" | "lower"): Direction => {
+    const result = a[part].map((value, axis) => {
+      const tangentA = (b[part][axis] - previous[part][axis]) / (end - previousTime);
+      const tangentB = (next[part][axis] - value) / (nextTime - a.at);
+      return (2*u**3-3*u*u+1)*value + (u**3-2*u*u+u)*duration*tangentA
+        + (-2*u**3+3*u*u)*b[part][axis] + (u**3-u*u)*duration*tangentB;
+    }) as Direction;
+    result[0] *= side;
+    result[2] += Math.max(-0.35, Math.min(0.55, load)) * 0.12 * Math.sin(t * Math.PI * 2) ** 2;
+    const length = Math.hypot(...result);
+    return result.map(value => value / length) as Direction;
   };
+  return { upper: interpolate("upper"), lower: interpolate("lower") };
 }

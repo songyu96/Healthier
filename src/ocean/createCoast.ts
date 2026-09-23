@@ -93,6 +93,10 @@ export function createCoast(quality: OceanQuality) {
 
   const sprayGeometry = new BufferGeometry();
   const sprayPositions = new Float32Array(60 * 3);
+  const droplets = Array.from({ length: 60 }, () => ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, born: -100 }));
+  const previousHands = [new Vector3(), new Vector3()];
+  const previousDepth = [0, 0];
+  let lastSprayTime: number | undefined, nextDroplet = 0;
   sprayGeometry.setAttribute("position", new Float32BufferAttribute(sprayPositions, 3));
   const spray = new Points(sprayGeometry, new PointsMaterial({ color: "#e1f3e9", size: 0.025, transparent: true, opacity: 0.65, depthWrite: false }));
   spray.renderOrder = 3; spray.frustumCulled = false;
@@ -100,24 +104,42 @@ export function createCoast(quality: OceanQuality) {
   return {
     group,
     heightAt: water.heightAt,
-    update(time: number, phase: number, pose: RoutePose, energetic: boolean, luminous: boolean) {
+    update(time: number, _phase: number, pose: RoutePose, energetic: boolean, luminous: boolean) {
       water.update(time, pose, energetic, luminous);
       buoys.forEach((buoy) => { buoy.position.y = 0.06 + water.heightAt(buoy.position.x, buoy.position.z, time); });
-      const c = Math.cos(pose.heading), s = Math.sin(pose.heading);
-      for (let i = 0; i < 60; i++) {
-        const side = i % 2 ? -1 : 1;
-        const elapsed = ((phase / (Math.PI * 2) + i * 0.017 + (side === 1 ? 0 : 0.5)) % 1 + 1) % 1;
-        const spread = Math.sin(i * 7.91);
-        const x = side * 0.24 + spread * elapsed * 0.16;
-        const z = 0.8 - elapsed * 0.8 + Math.cos(i * 2.17) * 0.05;
-        const worldX = pose.x + x*c + z*s, worldZ = pose.z - x*s + z*c;
-        sprayPositions[i * 3] = worldX;
-        sprayPositions[i * 3 + 1] = elapsed < 0.3 ? water.heightAt(worldX, worldZ, time) + Math.sin(elapsed / 0.3 * Math.PI) * 0.12 : -100;
-        sprayPositions[i * 3 + 2] = worldZ;
-      }
-      // Float32BufferAttribute copies its input, so update the live GPU attribute.
+    },
+    updateSpray(time: number, hands: readonly Vector3[]) {
+      if (lastSprayTime === time) return;
+      const dt = lastSprayTime === undefined ? 0 : time - lastSprayTime;
+      hands.forEach((hand, side) => {
+        const depth = hand.y - water.heightAt(hand.x, hand.z, time);
+        if (dt > 0 && dt <= 0.1 && previousDepth[side] > 0 && depth <= 0) {
+          const fraction = previousDepth[side] / (previousDepth[side] - depth);
+          const x = previousHands[side].x + (hand.x - previousHands[side].x) * fraction;
+          const z = previousHands[side].z + (hand.z - previousHands[side].z) * fraction;
+          const strength = Math.min(1, (previousDepth[side] - depth) / dt * 0.35);
+          for (let drop = 0; drop < 8; drop++) {
+            const i = nextDroplet++ % droplets.length;
+            Object.assign(droplets[i], { x, y: water.heightAt(x, z, time) + 0.012, z,
+              vx: Math.sin(i * 7.91) * (0.15 + strength * 0.2), vy: 0.45 + strength * 0.7 + drop * 0.025,
+              vz: Math.cos(i * 2.17) * (0.15 + strength * 0.2), born: time });
+          }
+        }
+        previousHands[side].copy(hand);
+        previousDepth[side] = depth;
+      });
+      droplets.forEach((drop, i) => {
+        const age = time - drop.born;
+        const x = drop.x + drop.vx * age, z = drop.z + drop.vz * age;
+        const y = drop.y + drop.vy * age - 4.905 * age * age;
+        const visible = age >= 0 && age < 0.65 && y >= water.heightAt(x, z, time);
+        sprayPositions[i * 3] = visible ? x : 0;
+        sprayPositions[i * 3 + 1] = visible ? y : -100;
+        sprayPositions[i * 3 + 2] = visible ? z : 0;
+      });
       sprayGeometry.getAttribute("position").array.set(sprayPositions);
       sprayGeometry.getAttribute("position").needsUpdate = true;
+      lastSprayTime = time;
     },
     dispose() {
       const geometries = new Set<BufferGeometry>(), materials = new Set<Material>();

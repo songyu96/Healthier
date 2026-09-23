@@ -104,7 +104,8 @@ function World(props: Props) {
   const swimmer = useMemo(() => createSwimmer(gltf.scene), [gltf.scene]);
   const clock = useRef<SwimClock>({ time: 0, phase: 0, distance: 0 });
   const { gl, invalidate } = useThree();
-  useEffect(() => { swimmer.setAppearance(props); invalidate(); }, [swimmer, props, invalidate]);
+  const { avatarStyle, proportions: { bodyWidth, strokeReach } } = props;
+  useEffect(() => { swimmer.setAppearance({ avatarStyle, proportions: { bodyWidth, strokeReach } }); invalidate(); }, [swimmer, avatarStyle, bodyWidth, strokeReach, invalidate]);
   useEffect(() => { onReady(); }, [onReady]);
   useEffect(() => {
     const onLost = (event: Event) => { event.preventDefault(); onFailure(); };
@@ -118,6 +119,7 @@ function World(props: Props) {
     const pose = routePose(clock.current.distance);
     coast.update(clock.current.time, clock.current.phase, pose, props.pace === "SURGE", props.luminousWater);
     swimmer.update(clock.current.time, clock.current.phase, pose, coast.heightAt);
+    coast.updateSpray(clock.current.time, swimmer.hands);
   }, -2);
   return <><CameraRig request={props.cameraRequest} paused={props.paused} clock={clock} /><primitive object={coast.group} /><primitive object={swimmer.group} /></>;
 }
@@ -134,7 +136,10 @@ export default function OceanCanvas(props: Props) {
     frameloop={props.active && !props.paused ? "always" : "demand"}
     fallback={<p>海洋 3D 场景，可使用下方按钮切换镜头与暂停。</p>}
     onCreated={({ gl }) => {
-      gl.debug.onShaderError = () => { console.error("海洋场景着色器编译失败，已切换轻量场景。"); props.onFailure(); };
+      gl.debug.onShaderError = (context, program, vertex, fragment) => {
+        console.error("海洋场景着色器编译失败，已切换轻量场景。", context.getProgramInfoLog(program), context.getShaderInfoLog(vertex), context.getShaderInfoLog(fragment));
+        props.onFailure();
+      };
     }}
   >
     <Environment />
