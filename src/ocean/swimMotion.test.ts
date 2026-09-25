@@ -1,9 +1,22 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { advanceSwim, armDirections, seaHeight, sampleSwimEnvironment, SWIM_CYCLE_SECONDS, MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, transportView, type SwimClock, type SwimEnvironment } from "./swimMotion";
+import { advanceSwim, armDirections, breathingPose, seaHeight, sampleSwimEnvironment, SWIM_CYCLE_SECONDS, MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, transportView, type SwimClock, type SwimEnvironment } from "./swimMotion";
 import { supportsOceanWebGL } from "./webglSupport";
 
 afterEach(() => vi.restoreAllMocks());
 describe("swimming motion", () => {
+  it("常规划频提高，每三次单臂划水换气，入水前收头", () => {
+    expect(120 / SWIM_CYCLE_SECONDS.STEADY).toBeGreaterThanOrEqual(60);
+    for (let event = 0; event < 8; event++) {
+      const start = event * 1.5;
+      expect(breathingPose((start + 0.76) * Math.PI * 2)).toBe(event % 2 === 0 ? 1 : -1);
+      expect(breathingPose((start + 0.99) * Math.PI * 2)).toBe(0);
+      for (const t of [0.55,0.70,0.82,0.96]) {
+        const before = breathingPose((start+t-0.00001)*Math.PI*2);
+        const after = breathingPose((start+t+0.00001)*Math.PI*2);
+        expect(Math.abs(after-before)).toBeLessThan(0.00001);
+      }
+    }
+  });
   it("所有划水阶段连续循环，左右臂可以镜像使用", () => {
     for (let phase = 0; phase < Math.PI * 2; phase += 0.15) {
       const left = armDirections(phase, 1), right = armDirections(phase, -1), loop = armDirections(phase + Math.PI * 2, 1);
@@ -44,13 +57,13 @@ describe("visual travel", () => {
   it("持续前进，节奏改变不重置位置；暂停和后台恢复不会跳跃", () => {
     let clock: SwimClock = { time: 0, phase: 0, distance: 0 };
     for (let i = 0; i < 600; i++) clock = advanceSwim(clock, 1/60, "EASY", false);
-    expect(clock.distance).toBeGreaterThan(4.5);
-    expect(clock.distance).toBeLessThan(6.5);
-    expect(routePose(clock.distance).z).toBeGreaterThan(4.5);
+    expect(clock.distance).toBeGreaterThan(6.5);
+    expect(clock.distance).toBeLessThan(8.5);
+    expect(routePose(clock.distance).z).toBeGreaterThan(6.5);
     expect(advanceSwim(clock, 60, "SURGE", true)).toEqual(clock);
     const faster = advanceSwim(clock, 1/60, "SURGE", false);
     expect(faster.distance).toBeGreaterThan(clock.distance);
-    expect(advanceSwim(clock, 60, "SURGE", false).distance-clock.distance).toBeLessThan(0.06);
+    expect(advanceSwim(clock, 60, "SURGE", false).distance-clock.distance).toBeLessThan(0.08);
   });
   it("逆流加划频、降航速；顺流放松划频、提高航速，节奏变化不倒退", () => {
     const clock = { time: 8, phase: 3, distance: 5 };

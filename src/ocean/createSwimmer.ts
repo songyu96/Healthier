@@ -1,7 +1,7 @@
 import { Bone, BufferGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Quaternion, SphereGeometry, TorusGeometry, Vector3, SkinnedMesh, TubeGeometry, CatmullRomCurve3 } from "three";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 import type { OceanSceneProps } from "../OceanScene";
-import { armDirections, sampleSwimEnvironment, swimLoad, type RoutePose } from "./swimMotion";
+import { armDirections, breathingPose, sampleSwimEnvironment, swimLoad, type RoutePose } from "./swimMotion";
 
 export function createSwimmer(source: Object3D) {
   const model = clone(source);
@@ -37,7 +37,7 @@ export function createSwimmer(source: Object3D) {
   const headBone = bones.get("head");
   if (!headBone) throw new Error("游泳角色缺少头部骨骼。");
   const head: Bone = headBone;
-  for (const name of ["spine01", "spine03", "eye_L", "eye_R", ...["L", "R"].flatMap(side => ["clavicle", "upperarm01", "lowerarm01", "wrist", "upperleg01", "lowerleg01", "foot"].map(bone => `${bone}_${side}`))]) {
+  for (const name of ["spine01", "spine03", "neck01", "oris01", "eye_L", "eye_R", ...["L", "R"].flatMap(side => ["clavicle", "upperarm01", "lowerarm01", "wrist", "upperleg01", "lowerleg01", "foot"].map(bone => `${bone}_${side}`))]) {
     if (!bones.has(name)) throw new Error(`游泳角色缺少动作骨骼：${name}`);
   }
   const capMaterial = new MeshPhysicalMaterial({ color: "#ffffff", vertexColors: true, roughness: 0.36, clearcoat: 0.25 });
@@ -141,6 +141,9 @@ export function createSwimmer(source: Object3D) {
     head.scale.set(female ? 0.98 : 0.99, 1, 1);
   }
   const hands = [new Vector3(), new Vector3()] as const;
+  const mouth = new Vector3();
+  const neck = bones.get("neck01")!;
+  const lips = bones.get("oris01")!;
   let lastTime: number | undefined;
   let floatingHeight = 0, pitch = 0, roll = 0;
   function update(time: number, phase: number, pose: RoutePose, waterHeight: (x: number, z: number, time: number) => number) {
@@ -158,11 +161,20 @@ export function createSwimmer(source: Object3D) {
     group.position.set(pose.x, 0.065 + floatingHeight, pose.z);
     group.rotation.set(Math.max(-0.18, Math.min(0.18, pitch)), pose.heading, Math.max(-0.16, Math.min(0.16, roll)), "YXZ");
     const strokeRoll = -Math.sin(phase - 0.18);
+    const breath = breathingPose(phase), inhale = Math.abs(breath);
     prone.rotation.y = strokeRoll * 0.12;
     bones.get("spine03")!.rotation.set(0.015 * Math.sin(phase * 2), -Math.sin(phase - 0.65) * 0.055, 0);
     const shoulders = bones.get("spine01")!;
-    shoulders.rotation.set(-Math.min(0.025, Math.abs(environment.verticalVelocity) * 0.04), strokeRoll * 0.16, Math.max(-0.035, Math.min(0.035, environment.crossFlow * 0.08)));
-    let breath = 0;
+    shoulders.rotation.set(-0.18 * inhale - Math.min(0.025, Math.abs(environment.verticalVelocity) * 0.04), strokeRoll * 0.16 + breath * 0.18, Math.max(-0.035, Math.min(0.035, environment.crossFlow * 0.08)));
+    neck.rotation.set(-0.12 * inhale, breath * 0.12, 0);
+    head.rotation.set(-0.06 - inhale * 0.10, breath * 1.05, -strokeRoll * 0.05);
+    // Check the actual lip joint against the local water, not the pelvis height.
+    // A bounded neck extension clears small crests without translating the skeleton.
+    for (let attempt = 0; attempt < 3 && inhale > 0; attempt++) {
+      lips.getWorldPosition(mouth);
+      const deficit = waterHeight(mouth.x, mouth.z, time) + 0.025 - mouth.y;
+      neck.rotation.x -= Math.min(0.12, Math.max(0, deficit) * 4) * inhale;
+    }
     for (const side of [-1, 1] as const) {
       const suffix = side === 1 ? "L" : "R";
       const angle = phase + (side === 1 ? 0 : Math.PI);
@@ -178,16 +190,14 @@ export function createSwimmer(source: Object3D) {
       aim(`upperleg01_${suffix}`, [side * 0.025, -1, 0.035 + Math.sin(kickPhase) * kickStrength]);
       aim(`lowerleg01_${suffix}`, [side * 0.025, -1, -0.04 + Math.sin(kickPhase - 0.65) * kickStrength * 1.25]);
       aim(`foot_${suffix}`, [side * 0.035, -0.98, 0.10 + Math.sin(kickPhase - 1.05) * 0.08]);
-      // Alternate the breathing side every three arm strokes, during recovery only.
-      if (Math.floor(angle / (Math.PI * 2)) % 3 === (side === 1 ? 0 : 1)) breath += side * recovery;
     }
-    head.rotation.set(-0.06 - Math.abs(breath) * 0.08, breath * 0.85, -strokeRoll * 0.05);
     group.updateMatrixWorld(true);
     bones.get("wrist_L")!.getWorldPosition(hands[0]);
     bones.get("wrist_R")!.getWorldPosition(hands[1]);
+    lips.getWorldPosition(mouth);
   }
   return {
-    group, hands, setAppearance, update,
+    group, hands, mouth, setAppearance, update,
     dispose() {
       materials.forEach((material) => material.dispose());
       bodies.forEach(body => body.geometry.dispose());

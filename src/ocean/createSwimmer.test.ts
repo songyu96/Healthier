@@ -7,7 +7,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { OceanSceneProps } from "../OceanScene";
 import { createSwimmer } from "./createSwimmer";
-import { advanceSwim, routePose, seaHeight, type SwimClock } from "./swimMotion";
+import { advanceSwim, breathingPose, routePose, seaHeight, type SwimClock } from "./swimMotion";
 
 let source: Awaited<ReturnType<GLTFLoader["parseAsync"]>>["scene"];
 beforeAll(async () => {
@@ -17,6 +17,35 @@ beforeAll(async () => {
 const appearance: OceanSceneProps = { progress: 0, avatarStyle: "MALE", pace: "STEADY", proportions: { bodyWidth: 1, strokeReach: 1 }, luminousWater: false, dolphin: false, butterfly: false };
 
 describe("swimmer on the shipped GLB", () => {
+  it.each(["EASY", "STEADY", "SURGE"] as const)("%s 左右换气的吸气阶段嘴部露出浪面，收头后重新入水", (pace) => {
+    for (const avatarStyle of ["MALE", "FEMALE"] as const) {
+      const swimmer = createSwimmer(source);
+      swimmer.setAppearance({...appearance, avatarStyle});
+      let clock: SwimClock = {time:0,phase:0,distance:0};
+      let left = 0, right = 0, submerged = 0;
+      const previous = new Vector3();
+      try {
+        for (let frame = 0; frame < 1200; frame++) {
+          clock = advanceSwim(clock,1/60,pace,false);
+          swimmer.update(clock.time,clock.phase,routePose(clock.distance),seaHeight);
+          const breath = breathingPose(clock.phase);
+          const clearance = swimmer.mouth.y - seaHeight(swimmer.mouth.x,swimmer.mouth.z,clock.time);
+          if (Math.abs(breath) > 0.99) {
+            expect(clearance).toBeGreaterThan(0.005);
+            if (breath > 0) left++; else right++;
+          }
+          if (breath === 0 && clearance < -0.02) submerged++;
+          if (frame > 0) expect(swimmer.mouth.distanceTo(previous)).toBeLessThan(0.07);
+          previous.copy(swimmer.mouth);
+        }
+        expect(left).toBeGreaterThan(20);
+        expect(right).toBeGreaterThan(20);
+        expect(submerged).toBeGreaterThan(100);
+        swimmer.update(clock.time,clock.phase,routePose(clock.distance),seaHeight);
+        expect(swimmer.mouth.distanceTo(previous)).toBeLessThan(0.000001);
+      } finally { swimmer.dispose(); }
+    }
+  });
   it("动作覆盖实际骨骼，暂停不漂移，身体保持贴近水面且关节变换有限", () => {
     const swimmer = createSwimmer(source);
     swimmer.setAppearance(appearance);

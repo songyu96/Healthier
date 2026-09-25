@@ -2,14 +2,25 @@ import type { SwimPace } from "../gamePresentation";
 
 export type OceanView = "FOLLOW" | "OVERHEAD" | "COAST";
 export type OceanQuality = "BALANCED" | "LOW";
-export const SWIM_CYCLE_SECONDS: Record<SwimPace, number> = { EASY: 3.2, STEADY: 2.5, SURGE: 1.9 };
+export const SWIM_CYCLE_SECONDS: Record<SwimPace, number> = { EASY: 2.2, STEADY: 1.8, SURGE: 1.5 };
 // Visual travel is independent of saved game mileage.
-export const SWIM_SPEED: Record<SwimPace, number> = { EASY: 0.55, STEADY: 0.8, SURGE: 1.1 };
+export const SWIM_SPEED: Record<SwimPace, number> = { EASY: 0.75, STEADY: 1.0, SURGE: 1.3 };
 export const ROUTE_RADIUS = 100;
 // Surface drift also advects the water shader's fine ripples (metres/second).
 export const SURFACE_CURRENT = { x: 0.12, z: 0.055 };
 export interface SwimClock { time: number; phase: number; distance: number }
 export interface RoutePose { x: number; z: number; heading: number }
+// One breath every three individual arm strokes, alternating sides. Hold the
+// inhalation briefly and return the face before the recovering hand enters.
+export function breathingPose(phase: number): number {
+  const cycles = phase / (Math.PI * 2);
+  const event = Math.floor((cycles - 0.55) / 1.5);
+  if (event < 0) return 0;
+  const t = cycles - event * 1.5;
+  if (t >= 0.96) return 0;
+  const smooth = (value: number) => { const x = Math.max(0, Math.min(1, value)); return x*x*(3-2*x); };
+  return (event % 2 === 0 ? 1 : -1) * smooth((t - 0.55) / 0.15) * (1 - smooth((t - 0.82) / 0.14));
+}
 export interface SwimEnvironment { forwardSlope: number; forwardFlow: number; crossFlow: number; verticalVelocity: number }
 export function sampleSwimEnvironment(pose: RoutePose, time: number): SwimEnvironment {
   let flowX = SURFACE_CURRENT.x, flowZ = SURFACE_CURRENT.z, verticalVelocity = 0;
