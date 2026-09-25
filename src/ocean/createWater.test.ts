@@ -19,11 +19,11 @@ describe.each<OceanQuality>(["LOW", "BALANCED"])("%s physical water", (quality) 
     try {
       const first = compile(water), independent = compile(other);
       expect(water.mesh.material).toMatchObject({
-        transmission: 0.22,
+        transmission: 0.32,
         thickness: 3.5,
-        attenuationDistance: 5.5,
+        attenuationDistance: 16,
         opacity: 1,
-        roughness: 0.38
+        roughness: 0.27
       });
       water.update(12, { x: 3, z: 7, heading: 0.4 }, true, true);
       const recompiled = compile(water);
@@ -39,6 +39,18 @@ describe.each<OceanQuality>(["LOW", "BALANCED"])("%s physical water", (quality) 
       expect(independent.oceanTime.value).toBe(0);
       expect(independent.origin.value.toArray()).toEqual([0, 0]);
       expect(independent.wakeSampleCount.value).toBe(0);
+      const sunny = first.deepTint.value.clone();
+      water.setWeather("RAINY");
+      expect(first.rainfall.value).toBe(1);
+      expect(first.deepTint.value.equals(sunny)).toBe(false);
+      expect(independent.deepTint.value.equals(sunny)).toBe(true);
+      expect(recompiled.deepTint.value).toBe(first.deepTint.value);
+      water.setWeather("CLOUDY");
+      expect(first.rainfall.value).toBe(0);
+      water.setWeather("SUNNY");
+      expect(first.deepTint.value.equals(sunny)).toBe(true);
+      expect(first.oceanTime.value).toBe(24);
+      expect(first.wakeSampleCount.value).toBe(2);
     } finally {
       for (const instance of [water, other]) {
         instance.mesh.geometry.dispose();

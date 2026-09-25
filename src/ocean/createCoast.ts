@@ -1,10 +1,8 @@
-import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, Material, Mesh, MeshStandardMaterial, PlaneGeometry, Points, PointsMaterial, SphereGeometry, TubeGeometry, CatmullRomCurve3, Vector3 } from "three";
-import { MAX_SEA_HEIGHT, routePose, ROUTE_RADIUS, type OceanQuality, type RoutePose } from "./swimMotion";
+import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, LineBasicMaterial, LineSegments, Material, Mesh, MeshStandardMaterial, PlaneGeometry, Points, PointsMaterial, SphereGeometry, TubeGeometry, CatmullRomCurve3, Vector3 } from "three";
+import { routePose, ROUTE_RADIUS, type OceanQuality, type RoutePose } from "./swimMotion";
 import { createWater } from "./createWater";
-
-function noise(x: number, z: number): number {
-  return Math.sin(x * 1.7 + Math.sin(z * 0.83)) * 0.5 + Math.sin(z * 2.13 - x * 0.37) * 0.25 + Math.sin(x * 4.17 + z * 3.16) * 0.125;
-}
+import { ISLANDS, SEABED_HEIGHT, islandHeight, terrainNoise as noise } from "./coastTerrain";
+import type { OceanWeather } from "./oceanLook";
 
 function island(x: number, z: number, radius: number, height: number, seed: number) {
   const geometry = new PlaneGeometry(radius * 2.7, radius * 2.7, 72, 72);
@@ -14,12 +12,7 @@ function island(x: number, z: number, radius: number, height: number, seed: numb
   const sand = new Color("#c8bb95"), stone = new Color("#70776c"), green = new Color("#435d39");
   for (let i = 0; i < positions.count; i++) {
     const px = positions.getX(i), pz = positions.getZ(i);
-    const distance = Math.sqrt(px * px + pz * pz * 1.3) / radius;
-    const edge = 1 - distance + noise(px * 0.24 + seed, pz * 0.23) * 0.13;
-    // Lower the offshore skirt below every wave trough without moving the island inland.
-    const skirt = Math.max(0, Math.min(1, (0.15 - edge) / 0.15));
-    const seabedDrop = (MAX_SEA_HEIGHT + 0.5) * skirt * skirt * (3 - 2 * skirt);
-    const y = Math.pow(Math.max(0, edge), 1.6) * height + noise(px * 0.42 + seed, pz * 0.45) * Math.max(0, edge) * 1.9 - 0.28 - seabedDrop;
+    const y = islandHeight(px, pz, radius, height, seed);
     positions.setY(i, y);
     const rocky = noise(px * 0.48, pz * 0.48 + seed) > 0.1;
     const color = y < 0.65 ? sand.clone() : (rocky ? stone.clone() : green.clone());
@@ -65,10 +58,10 @@ export function createCoast(quality: OceanQuality) {
   const group = new Group();
   const water = createWater(quality);
   group.add(water.mesh);
-  const seabed = new Mesh(new PlaneGeometry(1200, 1200), new MeshStandardMaterial({ color: "#2a747d", roughness: 1 }));
-  seabed.rotation.x = -Math.PI / 2; seabed.position.y = -4;
+  const seabed = new Mesh(new PlaneGeometry(1200, 1200), new MeshStandardMaterial({ color: "#b7c9bc", roughness: 1 }));
+  seabed.rotation.x = -Math.PI / 2; seabed.position.y = SEABED_HEIGHT;
   group.add(seabed);
-  group.add(island(-24, 38, 13, 6.5, 1), island(30, 77, 21, 12, 3), island(-70, 130, 30, 16, 4));
+  group.add(...ISLANDS.map(i => island(i.x, i.z, i.radius, i.height, i.seed)));
   for (let i = 0; i < 7; i++) {
     const angle = i * 0.68;
     const x = -24 + Math.cos(angle) * 7, z = 38 + Math.sin(angle) * 4;
@@ -101,11 +94,34 @@ export function createCoast(quality: OceanQuality) {
   const spray = new Points(sprayGeometry, new PointsMaterial({ color: "#e1f3e9", size: 0.025, transparent: true, opacity: 0.65, depthWrite: false }));
   spray.renderOrder = 3; spray.frustumCulled = false;
   group.add(spray);
+  const rainGeometry = new BufferGeometry();
+  const rainPositions = new Float32Array((quality === "LOW" ? 60 : 120) * 6);
+  rainGeometry.setAttribute("position", new Float32BufferAttribute(rainPositions, 3));
+  const rain = new LineSegments(rainGeometry, new LineBasicMaterial({ color: "#d7eaf0", transparent: true, opacity: 0.22, depthWrite: false }));
+  rain.name = "CoastalRain";
+  rain.visible = false;
+  rain.frustumCulled = false;
+  group.add(rain);
   return {
     group,
     heightAt: water.heightAt,
+    setWeather(weather: OceanWeather) {
+      water.setWeather(weather);
+      rain.visible = weather === "RAINY";
+    },
     update(time: number, _phase: number, pose: RoutePose, energetic: boolean, luminous: boolean) {
       water.update(time, pose, energetic, luminous);
+      if (rain.visible) {
+        const positions = rainGeometry.getAttribute("position");
+        for (let i = 0; i < positions.count / 2; i++) {
+          const x = pose.x + ((i * 0.618034) % 1 - 0.5) * 16;
+          const z = pose.z + ((i * 0.414214) % 1 - 0.5) * 16;
+          const y = 0.3 + ((i * 0.754878 + time * 0.85) % 1) * -6 + 6;
+          positions.setXYZ(i*2, x, y, z);
+          positions.setXYZ(i*2+1, x+0.025, y-0.18, z+0.012);
+        }
+        positions.needsUpdate = true;
+      }
       buoys.forEach((buoy) => { buoy.position.y = 0.06 + water.heightAt(buoy.position.x, buoy.position.z, time); });
     },
     updateSpray(time: number, hands: readonly Vector3[]) {
@@ -144,7 +160,7 @@ export function createCoast(quality: OceanQuality) {
     dispose() {
       const geometries = new Set<BufferGeometry>(), materials = new Set<Material>();
       group.traverse((object) => {
-        if (object instanceof Mesh || object instanceof Points) {
+        if (object instanceof Mesh || object instanceof Points || object instanceof LineSegments) {
           geometries.add(object.geometry);
           (Array.isArray(object.material) ? object.material : [object.material]).forEach((material) => materials.add(material));
         }

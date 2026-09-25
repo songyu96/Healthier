@@ -5,10 +5,10 @@ import OceanExperience from "./OceanExperience";
 import type { OceanSceneProps } from "./OceanScene";
 
 vi.mock("./ocean/OceanCanvas", () => ({
-  default: function MockCanvas(props: { onReady: () => void; onFailure: () => void; paused: boolean; quality: string; cameraRequest: { view: string; revision: number }; avatarStyle: string }) {
+  default: function MockCanvas(props: { onReady: () => void; onFailure: () => void; paused: boolean; quality: string; weather: string; cameraRequest: { view: string; revision: number }; avatarStyle: string }) {
     const { onReady } = props;
     useEffect(() => { onReady(); }, [onReady]);
-    return <div data-testid="renderer" data-paused={props.paused} data-quality={props.quality} data-view={props.cameraRequest.view} data-revision={props.cameraRequest.revision} data-avatar={props.avatarStyle}><button onClick={props.onFailure}>模拟渲染失败</button></div>;
+    return <div data-testid="renderer" data-weather={props.weather} data-paused={props.paused} data-quality={props.quality} data-view={props.cameraRequest.view} data-revision={props.cameraRequest.revision} data-avatar={props.avatarStyle}><button onClick={props.onFailure}>模拟渲染失败</button></div>;
   }
 }));
 
@@ -36,6 +36,26 @@ async function click(text: string) {
 function renderer() { return container.querySelector<HTMLElement>('[data-testid="renderer"]')!; }
 
 describe("ocean experience", () => {
+  it("天气切换保留暂停、镜头、角色和进度，轻量模式往返保留天气", async () => {
+    await mount();
+    const original = renderer();
+    expect(original.dataset.weather).toBe("SUNNY");
+    await click("暂停动态");
+    await click("俯瞰");
+    for (const [label, value, title] of [["阴天","CLOUDY","云下海湾"],["雨天","RAINY","听雨海湾"],["晴天","SUNNY","晴空海湾"]]) {
+      await click(label);
+      expect(renderer()).toBe(original);
+      expect(renderer().dataset.weather).toBe(value);
+      expect(renderer().dataset.paused).toBe("true");
+      expect(renderer().dataset.view).toBe("OVERHEAD");
+      expect(renderer().dataset.avatar).toBe("FEMALE");
+      expect(container.textContent).toContain(title);
+    }
+    await click("雨天");
+    await click("轻量场景");
+    await click("进入 3D 场景");
+    expect(renderer().dataset.weather).toBe("RAINY");
+  });
   it("切换镜头、暂停、画质时保留角色，重复镜头按钮仍可复位", async () => {
     await mount();
     expect(container.textContent).not.toContain("正在驶入海湾");

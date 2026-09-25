@@ -423,6 +423,9 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .ocean-render-controls { display: flex; margin-left: auto; gap: 2px; }
 .ocean-render-controls button[aria-pressed="true"] { background: #e8eee6; }
 .ocean-controls .ocean-mode-button { border-color: #d9e3dd; }
+.ocean-weather-controls { display: flex; align-items: center; gap: 12px; margin-top: 10px; color: #47635f; font-size: 12px; }
+.ocean-weather-controls button { width: auto; min-height: 36px; padding: 7px 16px; border: 0; border-radius: 9px; color: #47635f; background: transparent; font: inherit; cursor: pointer; }
+.ocean-weather-controls button:focus-visible { outline: 2px solid #2c756d; outline-offset: 3px; }
 .ocean-interaction-hint { margin: 9px 0 3px; font-size: 10px; line-height: 1.7; color: #76847c; }
 .ocean-loading { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin: 0; background: linear-gradient(155deg, #c2dae0, #408d98 65%, #296874); color: #fff; font-size: 12px; }
 .ocean-loading b { font-size: 18px; font-weight: 500; letter-spacing: .08em; }
