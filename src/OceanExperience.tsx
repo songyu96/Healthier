@@ -46,7 +46,7 @@ export default function OceanExperience(props: OceanSceneProps) {
       </SceneBoundary>
       {!ready && <div className="ocean-loading" role="status"><span className="ocean-loading-ring" /><b>正在驶入海湾</b><span>首次进入需要加载场景与角色</span></div>}
       <div className="ocean-3d-heading"><span className="ocean-coordinate">OPEN WATER / 01</span><h2>{look.title}</h2><span className="ocean-scene-tag">{look.description}</span></div>
-      <div className="ocean-3d-footer"><div><span>今日节奏</span><b>{paused ? "画面已暂停" : props.pace === "SURGE" ? "迎浪加速" : props.pace === "STEADY" ? "稳步前进" : "自在巡游"}</b></div><div className="ocean-route"><span>本周航程</span><b>{Math.round(Math.max(0, Math.min(1, props.progress)) * 100)}<small> / 100</small></b></div></div>
+      <div className="ocean-3d-footer"><div><span>今日节奏</span><b>{paused ? "画面已暂停" : props.pace === "SURGE" ? "迎浪加速" : props.pace === "STEADY" ? "稳步前进" : "自在巡游"}</b></div><div className="ocean-route"><span>本周积分</span><b>{Math.round(Math.max(0, Math.min(1, props.progress)) * 100)}<small> / 100 分</small></b></div></div>
     </div>}
     <div className="ocean-controls">
       {!lightweight && <>
@@ -59,6 +59,7 @@ export default function OceanExperience(props: OceanSceneProps) {
         setReady(false); setLightweight((value) => !value);
       }}>{failed ? "重新加载 3D" : lightweight ? "进入 3D 场景" : "轻量场景"}</button>
     </div>
+    {!lightweight && (props.dolphin || props.butterfly) && <p className="ocean-reward-hint">已解锁的{[props.dolphin && "海豚伙伴", props.butterfly && "蝶泳主题光轨"].filter(Boolean).join("、")}目前在轻量场景展示。<button type="button" onClick={() => { setReady(false); setLightweight(true); }}>查看轻量场景奖励</button></p>}
     {!lightweight && <div className="ocean-weather-controls"><span>海湾天气</span><div className="ocean-view-buttons" role="group" aria-label="海湾天气">{(Object.keys(OCEAN_LOOKS) as OceanWeather[]).map(value => <button type="button" key={value} aria-pressed={weather === value} onClick={() => setWeather(value)}>{OCEAN_LOOKS[value].label}</button>)}</div></div>}
     <p className="ocean-interaction-hint" role={failed ? "status" : undefined}>{failed ? "3D 暂时无法加载，已为你切换轻量场景。可检查连接后重试。" : lightweight ? "轻量场景适合低性能设备。" : "拖动环绕 · 滚轮或双指缩放 · 点击镜头按钮回到预设视角"}</p>
   </div>;

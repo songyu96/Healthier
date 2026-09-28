@@ -36,6 +36,16 @@ async function click(text: string) {
 function renderer() { return container.querySelector<HTMLElement>('[data-testid="renderer"]')!; }
 
 describe("ocean experience", () => {
+  it("已有伙伴与主题奖励时提供轻量场景入口，3D 不宣称已实现", async () => {
+    await act(async()=>root.render(<OceanExperience {...props} dolphin butterfly />));
+    await vi.waitFor(()=>expect(renderer()).not.toBeNull());
+    expect(container.textContent).toContain("蝶泳主题光轨目前在轻量场景展示");
+    await click("查看轻量场景奖励");
+    expect(renderer()).toBeNull();
+    expect(container.querySelector(".ocean-dolphin")).not.toBeNull();
+    expect(container.querySelector(".swimmer-glide")).not.toBeNull();
+    expect(container.textContent).toContain("50 / 100 分");
+  });
   it("天气切换保留暂停、镜头、角色和进度，轻量模式往返保留天气", async () => {
     await mount();
     const original = renderer();
@@ -76,7 +86,7 @@ describe("ocean experience", () => {
     await click("模拟渲染失败");
     expect(renderer()).toBeNull();
     expect(container.textContent).toContain("已为你切换轻量场景");
-    expect(container.textContent).toContain("50%");
+    expect(container.textContent).toContain("50 / 100 分");
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "重新加载 3D")).toBe(true);
   });
   it("可以手动切换轻量场景并重新进入 3D", async () => {

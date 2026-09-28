@@ -17,6 +17,23 @@ beforeAll(async () => {
 const appearance: OceanSceneProps = { progress: 0, avatarStyle: "MALE", pace: "STEADY", proportions: { bodyWidth: 1, strokeReach: 1 }, luminousWater: false, dolphin: false, butterfly: false };
 
 describe("swimmer on the shipped GLB", () => {
+  it("独立站姿预览完整入镜、双脚着地且不改变正在游泳的实例", () => {
+    const swimming=createSwimmer(source), preview=createSwimmer(source);
+    try {
+      swimming.setAppearance(appearance);preview.setAppearance({...appearance,avatarStyle:"FEMALE"});
+      swimming.update(3,2,routePose(5),seaHeight);
+      const before=swimming.group.matrixWorld.clone();
+      const framing=preview.setPreviewPose();
+      expect(framing.height).toBeGreaterThan(1.5);
+      expect(framing.height).toBeLessThan(2.2);
+      expect(framing.face.y).toBeGreaterThan(framing.height*0.8);
+      expect(new Box3().setFromObject(preview.group).min.y).toBeCloseTo(0,6);
+      const repeated=preview.setPreviewPose();
+      expect(repeated.height).toBeCloseTo(framing.height,6);
+      expect(repeated.face.distanceTo(framing.face)).toBeLessThan(0.000001);
+      expect(swimming.group.matrixWorld.equals(before)).toBe(true);
+    } finally { swimming.dispose();preview.dispose(); }
+  });
   it.each(["EASY", "STEADY", "SURGE"] as const)("%s 左右换气的吸气阶段嘴部露出浪面，收头后重新入水", (pace) => {
     for (const avatarStyle of ["MALE", "FEMALE"] as const) {
       const swimmer = createSwimmer(source);

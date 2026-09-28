@@ -66,10 +66,10 @@ export interface GameSnapshot {
   newUnlocks: GameUnlockId[];
 }
 
-export const GAME_UNLOCKS: ReadonlyArray<{ id: GameUnlockId; threshold: number; label: string }> = [
-  { id: "FREESTYLE", threshold: 50, label: "自由泳" },
-  { id: "DOLPHIN", threshold: 150, label: "海豚伙伴" },
-  { id: "BUTTERFLY", threshold: 300, label: "蝶泳" }
+export const GAME_UNLOCKS: ReadonlyArray<{ id: GameUnlockId; threshold: number; label: string; description: string }> = [
+  { id: "FREESTYLE", threshold: 50, label: "自由泳里程碑", description: "累计 50 分的成长纪念；自由泳从开启旅程即可观看。" },
+  { id: "DOLPHIN", threshold: 150, label: "海豚伙伴", description: "在轻量场景中显示海豚伴游；3D 伴游尚未开放。" },
+  { id: "BUTTERFLY", threshold: 300, label: "蝶泳主题", description: "在轻量场景中显示主题光轨；真正的蝶泳动作尚未开放。" }
 ];
 
 export function dateFromKey(key: string): Date {

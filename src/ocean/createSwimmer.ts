@@ -1,4 +1,4 @@
-import { Bone, BufferGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Quaternion, SphereGeometry, TorusGeometry, Vector3, SkinnedMesh, TubeGeometry, CatmullRomCurve3 } from "three";
+import { Bone, Box3, BufferGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Quaternion, SphereGeometry, TorusGeometry, Vector3, SkinnedMesh, TubeGeometry, CatmullRomCurve3 } from "three";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 import type { OceanSceneProps } from "../OceanScene";
 import { armDirections, breathingPose, sampleSwimEnvironment, swimLoad, type RoutePose } from "./swimMotion";
@@ -198,6 +198,24 @@ export function createSwimmer(source: Object3D) {
   }
   return {
     group, hands, mouth, setAppearance, update,
+    setPreviewPose() {
+      group.position.set(0,0,0);
+      group.rotation.set(0,0,0);
+      prone.rotation.set(0,0,0);
+      bones.forEach(bone => bone.quaternion.identity());
+      for (const side of [-1,1] as const) {
+        const suffix = side === 1 ? "L" : "R";
+        aim(`upperarm01_${suffix}`, [side*0.22,-0.97,0]);
+        aim(`lowerarm01_${suffix}`, [side*0.14,-0.99,0.025]);
+        aim(`wrist_${suffix}`, [side*0.12,-0.99,0.025]);
+      }
+      group.updateMatrixWorld(true);
+      bodies.forEach(body => body.computeBoundingBox());
+      const bounds = new Box3().setFromObject(group);
+      group.position.y = -bounds.min.y;
+      group.updateMatrixWorld(true);
+      return { height: bounds.max.y-bounds.min.y, face: head.getWorldPosition(new Vector3()).add(new Vector3(0,0.06,0)) };
+    },
     dispose() {
       materials.forEach((material) => material.dispose());
       bodies.forEach(body => body.geometry.dispose());

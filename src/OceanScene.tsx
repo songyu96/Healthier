@@ -107,6 +107,6 @@ export default function OceanScene({ progress, avatarStyle, pace, proportions, l
       </g>
     </svg>
     <div className="ocean-stage-heading"><span>OPEN WATER · 海洋旅程</span><b>每一次练习，都向前一程</b></div>
-    <div className="ocean-stage-marker" aria-hidden="true"><span>航线</span><b>{Math.round(Math.min(1, Math.max(0, progress)) * 100)}%</b></div>
+    <div className="ocean-stage-marker"><span>本周积分</span><b>{Math.round(Math.min(1, Math.max(0, progress)) * 100)} / 100 分</b></div>
   </div>;
 }

@@ -43,6 +43,7 @@ import {
 import { avatarProportions, swimPresentation } from "./gamePresentation";
 import { AvatarThumbnail } from "./OceanScene";
 import OceanExperience from "./OceanExperience";
+import CharacterPreview from "./CharacterPreview";
 
 const CATEGORY_LABELS: Record<GameGoalCategory, string> = {
   FITNESS: "健身",
@@ -77,7 +78,7 @@ function AvatarPicker({ value, onSelect, disabled = false }: {
   onSelect: (style: GameAvatarStyle) => void;
   disabled?: boolean;
 }) {
-  return <div className="game-avatar-picker">
+  return <><div className="game-avatar-picker">
     <div><span className="eyebrow">你的游泳角色</span><p>选择喜欢的角色，之后随时可以切换。</p></div>
     <div className="game-avatar-options">{(["FEMALE", "MALE"] as const).map((style) => <button
       className={`game-avatar-option${value === style ? " selected" : ""}`}
@@ -87,7 +88,7 @@ function AvatarPicker({ value, onSelect, disabled = false }: {
       disabled={disabled}
       onClick={() => onSelect(style)}
     ><AvatarThumbnail avatarStyle={style} /><span>{style === "FEMALE" ? "女游泳者" : "男游泳者"}</span></button>)}</div>
-  </div>;
+  </div><CharacterPreview avatarStyle={value} /></>;
 }
 
 export default function GamePage() {
@@ -208,14 +209,14 @@ export default function GamePage() {
 
   return <div className="page-stack">
     <section className="page-intro"><span className="eyebrow">海洋旅程 · {state.startedOn} 开始</span><h1>今天游到哪里？</h1>
-      <p>{gameWeightDescription(dietMode, Boolean(currentWeek?.goalPlannedSessions))} 少记录或休息不会扣除已经获得的伙伴和泳姿。</p>
+      <p>{gameWeightDescription(dietMode, Boolean(currentWeek?.goalPlannedSessions))} 少记录或休息不会扣除已解锁的奖励。</p>
     </section>
     <section className="card game-scene-card">
       <OceanExperience progress={(currentWeek?.points ?? 0) / 100} avatarStyle={state.avatarStyle} pace={presentation.pace} proportions={proportions} luminousWater={presentation.luminousWater} dolphin={Boolean(snapshot?.unlocks.includes("DOLPHIN"))} butterfly={Boolean(snapshot?.unlocks.includes("BUTTERFLY"))} />
-      <div className="game-progress"><div><span>当前可核算里程</span><strong>{snapshot?.mileage.toFixed(1) ?? "0.0"} 分</strong></div>
+      <div className="game-progress"><div><span>旅程积分</span><strong>{snapshot?.mileage.toFixed(1) ?? "0.0"} 分</strong></div>
         <div><span>今日游泳状态</span><strong>{presentation.label}</strong></div></div>
-      <p className="helper">本周前进 {currentWeek?.points.toFixed(1) ?? "0.0"} / 100 分。</p>
-      <p className="helper">历史记录修改后可核算里程会重算；已解锁内容永久保留。</p>
+      <p className="helper">本周积分 {currentWeek?.points.toFixed(1) ?? "0.0"} / 100 分。积分反映记录与练习，不代表实际游泳距离。</p>
+      <p className="helper">历史记录修改后旅程积分会重算；已解锁内容永久保留。</p>
       <AvatarPicker value={state.avatarStyle} onSelect={(style) => void run(() => setGameAvatarStyle(style), "游泳角色已切换。")} disabled={busy} />
       <p className="helper">身高与体重只轻微调整角色外观；游泳节奏随打卡和可评价的饮食记录变化，不代表体能或健康判断。</p>
     </section>
@@ -231,10 +232,11 @@ export default function GamePage() {
       <p className="helper">饮食分母固定为 7 天；只采用可比较的蔬菜、鲜果与食物多样性记录。游戏加成不代表整体健康判断。</p>
     </section>
     <section className="card">
-      <div className="section-heading"><div><span className="eyebrow">成长记录</span><h2>泳姿与伙伴</h2></div></div>
+      <div className="section-heading"><div><span className="eyebrow">成长记录</span><h2>旅程奖励</h2></div></div>
       <div className="game-unlock-grid">{GAME_UNLOCKS.map((unlock) => <div className={snapshot?.unlocks.includes(unlock.id) ? "game-unlock unlocked" : "game-unlock"} key={unlock.id}>
         <span aria-hidden="true">{unlock.id === "DOLPHIN" ? "🐬" : unlock.id === "BUTTERFLY" ? "🦋" : "🏊"}</span>
         <b>{unlock.label}</b><small>{snapshot?.unlocks.includes(unlock.id) ? "已解锁" : `${unlock.threshold} 分解锁`}</small>
+        <p className="helper">{unlock.description}</p>
       </div>)}</div>
     </section>
     <section className="card">
@@ -279,7 +281,7 @@ export default function GamePage() {
           {existing && <button className="secondary" type="button" disabled={busy} onClick={() => void run(() => deleteGameCheckin(goal.id, selectedDate), "打卡已删除，旅程已重算。")}>删除</button>}
         </form>;
       })}</div>
-      {selectedDate < today && <p className="helper">补录或删除历史打卡会重算该周及之后的可核算里程。</p>}
+      {selectedDate < today && <p className="helper">补录或删除历史打卡会重算该周及之后的旅程积分。</p>}
     </section>
   </div>;
 }
