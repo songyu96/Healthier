@@ -7,7 +7,7 @@ import type { GameAvatarStyle } from "../game";
 import { createSwimmer } from "./createSwimmer";
 import { characterCamera, type CharacterView } from "./characterPreviewViews";
 import { supportsOceanWebGL } from "./webglSupport";
-import swimmerUrl from "./assets/swimmer.glb?url";
+import { swimmerAsset } from "./swimmerAssets";
 
 interface Props {
   avatarStyle: GameAvatarStyle;
@@ -18,7 +18,7 @@ interface Props {
 }
 
 function Studio({ avatarStyle, request, rotating, onReady, onFailure }: Props) {
-  const gltf = useLoader(GLTFLoader, swimmerUrl);
+  const gltf = useLoader(GLTFLoader, swimmerAsset(avatarStyle));
   const { camera, gl, invalidate } = useThree();
   const controls = useRef<OrbitControls | null>(null);
   const subject = useMemo(() => {
@@ -73,9 +73,9 @@ export default function CharacterPreviewCanvas(props: Props) {
     gl={{antialias:true,alpha:false,powerPreference:"default",toneMapping:ACESFilmicToneMapping,toneMappingExposure:1}}
     onCreated={({gl}) => { gl.debug.onShaderError = () => onFailure(); }}>
     <color attach="background" args={["#e5ece8"]} />
-    <hemisphereLight args={["#f2f6f5","#b1bdb6",1.6]} />
-    <directionalLight position={[3,4,5]} color="#fff7ed" intensity={2.4} />
-    <directionalLight position={[-3,2,-2]} color="#d9ebf5" intensity={1.2} />
+    <hemisphereLight args={["#f2f6f5","#b1bdb6",0.65]} />
+    <directionalLight position={[3,4,5]} color="#fff7ed" intensity={1.5} />
+    <directionalLight position={[-3,2,-2]} color="#d9ebf5" intensity={0.35} />
     <mesh rotation={[-Math.PI/2,0,0]} position={[0,-0.003,0]}><circleGeometry args={[0.65,64]} /><meshStandardMaterial color="#c8d8cf" roughness={0.9} /></mesh>
     <Suspense fallback={null}><Studio {...props} /></Suspense>
   </Canvas>;

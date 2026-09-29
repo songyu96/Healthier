@@ -32,7 +32,7 @@ describe("character inspection", () => {
     await click("面部近景");
     await act(async()=>root.render(<CharacterPreview avatarStyle="FEMALE" />));
     expect(host.querySelector<HTMLElement>("[data-preview]")?.dataset.preview).toBe("FEMALE");
-    expect(host.textContent).toContain("新造型尚未上线");
+    expect(host.textContent).toContain("C 款珊瑚配色");
     await click("收起角色预览");
     expect(host.querySelector("[data-preview]")).toBeNull();
   });

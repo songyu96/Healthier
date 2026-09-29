@@ -8,7 +8,7 @@ import type { OceanSceneProps } from "../OceanScene";
 import { createCoast } from "./createCoast";
 import { createSwimmer } from "./createSwimmer";
 import { advanceSwim, routePose, transportView, CAMERA_VIEWS, type SwimClock, type OceanQuality, type OceanView } from "./swimMotion";
-import swimmerUrl from "./assets/swimmer.glb?url";
+import { swimmerAsset } from "./swimmerAssets";
 import { supportsOceanWebGL } from "./webglSupport";
 import { OCEAN_LOOKS, type OceanWeather } from "./oceanLook";
 
@@ -113,7 +113,7 @@ function Environment({ weather }: { weather: OceanWeather }) {
 
 function World(props: Props) {
   const { onReady, onFailure } = props;
-  const gltf = useLoader(GLTFLoader, swimmerUrl);
+  const gltf = useLoader(GLTFLoader, swimmerAsset(props.avatarStyle));
   const coast = useMemo(() => createCoast(props.quality), [props.quality]);
   const swimmer = useMemo(() => createSwimmer(gltf.scene), [gltf.scene]);
   const clock = useRef<SwimClock>({ time: 0, phase: 0, distance: 0 });

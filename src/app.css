@@ -333,8 +333,8 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .ocean-stage-marker span { font-size: 10px; letter-spacing: .12em; }
 .ocean-stage-marker b { font-size: 18px; }
 .swimmer-figure { --swim-suit: #d7af6d; --swim-suit-dark: #966d42; --swim-hair: #33404a; }
-.swimmer-figure.avatar-female { --swim-suit: #e58472; --swim-suit-dark: #af5656; --swim-hair: #333443; }
-.swimmer-figure.avatar-male { --swim-suit: #58bfc0; --swim-suit-dark: #256f86; --swim-hair: #273c48; }
+.swimmer-figure.avatar-female { --swim-suit: #e88777; --swim-suit-dark: #294d5e; --swim-hair: #463637; }
+.swimmer-figure.avatar-male { --swim-suit: #f6f2e6; --swim-suit-dark: #e88777; --swim-hair: #1d293b; }
 .ocean-stage .swimmer-motion { animation: ocean-swimmer-bob var(--swim-cycle) ease-in-out infinite; }
 .ocean-stage .swimmer-arm, .ocean-stage .swimmer-leg { transform-box: fill-box; }
 .ocean-stage .swimmer-arm-front { transform-origin: 8% 50%; animation: ocean-arm-front var(--swim-cycle) ease-in-out infinite; }

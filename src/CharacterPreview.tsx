@@ -40,7 +40,7 @@ export default function CharacterPreview({ avatarStyle }: { avatarStyle?: GameAv
     {!avatarStyle && <span className="helper">先选择一位游泳者，即可查看全身与面部。</span>}
     {open && avatarStyle && <section id={panelId} aria-label="角色观察室" className="character-preview-panel">
       <header><div><span className="eyebrow">角色观察室</span><h3>{avatarStyle === "MALE" ? "男游泳者" : "女游泳者"}</h3></div><span className="character-preview-badge">当前游戏造型</span></header>
-      <p className="helper">中性灯光下查看轮廓与装备。这里展示当前角色，新造型尚未上线。</p>
+      <p className="helper">C 款珊瑚配色 · 动漫角色。观察室展示发型，游泳时佩戴泳帽与泳镜。</p>
       <div className="character-preview-viewport" ref={host}>
         {failed ? <p role="status">角色预览暂不可用。你仍可选择角色并继续旅程。</p> : <PreviewBoundary onFailure={onFailure}>
           <Suspense fallback={null}><CharacterPreviewCanvas avatarStyle={avatarStyle} request={request} rotating={rotating && active} onReady={onReady} onFailure={onFailure} /></Suspense>

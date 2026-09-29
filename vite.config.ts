@@ -8,9 +8,9 @@ const pwaPlugins = VitePWA({
   registerType: "prompt",
   includeAssets: ["favicon.svg"],
   workbox: {
-    globIgnores: ["**/OceanCanvas-*.js", "**/CharacterPreviewCanvas-*.js", "**/swimmer-*.js"],
+    globIgnores: ["**/OceanCanvas-*.js", "**/CharacterPreviewCanvas-*.js", "**/swimmer*.js", "**/createSwimmer-*.js"],
     runtimeCaching: [{
-      urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/assets\/(?:(?:OceanCanvas|CharacterPreviewCanvas|swimmer)-[^/]+\.js|swimmer-[^/]+\.glb)$/.test(url.pathname),
+      urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/assets\/(?:(?:OceanCanvas|CharacterPreviewCanvas|swimmer[^/]*|createSwimmer)-[^/]+\.js|swimmer-[^/]+\.glb)$/.test(url.pathname),
       handler: "CacheFirst",
       options: {
         cacheName: "healthier-ocean-assets",

@@ -1,10 +1,12 @@
-import { Bone, Box3, BufferGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Quaternion, SphereGeometry, TorusGeometry, Vector3, SkinnedMesh, TubeGeometry, CatmullRomCurve3 } from "three";
+import { Bone, Box3, BufferGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, MeshToonMaterial, Object3D, Quaternion, SphereGeometry, TorusGeometry, Vector3, SkinnedMesh, TubeGeometry, CatmullRomCurve3 } from "three";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 import type { OceanSceneProps } from "../OceanScene";
 import { armDirections, breathingPose, sampleSwimEnvironment, swimLoad, type RoutePose } from "./swimMotion";
 
 export function createSwimmer(source: Object3D) {
   const model = clone(source);
+  let anime = false;
+  model.traverse(object => { if (object.userData.characterStyle === "anime-coral-c") anime = true; });
   const group = new Group();
   group.name = "SwimmingCharacter";
   const prone = new Group();
@@ -12,20 +14,25 @@ export function createSwimmer(source: Object3D) {
   group.add(prone);
   prone.add(model);
   const bones = new Map<string, Bone>();
-  const materials: MeshStandardMaterial[] = [];
+  const materials: (MeshStandardMaterial | MeshToonMaterial)[] = [];
+  const staticGeometries: BufferGeometry[] = [];
   const bodies: SkinnedMesh[] = [];
   model.traverse((object) => {
     if (object instanceof Bone) bones.set(object.name, object);
-    if (object instanceof SkinnedMesh) {
+    if (object instanceof Mesh) {
       object.geometry = object.geometry.clone();
-      bodies.push(object);
+      if (object instanceof SkinnedMesh) bodies.push(object);
+      else staticGeometries.push(object.geometry);
       object.frustumCulled = false;
       object.castShadow = true;
       const copyMaterial = (material: MeshStandardMaterial) => {
-        const copy = material.clone();
-        copy.envMapIntensity = 0.7;
-        copy.roughness = material.name === "Skin" ? 0.54 : 0.42;
-        copy.vertexColors = material.name !== "Skin";
+        const copy = anime ? new MeshToonMaterial({color:material.color,side:material.side}) : material.clone();
+        copy.name = material.name;
+        if (copy instanceof MeshStandardMaterial) {
+          copy.envMapIntensity = 0.7;
+          copy.roughness = material.name === "Skin" ? 0.54 : 0.42;
+          copy.vertexColors = material.name !== "Skin";
+        }
         materials.push(copy);
         return copy;
       };
@@ -37,6 +44,7 @@ export function createSwimmer(source: Object3D) {
   const headBone = bones.get("head");
   if (!headBone) throw new Error("游泳角色缺少头部骨骼。");
   const head: Bone = headBone;
+  const legacyHead: Object3D = anime ? new Group() : head;
   for (const name of ["spine01", "spine03", "neck01", "oris01", "eye_L", "eye_R", ...["L", "R"].flatMap(side => ["clavicle", "upperarm01", "lowerarm01", "wrist", "upperleg01", "lowerleg01", "foot"].map(bone => `${bone}_${side}`))]) {
     if (!bones.has(name)) throw new Error(`游泳角色缺少动作骨骼：${name}`);
   }
@@ -51,7 +59,7 @@ export function createSwimmer(source: Object3D) {
   cap.geometry.computeVertexNormals();
   cap.scale.set(0.079, 0.096, 0.102);
   cap.position.set(0, 0.057, 0.043);
-  head.add(cap);
+  legacyHead.add(cap);
   const lensMaterial = new MeshPhysicalMaterial({ color: "#76b8ce", metalness: 0.45, roughness: 0.22, clearcoat: 0.7 });
   const strapMaterial = new MeshStandardMaterial({ color: "#263c42", roughness: 0.58 });
   const accessoryGeometries: BufferGeometry[] = [cap.geometry];
@@ -62,7 +70,7 @@ export function createSwimmer(source: Object3D) {
     lens.name = `RaceLens_${side === 1 ? "L" : "R"}`;
     lens.position.set(0, 0, 0.024);
     lens.scale.set(0.029, 0.018, 0.009);
-    const eye = bones.get(`eye_${side === 1 ? "L" : "R"}`)!;
+    const eye = anime ? legacyHead : bones.get(`eye_${side === 1 ? "L" : "R"}`)!;
     eye.add(lens);
     const rimGeometry = new TorusGeometry(1, 0.11, 8, 32);
     accessoryGeometries.push(rimGeometry);
@@ -77,10 +85,10 @@ export function createSwimmer(source: Object3D) {
   strap.rotation.x = Math.PI / 2;
   strap.scale.set(0.081, 0.10, 0.081);
   strap.position.set(0, 0.035, 0.043);
-  head.add(strap);
+  legacyHead.add(strap);
   const bridgeGeometry = new TubeGeometry(new CatmullRomCurve3([new Vector3(-0.012, 0.031, 0.132), new Vector3(0, 0.037, 0.137), new Vector3(0.012, 0.031, 0.132)]), 10, 0.0025, 6, false);
   accessoryGeometries.push(bridgeGeometry);
-  head.add(new Mesh(bridgeGeometry, strapMaterial));
+  legacyHead.add(new Mesh(bridgeGeometry, strapMaterial));
 
   const direction = new Vector3();
   const inverse = new Quaternion();
@@ -105,6 +113,10 @@ export function createSwimmer(source: Object3D) {
     bone.quaternion.setFromUnitVectors(rest.get(name)!, direction);
   }
   function setAppearance(props: Pick<OceanSceneProps, "avatarStyle" | "proportions">) {
+    if (anime) {
+      model.scale.set(props.proportions.bodyWidth,props.proportions.strokeReach,1);
+      return;
+    }
     const female = props.avatarStyle === "FEMALE";
     const base = new Color(female ? "#172e35" : "#122f49");
     const accent = new Color(female ? "#30cbae" : "#60aecb");
@@ -145,8 +157,20 @@ export function createSwimmer(source: Object3D) {
   const neck = bones.get("neck01")!;
   const lips = bones.get("oris01")!;
   let lastTime: number | undefined;
+  const previewObjects: Object3D[] = [], swimObjects: Object3D[] = [];
+  model.traverse(object => {
+    if (object.userData.previewOnly) previewObjects.push(object);
+    if (object.userData.swimOnly) swimObjects.push(object);
+  });
+  function presentation(preview: boolean) {
+    previewObjects.forEach(object => { object.visible = preview; });
+    swimObjects.forEach(object => { object.visible = !preview; });
+  }
+  presentation(false);
   let floatingHeight = 0, pitch = 0, roll = 0;
   function update(time: number, phase: number, pose: RoutePose, waterHeight: (x: number, z: number, time: number) => number) {
+    presentation(false);
+    prone.rotation.x = Math.PI / 2;
     const c = Math.cos(pose.heading), s = Math.sin(pose.heading);
     const height = (x: number, z: number) => waterHeight(pose.x + x*c + z*s, pose.z - x*s + z*c, time);
     const environment = sampleSwimEnvironment(pose, time), load = swimLoad(environment);
@@ -199,6 +223,7 @@ export function createSwimmer(source: Object3D) {
   return {
     group, hands, mouth, setAppearance, update,
     setPreviewPose() {
+      presentation(true);
       group.position.set(0,0,0);
       group.rotation.set(0,0,0);
       prone.rotation.set(0,0,0);
@@ -208,6 +233,8 @@ export function createSwimmer(source: Object3D) {
         aim(`upperarm01_${suffix}`, [side*0.22,-0.97,0]);
         aim(`lowerarm01_${suffix}`, [side*0.14,-0.99,0.025]);
         aim(`wrist_${suffix}`, [side*0.12,-0.99,0.025]);
+        aim(`upperleg01_${suffix}`, [side*0.035,-1,0]);
+        aim(`lowerleg01_${suffix}`, [side*0.025,-1,0.025]);
       }
       group.updateMatrixWorld(true);
       bodies.forEach(body => body.computeBoundingBox());
@@ -219,6 +246,7 @@ export function createSwimmer(source: Object3D) {
     dispose() {
       materials.forEach((material) => material.dispose());
       bodies.forEach(body => body.geometry.dispose());
+      staticGeometries.forEach(geometry => geometry.dispose());
       accessoryGeometries.forEach((geometry) => geometry.dispose());
       capMaterial.dispose(); lensMaterial.dispose(); strapMaterial.dispose();
       const skeletons = new Set<SkinnedMesh["skeleton"]>();
