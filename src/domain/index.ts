@@ -13,5 +13,4 @@ export * from "./rules/targets";
 export * from "./rules/assessDay";
 export * from "./rules/assessWeek";
 export * from "./rules/recommendations";
-export * from "./knowledge/bookKnowledge";
 

@@ -3,13 +3,16 @@ import { BUILT_IN_FOODS, mergeFoodRegistry } from "./foodRegistry";
 
 describe("food registry", () => {
   it("统一注册四套数据且ID全局唯一", () => {
-    expect(BUILT_IN_FOODS).toHaveLength(237);
+    expect(BUILT_IN_FOODS).toHaveLength(317);
     expect(new Set(BUILT_IN_FOODS.map((food) => food.id)).size).toBe(BUILT_IN_FOODS.length);
     expect(BUILT_IN_FOODS.some((food) => food.id === "china-crucian-carp-raw")).toBe(true);
     expect(BUILT_IN_FOODS.some((food) => food.id === "hamburger-generic-recipe")).toBe(true);
     expect(BUILT_IN_FOODS.some((food) => food.id === "china-purple-cabbage-raw")).toBe(true);
     expect(BUILT_IN_FOODS.some((food) => food.id === "china-shiitake-fresh-raw")).toBe(true);
     expect(BUILT_IN_FOODS.some((food) => food.id === "china-cured-sausage")).toBe(true);
+    expect(BUILT_IN_FOODS.some((food) => food.id === "china-oat-flakes-plain")).toBe(true);
+    expect(BUILT_IN_FOODS.some((food) => food.id === "china-chicken-egg-raw-average")).toBe(true);
+    expect(BUILT_IN_FOODS.some((food) => food.id === "china-scallop-dried")).toBe(true);
   });
 
   it("常见中国食物名不会误命中美式通用条目", () => {

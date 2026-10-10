@@ -7,18 +7,6 @@ import { VitePWA, type VitePluginPWAAPI } from "vite-plugin-pwa";
 const pwaPlugins = VitePWA({
   registerType: "prompt",
   includeAssets: ["favicon.svg"],
-  workbox: {
-    globIgnores: ["**/OceanCanvas-*.js", "**/CharacterPreviewCanvas-*.js", "**/swimmer*.js", "**/createSwimmer-*.js"],
-    runtimeCaching: [{
-      urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/assets\/(?:(?:OceanCanvas|CharacterPreviewCanvas|swimmer[^/]*|createSwimmer)-[^/]+\.js|swimmer-[^/]+\.glb)$/.test(url.pathname),
-      handler: "CacheFirst",
-      options: {
-        cacheName: "healthier-ocean-assets",
-        cacheableResponse: { statuses: [200] },
-        expiration: { maxEntries: 8, maxAgeSeconds: 30 * 24 * 60 * 60 }
-      }
-    }]
-  },
   manifest: {
     name: "Healthier · 书本饮食助手",
     short_name: "Healthier",

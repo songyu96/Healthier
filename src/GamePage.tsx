@@ -43,7 +43,6 @@ import {
 import { avatarProportions, swimPresentation } from "./gamePresentation";
 import { AvatarThumbnail } from "./OceanScene";
 import OceanExperience from "./OceanExperience";
-import CharacterPreview from "./CharacterPreview";
 
 const CATEGORY_LABELS: Record<GameGoalCategory, string> = {
   FITNESS: "健身",
@@ -78,7 +77,7 @@ function AvatarPicker({ value, onSelect, disabled = false }: {
   onSelect: (style: GameAvatarStyle) => void;
   disabled?: boolean;
 }) {
-  return <><div className="game-avatar-picker">
+  return <div className="game-avatar-picker">
     <div><span className="eyebrow">你的游泳角色</span><p>选择喜欢的角色，之后随时可以切换。</p></div>
     <div className="game-avatar-options">{(["FEMALE", "MALE"] as const).map((style) => <button
       className={`game-avatar-option${value === style ? " selected" : ""}`}
@@ -88,7 +87,7 @@ function AvatarPicker({ value, onSelect, disabled = false }: {
       disabled={disabled}
       onClick={() => onSelect(style)}
     ><AvatarThumbnail avatarStyle={style} /><span>{style === "FEMALE" ? "女游泳者" : "男游泳者"}</span></button>)}</div>
-  </div><CharacterPreview avatarStyle={value} /></>;
+  </div>;
 }
 
 export default function GamePage() {

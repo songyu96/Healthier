@@ -8,7 +8,6 @@ import { db, startGame, loadGameState, recordGameUnlocks } from "./db";
 import { dateKey, GAME_UNLOCKS } from "./game";
 
 vi.mock("./OceanExperience",()=>({default:()=> <div>海湾场景</div>}));
-vi.mock("./CharacterPreview",()=>({default:()=> <div>角色观察室</div>}));
 
 afterEach(async () => {
   await db.transaction("rw", db.tables, async () => {
@@ -28,8 +27,9 @@ describe("ocean game page", () => {
       await vi.waitFor(()=>expect(container.textContent).toContain("旅程积分"));
       expect(container.textContent).not.toContain("可核算里程");
       expect(container.textContent).toContain("不代表实际游泳距离");
-      expect(container.textContent).toContain("3D 伴游尚未开放");
-      expect(container.textContent).toContain("真正的蝶泳动作尚未开放");
+      expect(container.textContent).toContain("在海洋场景中显示海豚伴游");
+      expect(container.textContent).toContain("光轨不代表真正的蝶泳动作");
+      expect(container.textContent).not.toContain("角色观察室");
       expect(GAME_UNLOCKS.map(unlock=>unlock.threshold)).toEqual([50,150,300]);
       expect((await loadGameState())?.unlocks).toEqual(before?.unlocks);
     } finally { await act(async()=>root.unmount());container.remove(); }

@@ -1,16 +1,8 @@
-import { act, useEffect } from "react";
+import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import OceanExperience from "./OceanExperience";
 import type { OceanSceneProps } from "./OceanScene";
-
-vi.mock("./ocean/OceanCanvas", () => ({
-  default: function MockCanvas(props: { onReady: () => void; onFailure: () => void; paused: boolean; quality: string; weather: string; cameraRequest: { view: string; revision: number }; avatarStyle: string }) {
-    const { onReady } = props;
-    useEffect(() => { onReady(); }, [onReady]);
-    return <div data-testid="renderer" data-weather={props.weather} data-paused={props.paused} data-quality={props.quality} data-view={props.cameraRequest.view} data-revision={props.cameraRequest.revision} data-avatar={props.avatarStyle}><button onClick={props.onFailure}>模拟渲染失败</button></div>;
-  }
-}));
 
 const props: OceanSceneProps = { progress: 0.5, avatarStyle: "FEMALE", pace: "STEADY", proportions: { bodyWidth: 1, strokeReach: 1 }, luminousWater: false, dolphin: false, butterfly: false };
 let container: HTMLDivElement, root: Root;
@@ -22,86 +14,23 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   container.remove();
-  vi.unstubAllGlobals();
 });
-async function mount() {
-  await act(async () => { root.render(<OceanExperience {...props} />); });
-  await vi.waitFor(() => expect(container.querySelector('[data-testid="renderer"]')).not.toBeNull());
-}
-async function click(text: string) {
-  const button = [...container.querySelectorAll("button")].find((item) => item.textContent === text);
-  expect(button).toBeDefined();
-  await act(async () => button!.click());
-}
-function renderer() { return container.querySelector<HTMLElement>('[data-testid="renderer"]')!; }
 
 describe("ocean experience", () => {
-  it("已有伙伴与主题奖励时提供轻量场景入口，3D 不宣称已实现", async () => {
-    await act(async()=>root.render(<OceanExperience {...props} dolphin butterfly />));
-    await vi.waitFor(()=>expect(renderer()).not.toBeNull());
-    expect(container.textContent).toContain("蝶泳主题光轨目前在轻量场景展示");
-    await click("查看轻量场景奖励");
-    expect(renderer()).toBeNull();
+  it("只展示轻量海洋场景，不提供 3D 入口", async () => {
+    await act(async () => root.render(<OceanExperience {...props} />));
+    expect(container.querySelector(".ocean-stage-art")).not.toBeNull();
+    expect(container.textContent).toContain("50 / 100 分");
+    expect(container.textContent).toContain("不会加载 3D 模型");
+    expect(container.textContent).not.toContain("进入 3D 场景");
+    expect(container.textContent).not.toContain("均衡画质");
+    expect(container.querySelector("canvas")).toBeNull();
+  });
+
+  it("在轻量场景中保留角色和解锁奖励", async () => {
+    await act(async () => root.render(<OceanExperience {...props} dolphin butterfly />));
+    expect(container.querySelector(".avatar-female")).not.toBeNull();
     expect(container.querySelector(".ocean-dolphin")).not.toBeNull();
     expect(container.querySelector(".swimmer-glide")).not.toBeNull();
-    expect(container.textContent).toContain("50 / 100 分");
-  });
-  it("天气切换保留暂停、镜头、角色和进度，轻量模式往返保留天气", async () => {
-    await mount();
-    const original = renderer();
-    expect(original.dataset.weather).toBe("SUNNY");
-    await click("暂停动态");
-    await click("俯瞰");
-    for (const [label, value, title] of [["阴天","CLOUDY","云下海湾"],["雨天","RAINY","听雨海湾"],["晴天","SUNNY","晴空海湾"]]) {
-      await click(label);
-      expect(renderer()).toBe(original);
-      expect(renderer().dataset.weather).toBe(value);
-      expect(renderer().dataset.paused).toBe("true");
-      expect(renderer().dataset.view).toBe("OVERHEAD");
-      expect(renderer().dataset.avatar).toBe("FEMALE");
-      expect(container.textContent).toContain(title);
-    }
-    await click("雨天");
-    await click("轻量场景");
-    await click("进入 3D 场景");
-    expect(renderer().dataset.weather).toBe("RAINY");
-  });
-  it("切换镜头、暂停、画质时保留角色，重复镜头按钮仍可复位", async () => {
-    await mount();
-    expect(container.textContent).not.toContain("正在驶入海湾");
-    await click("俯瞰");
-    expect(renderer().dataset.view).toBe("OVERHEAD");
-    await click("俯瞰");
-    expect(renderer().dataset.revision).toBe("2");
-    await click("暂停动态");
-    expect(renderer().dataset.paused).toBe("true");
-    await click("均衡画质");
-    expect(renderer().dataset.quality).toBe("LOW");
-    expect(renderer().dataset.avatar).toBe("FEMALE");
-    await click("继续动态");
-    expect(renderer().dataset.paused).toBe("false");
-  });
-  it("渲染失败自动回退，提供刷新重试并保留原始进度", async () => {
-    await mount();
-    await click("模拟渲染失败");
-    expect(renderer()).toBeNull();
-    expect(container.textContent).toContain("已为你切换轻量场景");
-    expect(container.textContent).toContain("50 / 100 分");
-    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "重新加载 3D")).toBe(true);
-  });
-  it("可以手动切换轻量场景并重新进入 3D", async () => {
-    await mount();
-    await click("轻量场景");
-    expect(renderer()).toBeNull();
-    await click("进入 3D 场景");
-    expect(renderer()).not.toBeNull();
-    expect(container.textContent).not.toContain("已为你切换轻量场景");
-  });
-  it("减少动态效果偏好默认暂停，可手动继续", async () => {
-    vi.stubGlobal("matchMedia", () => ({ matches: true }));
-    await mount();
-    expect(renderer().dataset.paused).toBe("true");
-    await click("继续动态");
-    expect(renderer().dataset.paused).toBe("false");
   });
 });

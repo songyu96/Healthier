@@ -1,10 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import {
   AssessmentPanel,
   BodyMetricRows,
-  BookChapterCard,
   BrandMark,
   BrandWordmark,
   CalculatorResult,
@@ -16,12 +15,12 @@ import {
   foodCategoriesForKind,
   foodQualityLabel
 } from "./HealthierApp";
+import BookKnowledgePage, { BookChapterCard } from "./BookKnowledgePage";
 import type { BodyMetric } from "./db";
 import {
   assessDay,
   assessWeek,
   appendQuickMealFood,
-  BOOK_CHAPTERS,
   calculateNutrition,
   calculateTargets,
   createQuickMealDraft,
@@ -29,6 +28,7 @@ import {
   type FoodReference,
   type UserProfile
 } from "./domain";
+import { BOOK_CHAPTERS } from "./domain/knowledge/bookKnowledge";
 
 function profile(healthFlags: UserProfile["healthFlags"]): UserProfile {
   return {
@@ -103,6 +103,19 @@ describe("book knowledge rendering", () => {
     expect(html).not.toContain(chapter!.coreIdea);
     expect(html).not.toContain("EPUB目录");
     expect(html).not.toContain("BR-B-002");
+  });
+
+  it("拆分后的章节路由仍展示详情与来源", () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter initialEntries={["/book/B1-BREAKFAST"]}>
+        <Routes><Route path="/book/:chapterId" element={<BookKnowledgePage />} /></Routes>
+      </MemoryRouter>
+    );
+
+    expect(html).toContain("早餐一定要吃够100分");
+    expect(html).toContain("返回书本知识");
+    expect(html).toContain("引用位置");
+    expect(html).toContain("index_split_076.html");
   });
 });
 

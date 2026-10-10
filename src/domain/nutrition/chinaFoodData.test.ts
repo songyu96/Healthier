@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { CHINA_FOODS } from "./chinaFoodData";
 
 describe("curated China food composition data", () => {
-  it("收录六十六个来源可直达的人工核验条目", () => {
-    expect(CHINA_FOODS).toHaveLength(66);
-    expect(new Set(CHINA_FOODS.map((food) => food.id)).size).toBe(66);
-    expect(CHINA_FOODS.filter((food) => food.nutrientsPer100)).toHaveLength(32);
-    expect(CHINA_FOODS.filter((food) => food.partialNutrientsPer100)).toHaveLength(34);
+  it("收录一百四十六个来源可直达的人工核验条目", () => {
+    expect(CHINA_FOODS).toHaveLength(146);
+    expect(new Set(CHINA_FOODS.map((food) => food.id)).size).toBe(146);
+    expect(CHINA_FOODS.filter((food) => food.nutrientsPer100)).toHaveLength(36);
+    expect(CHINA_FOODS.filter((food) => food.partialNutrientsPer100)).toHaveLength(110);
 
     CHINA_FOODS.forEach((food) => {
       expect(food.source).toMatchObject({
@@ -16,11 +16,14 @@ describe("curated China food composition data", () => {
       expect(food.source.ref).toMatch(/^https:\/\/nlc\.chinanutri\.cn\/fq\/foodinfo\/\d+\.html$/);
       const nutrients = food.nutrientsPer100 ?? food.partialNutrientsPer100;
       expect(nutrients?.kcal).toEqual(expect.any(Number));
-      expect(nutrients?.protein).toEqual(expect.any(Number));
-      expect(nutrients?.fat).toEqual(expect.any(Number));
       if (food.nutrientsPer100) {
+        expect(nutrients?.protein).toEqual(expect.any(Number));
+        expect(nutrients?.fat).toEqual(expect.any(Number));
         expect(nutrients?.carb).toEqual(expect.any(Number));
         expect(nutrients?.fiber).toEqual(expect.any(Number));
+      } else {
+        expect([nutrients?.protein, nutrients?.fat, nutrients?.carb, nutrients?.fiber]
+          .some((value) => typeof value === "number")).toBe(true);
       }
       expect(food.dataCaveats?.some((caveat) => caveat.includes("kcal=4.184 kJ"))).toBe(true);
     });
@@ -67,6 +70,23 @@ describe("curated China food composition data", () => {
 
     for (const id of ["china-purple-cabbage-raw", "china-cod-baked", "china-cured-sausage"]) {
       expect(CHINA_FOODS.find((food) => food.id === id)?.source.release).toContain("2026-09-02");
+    }
+  });
+
+  it("第二批常见食物覆盖主食、蛋奶、水产、块茎和油脂", () => {
+    expect(CHINA_FOODS.find((food) => food.id === "china-oat-flakes-plain")?.nutrientsPer100)
+      .toEqual({ kcal: 381, protein: 14.4, fat: 9.7, carb: 65.3, fiber: 13.2 });
+    expect(CHINA_FOODS.find((food) => food.id === "china-chicken-egg-raw-average")?.partialNutrientsPer100)
+      .toEqual({ kcal: 143, protein: 13.3, fat: 8.8, carb: 2.8 });
+    expect(CHINA_FOODS.find((food) => food.id === "china-scallop-dried")?.partialNutrientsPer100)
+      .toEqual({ kcal: 268, protein: 55.6, fat: 2.4, carb: 5.1 });
+    expect(CHINA_FOODS.find((food) => food.id === "china-yam-raw")?.partialNutrientsPer100)
+      .toEqual({ kcal: 58, protein: 1.9, fat: 0.2, carb: 12.4 });
+    expect(CHINA_FOODS.find((food) => food.id === "china-peanut-oil")?.partialNutrientsPer100)
+      .toEqual({ kcal: 883, fat: 99.9 });
+
+    for (const id of ["china-oat-flakes-plain", "china-chicken-egg-raw-average", "china-scallop-dried"]) {
+      expect(CHINA_FOODS.find((food) => food.id === id)?.source.release).toContain("2026-10-06");
     }
   });
 });
