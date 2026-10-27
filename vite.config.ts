@@ -7,6 +7,18 @@ import { VitePWA, type VitePluginPWAAPI } from "vite-plugin-pwa";
 const pwaPlugins = VitePWA({
   registerType: "prompt",
   includeAssets: ["favicon.svg"],
+  workbox: {
+    globIgnores: ["**/journey-*.webp"],
+    runtimeCaching: [{
+      urlPattern: ({ url }) => url.pathname.includes("/assets/journey-") && url.pathname.endsWith(".webp"),
+      handler: "CacheFirst",
+      options: {
+        cacheName: "healthier-journey-art-v1",
+        cacheableResponse: { statuses: [0, 200] },
+        expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 30 }
+      }
+    }]
+  },
   manifest: {
     name: "Healthier · 书本饮食助手",
     short_name: "Healthier",

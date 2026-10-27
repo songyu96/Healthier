@@ -322,56 +322,66 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .game-today-link > span:last-child { font-size: 25px; }
 .game-start-card, .game-scene-card { overflow: hidden; }
 .game-start-card > .primary { margin-top: 18px; }
-.ocean-stage { position: relative; overflow: hidden; isolation: isolate; border-radius: 20px; background: #0b4c66; --swim-cycle: 2.7s; --bubble-cycle: 4.8s; }
-.ocean-stage.pace-steady { --swim-cycle: 1.9s; --bubble-cycle: 3.8s; }
-.ocean-stage.pace-surge { --swim-cycle: 1.2s; --bubble-cycle: 2.8s; }
-.ocean-stage-art { display: block; width: 100%; height: clamp(260px, 43vw, 370px); }
-.ocean-stage-heading { position: absolute; top: 17px; left: 20px; display: grid; gap: 4px; max-width: calc(100% - 150px); color: #173f50; text-shadow: 0 1px 9px rgba(255, 251, 230, .75); }
-.ocean-stage-heading span { font-size: 10px; font-weight: 900; letter-spacing: .16em; }
-.ocean-stage-heading b { font-family: Georgia, "Songti SC", serif; font-size: clamp(16px, 3vw, 23px); font-weight: 600; }
-.ocean-stage-marker { position: absolute; right: 18px; bottom: 18px; display: grid; justify-items: end; gap: 1px; border: 1px solid rgba(224, 251, 243, .34); border-radius: 13px; padding: 8px 11px; color: #e9fff4; background: rgba(8, 54, 74, .52); backdrop-filter: blur(8px); }
-.ocean-stage-marker span { font-size: 10px; letter-spacing: .12em; }
-.ocean-stage-marker b { font-size: 18px; }
-.swimmer-figure { --swim-suit: #d7af6d; --swim-suit-dark: #966d42; --swim-hair: #33404a; }
-.swimmer-figure.avatar-female { --swim-suit: #e88777; --swim-suit-dark: #294d5e; --swim-hair: #463637; }
-.swimmer-figure.avatar-male { --swim-suit: #f6f2e6; --swim-suit-dark: #e88777; --swim-hair: #1d293b; }
-.ocean-stage .swimmer-motion { animation: ocean-swimmer-bob var(--swim-cycle) ease-in-out infinite; }
-.ocean-stage .swimmer-arm, .ocean-stage .swimmer-leg { transform-box: fill-box; }
-.ocean-stage .swimmer-arm-front { transform-origin: 8% 50%; animation: ocean-arm-front var(--swim-cycle) ease-in-out infinite; }
-.ocean-stage .swimmer-arm-back { transform-origin: 8% 50%; animation: ocean-arm-back var(--swim-cycle) ease-in-out infinite; }
-.ocean-stage .swimmer-leg-front { transform-origin: 90% 40%; animation: ocean-kick-front calc(var(--swim-cycle) / 2) ease-in-out infinite; }
-.ocean-stage .swimmer-leg-back { transform-origin: 90% 40%; animation: ocean-kick-back calc(var(--swim-cycle) / 2) ease-in-out infinite; }
-.ocean-stage .ocean-wave-front { animation: ocean-wave-drift 6s ease-in-out infinite alternate; }
-.ocean-stage .ocean-wave-back { animation: ocean-wave-drift 8s ease-in-out infinite alternate-reverse; }
-.ocean-stage .ocean-light-rays { opacity: .48; animation: ocean-light-pulse 8s ease-in-out infinite; }
-.ocean-stage-luminous .ocean-light-rays { opacity: .9; }
-.ocean-stage .ocean-fish-school { animation: ocean-fish-drift 9s ease-in-out infinite alternate; }
-.ocean-stage .ocean-seaweed { transform-origin: bottom center; animation: ocean-seaweed-sway 5s ease-in-out infinite alternate; }
-.ocean-stage .ocean-wake { animation: ocean-wake-pulse var(--swim-cycle) ease-in-out infinite; }
-.ocean-stage .ocean-bubble { animation: ocean-bubble-rise var(--bubble-cycle) linear infinite; }
-.ocean-stage .bubble-two { animation-delay: calc(var(--bubble-cycle) / -2); }
-.ocean-stage .ocean-dolphin { animation: ocean-dolphin-glide 4.4s ease-in-out infinite; }
-.ocean-stage .swimmer-glide { animation: ocean-glide-flash 3.5s ease-in-out infinite; }
-@keyframes ocean-swimmer-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
-@keyframes ocean-arm-front { 0%, 100% { transform: rotate(-11deg); } 45% { transform: rotate(29deg); } }
-@keyframes ocean-arm-back { 0%, 100% { transform: rotate(23deg); } 50% { transform: rotate(-19deg); } }
-@keyframes ocean-kick-front { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(13deg); } }
-@keyframes ocean-kick-back { 0%, 100% { transform: rotate(12deg); } 50% { transform: rotate(-10deg); } }
-@keyframes ocean-wave-drift { from { transform: translateX(-24px); } to { transform: translateX(26px); } }
-@keyframes ocean-light-pulse { 0%, 100% { filter: brightness(.85); } 50% { filter: brightness(1.25); } }
-@keyframes ocean-fish-drift { from { transform: translateX(-12px); } to { transform: translateX(25px); } }
-@keyframes ocean-seaweed-sway { from { transform: skewX(-3deg); } to { transform: skewX(3deg); } }
-@keyframes ocean-wake-pulse { 0%, 100% { opacity: .5; transform: translateX(0); } 50% { opacity: .95; transform: translateX(-12px); } }
-@keyframes ocean-bubble-rise { 0% { opacity: 0; transform: translateY(21px) scale(.7); } 20% { opacity: .8; } 85% { opacity: .35; } 100% { opacity: 0; transform: translateY(-70px) scale(1.3); } }
-@keyframes ocean-dolphin-glide { 0%, 100% { translate: 0 4px; } 50% { translate: 0 -13px; } }
-@keyframes ocean-glide-flash { 0%, 100% { opacity: .2; } 50% { opacity: .9; } }
-.game-avatar-picker { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
-.game-avatar-picker p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
-.game-avatar-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: min(100%, 310px); }
-.game-avatar-option { display: grid; justify-items: center; gap: 3px; min-width: 0; border: 1px solid #cbd6d2; border-radius: 14px; padding: 4px 8px 8px; color: var(--ink); background: #f5f8f4; font-size: 12px; font-weight: 800; }
-.game-avatar-option.selected { border: 2px solid #2c756d; padding: 3px 7px 7px; color: #164b48; background: #e3f2e9; box-shadow: 0 0 0 3px rgba(44, 117, 109, .1); }
-.game-avatar-option:focus-visible { outline: 3px solid #c8df87; outline-offset: 2px; }
-.game-avatar-thumb { display: block; width: 86px; max-width: 100%; height: 49px; }
+.journey-experience { min-width: 0; }
+.journey-map { position: relative; overflow: hidden; isolation: isolate; min-height: 470px; border-radius: 22px; color: white; background: linear-gradient(135deg, #55b7c1, #183f68 68%, #161c4c); }
+.journey-map-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.journey-map-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 31, 43, .06), transparent 52%, rgba(4, 24, 42, .35)); pointer-events: none; }
+.journey-map-title { position: absolute; z-index: 4; top: 18px; left: 20px; display: grid; gap: 4px; padding: 10px 13px; border: 1px solid rgba(255, 255, 255, .25); border-radius: 13px; color: #f5fff8; background: rgba(9, 46, 61, .48); text-shadow: 0 1px 8px rgba(0, 0, 0, .4); backdrop-filter: blur(9px); }
+.journey-map-title span { font-size: 10px; font-weight: 900; letter-spacing: .15em; }
+.journey-map-title b { font-family: Georgia, "Songti SC", serif; font-size: clamp(16px, 3vw, 23px); }
+.journey-route { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.journey-route-shadow, .journey-route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.journey-route-shadow { stroke: rgba(3, 27, 44, .48); stroke-width: 12; }
+.journey-route-line { stroke: #fff5b8; stroke-width: 5; stroke-dasharray: 3 14; filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .5)); animation: journey-route-drift 12s linear infinite; }
+.journey-node { position: absolute; z-index: 3; display: grid; justify-items: center; translate: -50% -50%; width: auto; min-width: 32px; border: 0; padding: 0; color: #f7fff9; background: transparent; text-shadow: 0 1px 5px rgba(0, 0, 0, .75); }
+.journey-node-dot { display: grid; place-items: center; width: 25px; height: 25px; border: 3px solid rgba(255, 255, 255, .92); border-radius: 50%; color: #184d54; background: #f8e6a4; box-shadow: 0 2px 10px rgba(2, 25, 42, .48); font-size: 12px; font-weight: 900; }
+.journey-node.locked { opacity: .62; filter: saturate(.45); }
+.journey-node.locked .journey-node-dot { color: transparent; background: #516773; }
+.journey-node.selected .journey-node-dot { outline: 3px solid rgba(228, 255, 211, .64); outline-offset: 3px; }
+.journey-node.current .journey-node-dot { animation: journey-node-pulse 2.3s ease-in-out infinite; }
+.journey-node-label { display: grid; margin-top: 4px; font-size: 10px; font-weight: 900; line-height: 1.2; white-space: nowrap; }
+.journey-node-label small { font-size: 8px; font-weight: 700; opacity: .85; }
+.journey-node:focus-visible { outline: 3px solid #f4e88e; outline-offset: 6px; border-radius: 999px; }
+.journey-boat { position: absolute; z-index: 5; translate: -50% -75%; pointer-events: none; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .5)); animation: journey-boat-float 2.4s ease-in-out infinite; }
+.journey-boat span { font-size: 30px; }
+.journey-map-progress { position: absolute; z-index: 4; right: 18px; bottom: 18px; display: grid; justify-items: end; max-width: min(260px, 58%); gap: 2px; border: 1px solid rgba(255, 255, 255, .24); border-radius: 14px; padding: 9px 12px; color: #effff5; text-align: right; background: rgba(4, 34, 55, .66); backdrop-filter: blur(9px); }
+.journey-map-progress span, .journey-map-progress small { font-size: 10px; }
+.journey-map-progress strong { font-size: 19px; }
+.journey-destination { position: relative; overflow: hidden; isolation: isolate; min-height: 270px; margin-top: 14px; border-radius: 20px; color: white; background: linear-gradient(135deg, #1c5b64, #173a58); }
+.journey-destination.locked { min-height: 190px; background: radial-gradient(circle at 70% 10%, #587681, #243f50 58%, #172f42); }
+.journey-destination-art, .journey-destination-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+.journey-destination-art { object-fit: cover; }
+.journey-destination-overlay { background: linear-gradient(90deg, rgba(4, 30, 43, .83), rgba(4, 30, 43, .24) 62%, rgba(4, 30, 43, .08)); }
+.journey-destination-copy { position: relative; z-index: 2; display: grid; align-content: center; min-height: inherit; max-width: 54%; padding: 24px; text-shadow: 0 1px 8px rgba(0, 0, 0, .52); }
+.journey-destination-copy > span { font-size: 10px; font-weight: 900; letter-spacing: .13em; }
+.journey-destination-copy h2 { margin: 6px 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(22px, 4vw, 34px); }
+.journey-destination-copy p { margin: 0; line-height: 1.7; }
+.journey-rest-button { justify-self: start; width: auto; margin-top: 14px; border: 1px solid rgba(255, 255, 255, .5); padding: 8px 14px; color: #173f45; background: #f5e2a5; }
+.journey-rest-summary { position: relative; z-index: 3; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: -78px 18px 16px auto; width: min(52%, 510px); border: 1px solid rgba(255, 255, 255, .28); border-radius: 15px; padding: 10px; color: #f4fff7; background: rgba(5, 37, 48, .68); backdrop-filter: blur(10px); }
+.journey-rest-summary > div { display: grid; gap: 2px; }
+.journey-rest-summary span { font-size: 9px; opacity: .78; }
+.journey-rest-summary b { font-size: 12px; }
+.journey-rest-summary p { grid-column: 1 / -1; margin: 3px 0 0; font-size: 10px; }
+.journey-ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 12px; }
+.journey-ledger > div { display: grid; gap: 4px; border-radius: 13px; padding: 12px 14px; background: #edf5f1; }
+.journey-ledger span { color: var(--muted); font-size: 10px; }
+.journey-ledger strong { font-size: 17px; }
+.journey-protection-note { margin: 10px 0 0; border-left: 3px solid #c28b2c; padding: 9px 11px; color: #6f4d16; background: #fff4d9; font-size: 12px; line-height: 1.65; }
+.journey-missions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.journey-missions > div { display: grid; align-content: start; gap: 6px; min-width: 0; border: 1px solid #dfe9e1; border-radius: 15px; padding: 14px; background: linear-gradient(145deg, #f7faf5, #edf5f1); }
+.journey-missions > div > span { font-size: 24px; }
+.journey-missions small { color: var(--muted); font-size: 10px; }
+.journey-missions strong { font-size: 14px; line-height: 1.4; }
+.journey-atlas-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.journey-atlas-grid > div { display: grid; justify-items: center; gap: 4px; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px 5px; color: #8a918d; text-align: center; background: #f2f2ee; filter: grayscale(1); }
+.journey-atlas-grid > div.discovered { border-color: #abcdbb; color: var(--green-dark); background: #edf6ec; filter: none; }
+.journey-atlas-grid span { font-size: 20px; }
+.journey-atlas-grid b { overflow: hidden; max-width: 100%; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.journey-atlas-grid small { font-size: 9px; }
+.journey-reward-title { margin: 20px 0 10px; font-size: 15px; }
+@keyframes journey-route-drift { to { stroke-dashoffset: -68; } }
+@keyframes journey-node-pulse { 0%, 100% { box-shadow: 0 2px 10px rgba(2, 25, 42, .48), 0 0 0 0 rgba(255, 244, 167, .7); } 50% { box-shadow: 0 2px 10px rgba(2, 25, 42, .48), 0 0 0 8px rgba(255, 244, 167, 0); } }
+@keyframes journey-boat-float { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
 .game-progress { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .game-progress > div { display: grid; align-content: start; gap: 5px; min-width: 0; border-radius: 13px; padding: 13px; background: #f1f7f4; }
 .game-progress span, .game-progress small { color: var(--muted); font-size: 11px; }
@@ -397,9 +407,6 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .game-checkin-list small { color: var(--muted); font-size: 11px; }
 .game-checkin-list input { min-width: 0; }
 .game-checkin-list button { width: auto; }
-
-.ocean-experience { min-width: 0; }
-.ocean-interaction-hint { margin: 9px 0 3px; font-size: 10px; line-height: 1.7; color: #76847c; }
 
 @media (max-width: 620px) {
   main { width: min(100% - 20px, 760px); }
@@ -435,12 +442,21 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .game-progress, .game-unlock-grid { gap: 6px; }
   .game-progress strong { font-size: 14px; }
   .game-goal-list article { align-items: flex-start; flex-direction: column; }
-  .ocean-stage-art { height: clamp(190px, 44vw, 270px); }
-  .ocean-stage-heading { top: 13px; left: 13px; max-width: calc(100% - 48px); }
-  .ocean-stage-heading b { font-size: 14px; }
-  .ocean-stage-marker { right: 12px; bottom: 12px; }
-  .game-avatar-picker { align-items: stretch; flex-direction: column; }
-  .game-avatar-options { width: 100%; }
+  .journey-map { min-height: 390px; }
+  .journey-map-title { top: 11px; left: 11px; padding: 7px 9px; }
+  .journey-map-title b { font-size: 14px; }
+  .journey-node-label { display: none; }
+  .journey-node.current .journey-node-label, .journey-node.selected .journey-node-label { display: grid; padding: 3px 5px; border-radius: 7px; background: rgba(4, 33, 46, .64); }
+  .journey-map-progress { right: 10px; bottom: 10px; max-width: 70%; }
+  .journey-destination-copy { max-width: 82%; padding: 18px; }
+  .journey-destination-overlay { background: linear-gradient(90deg, rgba(4, 30, 43, .85), rgba(4, 30, 43, .18)); }
+  .journey-rest-summary { grid-template-columns: 1fr; margin: -9px 12px 12px; width: auto; }
+  .journey-rest-summary p { grid-column: 1; }
+  .journey-ledger { grid-template-columns: 1fr; }
+  .journey-missions { grid-template-columns: 1fr; }
+  .journey-missions > div { grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+  .journey-missions > div > span { grid-row: span 2; }
+  .journey-atlas-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .game-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-checkin-list form { grid-template-columns: minmax(0, 1fr) 95px; }
   .game-checkin-list form button { grid-row: 2; }

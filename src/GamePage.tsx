@@ -18,8 +18,7 @@ import {
   deleteGameCheckin,
   loadGameState,
   loadMealsBetween,
-  recordGameUnlocks,
-  setGameAvatarStyle,
+  recordGameProgress,
   setGameCheckin,
   startGame,
   updateGameGoal,
@@ -32,17 +31,14 @@ import {
   GAME_UNLOCKS,
   gameWeightDescription,
   goalVersionOn,
+  JOURNEY_DESTINATIONS,
   nextWeekStart,
   shiftDate,
   type DietMode,
-  type GameAvatarStyle,
   type GameGoalCategory,
-  type GameGoalVersion,
-  type GameUnlockId
+  type GameGoalVersion
 } from "./game";
-import { avatarProportions, swimPresentation } from "./gamePresentation";
-import { AvatarThumbnail } from "./OceanScene";
-import OceanExperience from "./OceanExperience";
+import JourneyMap from "./JourneyMap";
 
 const CATEGORY_LABELS: Record<GameGoalCategory, string> = {
   FITNESS: "健身",
@@ -72,28 +68,9 @@ function completedFromSettings(settings: AppSetting[], date: string): boolean {
   return value.completed === true && value.revision === (typeof revision === "number" ? revision : 0);
 }
 
-function AvatarPicker({ value, onSelect, disabled = false }: {
-  value?: GameAvatarStyle;
-  onSelect: (style: GameAvatarStyle) => void;
-  disabled?: boolean;
-}) {
-  return <div className="game-avatar-picker">
-    <div><span className="eyebrow">你的游泳角色</span><p>选择喜欢的角色，之后随时可以切换。</p></div>
-    <div className="game-avatar-options">{(["FEMALE", "MALE"] as const).map((style) => <button
-      className={`game-avatar-option${value === style ? " selected" : ""}`}
-      type="button"
-      key={style}
-      aria-pressed={value === style}
-      disabled={disabled}
-      onClick={() => onSelect(style)}
-    ><AvatarThumbnail avatarStyle={style} /><span>{style === "FEMALE" ? "女游泳者" : "男游泳者"}</span></button>)}</div>
-  </div>;
-}
-
 export default function GamePage() {
   const { profile } = useApp();
   const [today, setToday] = useState(() => dateKey(new Date()));
-  const [previewAvatar, setPreviewAvatar] = useState<GameAvatarStyle>();
   const [selectedDate, setSelectedDate] = useState(today);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingGoalId, setEditingGoalId] = useState<string>();
@@ -109,7 +86,6 @@ export default function GamePage() {
   );
   const foods = useMemo(() => mergeFoodRegistry(overrides), [overrides]);
   const currentTargets = useMemo(() => profile ? calculateTargets(profile) : undefined, [profile]);
-  const proportions = avatarProportions(profile);
   const dietMode: DietMode = !currentTargets ? "NO_PROFILE" : currentTargets.safetyRestricted ? "SAFETY_PAUSED" : "AVAILABLE";
 
   useEffect(() => {
@@ -145,11 +121,15 @@ export default function GamePage() {
     [assessments, dietMode, state, today]
   );
   const pendingUnlockKey = snapshot?.newUnlocks.join(",") ?? "";
+  const voyagePoints = snapshot?.voyagePoints;
   useEffect(() => {
-    if (!pendingUnlockKey) return;
-    void recordGameUnlocks(pendingUnlockKey.split(",") as GameUnlockId[])
-      .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "解锁保存失败。"));
-  }, [pendingUnlockKey]);
+    if (voyagePoints === undefined) return;
+    if (state?.voyagePoints !== undefined && voyagePoints <= state.voyagePoints && !pendingUnlockKey) return;
+    void recordGameProgress(voyagePoints, snapshot?.newUnlocks ?? [])
+      .catch((error: unknown) => setMessage(error instanceof Error
+        ? `航程保存失败，当前最高航程尚未持久化：${error.message}`
+        : "航程保存失败，当前最高航程尚未持久化，请保持页面开启后重试。"));
+  }, [pendingUnlockKey, snapshot?.newUnlocks, state?.voyagePoints, voyagePoints]);
 
   const run = async (action: () => Promise<unknown>, success: string): Promise<boolean> => {
     setBusy(true);
@@ -175,12 +155,11 @@ export default function GamePage() {
   };
 
   if (!state) return <div className="page-stack">
-    <section className="page-intro"><span className="eyebrow">海洋旅程</span><h1>让每一天推动一小段旅程</h1>
-      <p>记录饮食、练习自己的目标，游得更远并认识海洋伙伴。旅程从开启当天算起，不追溯以前的记录。</p>
+    <section className="page-intro"><span className="eyebrow">幻想群岛</span><h1>让每一天推动一小段航程</h1>
+      <p>记录饮食、练习自己的目标，探索三个海域与十三处目的地。旅程从开启当天算起，不追溯以前的记录。</p>
     </section>
-    <section className="card game-start-card"><OceanExperience progress={0} avatarStyle={previewAvatar} pace="EASY" proportions={proportions} luminousWater={false} dolphin={false} butterfly={false} />
-      <AvatarPicker value={previewAvatar} onSelect={setPreviewAvatar} disabled={busy} />
-      <button className="primary" type="button" disabled={busy || !previewAvatar} onClick={() => previewAvatar && void run(() => startGame(today, previewAvatar), "海洋旅程已开启。")}>开启海洋旅程</button>
+    <section className="card game-start-card"><JourneyMap voyagePoints={0} recalculatedPoints={0} week={{ points: 0, dietPoints: 0, dietStatus: "尚未开始", goalEarnedSessions: 0, goalPlannedSessions: 0 }} />
+      <button className="primary" type="button" disabled={busy} onClick={() => void run(() => startGame(today), "幻想群岛旅程已开启。")}>开启群岛旅程</button>
     </section>
   </div>;
 
@@ -193,47 +172,51 @@ export default function GamePage() {
   const activeGoals = state.goals.filter((goal) => goalVersionOn(goal, today));
   const selectedGoals = state.goals.filter((goal) => goalVersionOn(goal, selectedDate));
   const currentWeek = snapshot?.currentWeek;
-  const todayDiet = snapshot?.dietDays[today];
-  const beforeToday = calculateGameSnapshot(
-    { ...state, checkins: state.checkins.filter((checkin) => checkin.date !== today) },
-    today,
-    Object.fromEntries(Object.entries(assessments).filter(([date]) => date !== today)),
-    dietMode
-  );
-  const todayPoints = Math.max(0, (currentWeek?.points ?? 0) - beforeToday.currentWeek.points);
-  const presentation = swimPresentation(todayPoints, todayDiet);
-  const dietStatus = dietMode === "SAFETY_PAUSED" ? "暂不参与评价" :
-    todayDiet?.status !== "ASSESSED" ? "未评估" :
-      todayDiet.score === 0 ? "本日未获得饮食结构加成" : `本日饮食结构加成 ${(todayDiet.score * 100).toFixed(0)}%`;
+  const dietStatus = dietMode === "SAFETY_PAUSED" ? "安全限制，暂不评价" :
+    dietMode === "NO_PROFILE" ? "填写资料后评价" :
+      (currentWeek?.dietPoints ?? 0) > 0 ? `已获得 ${currentWeek?.dietPoints.toFixed(1)} 分` : "本周尚未获得加成";
+  const goalProgress = (currentWeek?.goalPlannedSessions ?? 0) > 0
+    ? `${currentWeek?.goalEarnedSessions.toFixed(1) ?? "0.0"} / ${currentWeek?.goalPlannedSessions} 次`
+    : "未设置";
 
   return <div className="page-stack">
-    <section className="page-intro"><span className="eyebrow">海洋旅程 · {state.startedOn} 开始</span><h1>今天游到哪里？</h1>
-      <p>{gameWeightDescription(dietMode, Boolean(currentWeek?.goalPlannedSessions))} 少记录或休息不会扣除已解锁的奖励。</p>
+    <section className="page-intro"><span className="eyebrow">幻想群岛 · {state.startedOn} 启航</span><h1>今天驶向哪里？</h1>
+      <p>{gameWeightDescription(dietMode, Boolean(currentWeek?.goalPlannedSessions))} 少记录或休息不会让历史最高航程倒退。</p>
     </section>
     <section className="card game-scene-card">
-      <OceanExperience progress={(currentWeek?.points ?? 0) / 100} avatarStyle={state.avatarStyle} pace={presentation.pace} proportions={proportions} luminousWater={presentation.luminousWater} dolphin={Boolean(snapshot?.unlocks.includes("DOLPHIN"))} butterfly={Boolean(snapshot?.unlocks.includes("BUTTERFLY"))} />
-      <div className="game-progress"><div><span>旅程积分</span><strong>{snapshot?.mileage.toFixed(1) ?? "0.0"} 分</strong></div>
-        <div><span>今日游泳状态</span><strong>{presentation.label}</strong></div></div>
-      <p className="helper">本周积分 {currentWeek?.points.toFixed(1) ?? "0.0"} / 100 分。积分反映记录与练习，不代表实际游泳距离。</p>
-      <p className="helper">历史记录修改后旅程积分会重算；已解锁内容永久保留。</p>
-      <AvatarPicker value={state.avatarStyle} onSelect={(style) => void run(() => setGameAvatarStyle(style), "游泳角色已切换。")} disabled={busy} />
-      <p className="helper">身高与体重只轻微调整角色外观；游泳节奏随打卡和可评价的饮食记录变化，不代表体能或健康判断。</p>
+      <JourneyMap
+        voyagePoints={snapshot?.voyagePoints ?? state.voyagePoints ?? 0}
+        recalculatedPoints={snapshot?.mileage ?? 0}
+        week={{
+          points: currentWeek?.points ?? 0,
+          dietPoints: currentWeek?.dietPoints ?? 0,
+          dietStatus,
+          goalEarnedSessions: currentWeek?.goalEarnedSessions ?? 0,
+          goalPlannedSessions: currentWeek?.goalPlannedSessions ?? 0
+        }}
+      />
     </section>
     {message && <p className="notice" role="status">{message}</p>}
     <section className="card">
-      <div className="section-heading"><div><span className="eyebrow">本周动力</span><h2>饮食与目标</h2></div></div>
-      <div className="game-progress"><div><span>目标练习</span><strong>{currentWeek?.goalEarnedSessions.toFixed(1) ?? "0.0"} / {currentWeek?.goalPlannedSessions ?? 0} 次</strong>
-        <small>本周贡献 {currentWeek?.goalPoints.toFixed(1) ?? "0.0"} 分</small></div>
-        <div><span>饮食结构</span><strong>{dietStatus}</strong>
-          {dietMode === "AVAILABLE" && <small>本周贡献 {currentWeek?.dietPoints.toFixed(1) ?? "0.0"} 分</small>}</div></div>
+      <div className="section-heading"><div><span className="eyebrow">本周航海任务</span><h2>三股前进动力</h2></div></div>
+      <div className="journey-missions">
+        <div><span aria-hidden="true">🥗</span><small>准备航海补给</small><strong>{dietStatus}</strong></div>
+        <div><span aria-hidden="true">🧭</span><small>练习进度（按时长折算）</small><strong>{goalProgress}</strong></div>
+        <div><span aria-hidden="true">⛵</span><small>驶向下一站</small><strong>{currentWeek?.points.toFixed(1) ?? "0.0"} / 100 分</strong></div>
+      </div>
       {dietMode === "SAFETY_PAUSED" && currentTargets?.safetyMessages.map((item) => <p className="notice warning" key={item}>{item}</p>)}
       {dietMode === "NO_PROFILE" && <p className="helper">填写个人资料后才可评价饮食；自设目标仍能推动旅程。 <NavLink to="/calculator">填写资料</NavLink></p>}
       <p className="helper">饮食分母固定为 7 天；只采用可比较的蔬菜、鲜果与食物多样性记录。游戏加成不代表整体健康判断。</p>
     </section>
     <section className="card">
-      <div className="section-heading"><div><span className="eyebrow">成长记录</span><h2>旅程奖励</h2></div></div>
+      <div className="section-heading"><div><span className="eyebrow">旅行图鉴</span><h2>发现的地点与伙伴</h2></div><small>{JOURNEY_DESTINATIONS.filter((destination) => (snapshot?.voyagePoints ?? 0) >= destination.threshold).length} / {JOURNEY_DESTINATIONS.length} 地点</small></div>
+      <div className="journey-atlas-grid">{JOURNEY_DESTINATIONS.map((destination) => {
+        const discovered = (snapshot?.voyagePoints ?? 0) >= destination.threshold;
+        return <div className={discovered ? "discovered" : ""} key={destination.id}><span aria-hidden="true">{destination.type === "REST" ? "🏝️" : destination.type === "FINALE" ? "🌟" : "◈"}</span><b>{destination.name}</b><small>{discovered ? "已发现" : `${destination.threshold} 分`}</small></div>;
+      })}</div>
+      <h3 className="journey-reward-title">永久纪念</h3>
       <div className="game-unlock-grid">{GAME_UNLOCKS.map((unlock) => <div className={snapshot?.unlocks.includes(unlock.id) ? "game-unlock unlocked" : "game-unlock"} key={unlock.id}>
-        <span aria-hidden="true">{unlock.id === "DOLPHIN" ? "🐬" : unlock.id === "BUTTERFLY" ? "🦋" : "🏊"}</span>
+        <span aria-hidden="true">{unlock.id === "DOLPHIN" ? "🐬" : unlock.id === "BUTTERFLY" ? "🗼" : "🌅"}</span>
         <b>{unlock.label}</b><small>{snapshot?.unlocks.includes(unlock.id) ? "已解锁" : `${unlock.threshold} 分解锁`}</small>
         <p className="helper">{unlock.description}</p>
       </div>)}</div>

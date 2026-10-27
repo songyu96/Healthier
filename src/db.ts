@@ -359,7 +359,7 @@ export async function startGame(date: string, avatarStyle?: GameAvatarStyle): Pr
   return db.transaction("rw", db.settings, async () => {
     const existing = await loadGameState();
     if (existing) return existing;
-    const state: GameState = { startedOn: date, ...(avatarStyle ? { avatarStyle } : {}), goals: [], checkins: [], unlocks: [] };
+    const state: GameState = { startedOn: date, ...(avatarStyle ? { avatarStyle } : {}), voyagePoints: 0, goals: [], checkins: [], unlocks: [] };
     await db.settings.put({ key: GAME_STATE_SETTING_KEY, value: state });
     return state;
   });
@@ -441,6 +441,15 @@ export async function deleteGameCheckin(goalId: string, date: string): Promise<G
 export async function recordGameUnlocks(unlocks: GameUnlockId[]): Promise<GameState> {
   return changeGameState((state) => ({
     ...state,
+    unlocks: [...new Set([...state.unlocks, ...unlocks])]
+  }));
+}
+
+export async function recordGameProgress(voyagePoints: number, unlocks: GameUnlockId[] = []): Promise<GameState> {
+  if (!Number.isFinite(voyagePoints) || voyagePoints < 0) throw new Error("航程积分无效。");
+  return changeGameState((state) => ({
+    ...state,
+    voyagePoints: Math.max(state.voyagePoints ?? 0, voyagePoints),
     unlocks: [...new Set([...state.unlocks, ...unlocks])]
   }));
 }

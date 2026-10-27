@@ -28,6 +28,7 @@ export interface GameCheckin {
 export interface GameState {
   startedOn: string;
   avatarStyle?: GameAvatarStyle;
+  voyagePoints?: number;
   goals: GameGoal[];
   checkins: GameCheckin[];
   unlocks: GameUnlockId[];
@@ -62,14 +63,76 @@ export interface GameSnapshot {
   currentWeek: GameWeek;
   dietDays: Record<string, GameDietDay>;
   mileage: number;
+  voyagePoints: number;
   unlocks: GameUnlockId[];
   newUnlocks: GameUnlockId[];
 }
 
+export type JourneyRegionId = "CORAL" | "MIST" | "STARS";
+export type JourneySceneId = "CORAL" | "MIST" | "STARS" | "REST";
+export type JourneyDestinationType = "START" | "MILESTONE" | "REST" | "REWARD" | "CHALLENGE" | "FINALE";
+
+export interface JourneyDestination {
+  id: string;
+  region: JourneyRegionId;
+  scene: JourneySceneId;
+  threshold: number;
+  name: string;
+  description: string;
+  type: JourneyDestinationType;
+  x: number;
+  y: number;
+}
+
+export const JOURNEY_REGIONS: Readonly<Record<JourneyRegionId, string>> = {
+  CORAL: "珊瑚群岛",
+  MIST: "云雾海",
+  STARS: "星夜洋"
+};
+
+export const JOURNEY_DESTINATIONS: ReadonlyArray<JourneyDestination> = [
+  { id: "DEPARTURE", region: "CORAL", scene: "CORAL", threshold: 0, name: "启航港", description: "从温暖海湾出发，让每天的记录成为航程。", type: "START", x: 9, y: 78 },
+  { id: "DAWN_SHOAL", region: "CORAL", scene: "CORAL", threshold: 50, name: "晨光浅滩", description: "阳光穿过清澈浅海，第一段航程已经完成。", type: "MILESTONE", x: 22, y: 66 },
+  { id: "REST_ISLAND", region: "CORAL", scene: "REST", threshold: 100, name: "栖息岛", description: "在安静海湾靠岸，回顾本周，也允许自己慢下来。", type: "REST", x: 34, y: 76 },
+  { id: "DOLPHIN_BAY", region: "CORAL", scene: "CORAL", threshold: 150, name: "海豚湾", description: "海豚伙伴会在这里加入你的长期旅程。", type: "REWARD", x: 42, y: 58 },
+  { id: "BUTTERFLY_LIGHTHOUSE", region: "CORAL", scene: "CORAL", threshold: 300, name: "蝶翼灯塔", description: "灯塔照亮通往云雾海的航道。", type: "REWARD", x: 31, y: 43 },
+  { id: "RAIN_ISLAND", region: "MIST", scene: "MIST", threshold: 400, name: "雨林岛", description: "穿过瀑布与薄雾，进入更深的绿色海域。", type: "MILESTONE", x: 47, y: 33 },
+  { id: "CRESCENT_REST", region: "MIST", scene: "REST", threshold: 500, name: "月牙驿岛", description: "月牙形港湾为长途航行留出喘息空间。", type: "REST", x: 58, y: 45 },
+  { id: "STORM_EYE", region: "MIST", scene: "MIST", threshold: 600, name: "风暴眼", description: "稳定的日常，比一次冲刺更能穿过风暴。这里是航线场景，不附加额外任务或失败规则。", type: "CHALLENGE", x: 65, y: 29 },
+  { id: "AURORA_PORT", region: "MIST", scene: "MIST", threshold: 700, name: "极光港", description: "云层散开，星夜洋已经出现在前方。", type: "MILESTONE", x: 72, y: 42 },
+  { id: "GLOW_ISLAND", region: "STARS", scene: "STARS", threshold: 850, name: "浮光岛", description: "海面收集星光，新的岛屿在夜色中浮现。", type: "MILESTONE", x: 78, y: 60 },
+  { id: "METEOR_REST", region: "STARS", scene: "REST", threshold: 1000, name: "流星驿站", description: "在流星划过时靠岸，不必每天都全速前进。", type: "REST", x: 87, y: 73 },
+  { id: "WORLD_TREE", region: "STARS", scene: "STARS", threshold: 1100, name: "世界树海岸", description: "发光的树冠记录着一路积累的微小改变。", type: "MILESTONE", x: 91, y: 50 },
+  { id: "STAR_BEACON", region: "STARS", scene: "STARS", threshold: 1200, name: "星潮灯塔", description: "第一季航程完成；之后的每一分仍会被继续珍藏。", type: "FINALE", x: 91, y: 19 }
+];
+
+export function journeyPosition(points: number): {
+  current: JourneyDestination;
+  next?: JourneyDestination;
+  remaining: number;
+  x: number;
+  y: number;
+} {
+  const safePoints = Math.max(0, points);
+  const current = [...JOURNEY_DESTINATIONS].reverse().find((destination) => safePoints >= destination.threshold)
+    ?? JOURNEY_DESTINATIONS[0];
+  const currentIndex = JOURNEY_DESTINATIONS.indexOf(current);
+  const next = JOURNEY_DESTINATIONS[currentIndex + 1];
+  if (!next) return { current, remaining: 0, x: current.x, y: current.y };
+  const legProgress = Math.min(1, Math.max(0, (safePoints - current.threshold) / (next.threshold - current.threshold)));
+  return {
+    current,
+    next,
+    remaining: Math.max(0, next.threshold - safePoints),
+    x: current.x + (next.x - current.x) * legProgress,
+    y: current.y + (next.y - current.y) * legProgress
+  };
+}
+
 export const GAME_UNLOCKS: ReadonlyArray<{ id: GameUnlockId; threshold: number; label: string; description: string }> = [
-  { id: "FREESTYLE", threshold: 50, label: "自由泳里程碑", description: "累计 50 分的成长纪念；自由泳从开启旅程即可观看。" },
-  { id: "DOLPHIN", threshold: 150, label: "海豚伙伴", description: "在海洋场景中显示海豚伴游。" },
-  { id: "BUTTERFLY", threshold: 300, label: "蝶泳主题", description: "在海洋场景中显示主题光轨；光轨不代表真正的蝶泳动作。" }
+  { id: "FREESTYLE", threshold: 50, label: "晨光浅滩", description: "完成第一段航程，浅海图鉴永久点亮。" },
+  { id: "DOLPHIN", threshold: 150, label: "海豚湾伙伴", description: "抵达海豚湾，海豚伙伴加入旅行图鉴。" },
+  { id: "BUTTERFLY", threshold: 300, label: "蝶翼灯塔", description: "点亮珊瑚群岛尽头的灯塔，开启云雾海航线。" }
 ];
 
 export function dateFromKey(key: string): Date {
@@ -217,13 +280,19 @@ export function calculateGameSnapshot(
     });
   }
   const mileage = weeks.reduce((sum, week) => sum + week.points, 0);
-  const newUnlocks = GAME_UNLOCKS.filter((unlock) => mileage >= unlock.threshold && !state.unlocks.includes(unlock.id))
+  const legacyUnlockPoints = GAME_UNLOCKS.reduce(
+    (highest, unlock) => state.unlocks.includes(unlock.id) ? Math.max(highest, unlock.threshold) : highest,
+    0
+  );
+  const voyagePoints = Math.max(state.voyagePoints ?? 0, mileage, legacyUnlockPoints);
+  const newUnlocks = GAME_UNLOCKS.filter((unlock) => voyagePoints >= unlock.threshold && !state.unlocks.includes(unlock.id))
     .map((unlock) => unlock.id);
   return {
     weeks,
     currentWeek: weeks.at(-1)!,
     dietDays,
     mileage,
+    voyagePoints,
     unlocks: [...state.unlocks, ...newUnlocks],
     newUnlocks
   };

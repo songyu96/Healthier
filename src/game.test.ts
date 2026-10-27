@@ -5,6 +5,7 @@ import {
   evaluateDietDay,
   gameWeightDescription,
   goalVersionOn,
+  journeyPosition,
   nextWeekStart,
   type GameGoal,
   type GameState
@@ -165,7 +166,7 @@ describe("game weekly scoring", () => {
     expect(gameWeightDescription("NO_PROFILE", false)).toContain("暂停计分");
   });
 
-  it("历史重算可降低里程，但已解锁伙伴永久保留", () => {
+  it("历史重算可降低实时积分，但永久航程和已解锁伙伴不会倒退", () => {
     const withCheckins = state({
       checkins: [
         { goalId: GOAL_ID, date: "2026-08-24", minutes: 30 },
@@ -175,9 +176,30 @@ describe("game weekly scoring", () => {
     const before = calculateGameSnapshot(withCheckins, "2026-08-30", {}, "SAFETY_PAUSED");
     expect(before.mileage).toBe(100);
     expect(before.newUnlocks).toContain("FREESTYLE");
-    const after = calculateGameSnapshot({ ...withCheckins, checkins: [], unlocks: ["FREESTYLE"] }, "2026-08-30", {}, "SAFETY_PAUSED");
+    const after = calculateGameSnapshot({ ...withCheckins, checkins: [], voyagePoints: before.voyagePoints, unlocks: ["FREESTYLE"] }, "2026-08-30", {}, "SAFETY_PAUSED");
     expect(after.mileage).toBe(0);
+    expect(after.voyagePoints).toBe(100);
     expect(after.unlocks).toContain("FREESTYLE");
     expect(after.newUnlocks).toEqual([]);
+  });
+
+  it("永久航程跨过多个阈值时一次性补齐旧奖励", () => {
+    const snapshot = calculateGameSnapshot(state({ voyagePoints: 310 }), "2026-08-24", {}, "SAFETY_PAUSED");
+    expect(snapshot.newUnlocks).toEqual(["FREESTYLE", "DOLPHIN", "BUTTERFLY"]);
+  });
+
+  it("旧存档按已解锁奖励的最高阈值补齐地图航程", () => {
+    const snapshot = calculateGameSnapshot(state({ unlocks: ["BUTTERFLY"] }), "2026-08-24", {}, "AVAILABLE");
+    expect(snapshot.mileage).toBe(0);
+    expect(snapshot.voyagePoints).toBe(300);
+    expect(snapshot.newUnlocks).toEqual(["FREESTYLE", "DOLPHIN"]);
+  });
+
+  it("地图位置给出当前地点、下一站和剩余积分", () => {
+    const position = journeyPosition(575);
+    expect(position.current.name).toBe("月牙驿岛");
+    expect(position.next?.name).toBe("风暴眼");
+    expect(position.remaining).toBe(25);
+    expect(journeyPosition(1300).next).toBeUndefined();
   });
 });

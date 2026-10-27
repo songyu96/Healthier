@@ -8,6 +8,7 @@ import {
   deleteGameCheckin,
   GAME_STATE_SETTING_KEY,
   loadGameState,
+  recordGameProgress,
   recordGameUnlocks,
   setGameAvatarStyle,
   setGameCheckin,
@@ -57,6 +58,17 @@ describe("ocean game persistence", () => {
     expect(backupPayloadSchema.safeParse(invalid).success).toBe(false);
   });
 
+  it("永久航程只增不减并进入备份", async () => {
+    await startGame("2026-08-26");
+    await recordGameProgress(180, ["FREESTYLE", "DOLPHIN"]);
+    await recordGameProgress(90);
+    expect(await loadGameState()).toMatchObject({ voyagePoints: 180, unlocks: ["FREESTYLE", "DOLPHIN"] });
+    const payload = await readBackupPayload();
+    expect(payload.settings.find((setting) => setting.key === GAME_STATE_SETTING_KEY)?.value)
+      .toMatchObject({ voyagePoints: 180 });
+    expect(backupPayloadSchema.safeParse(payload).success).toBe(true);
+  });
+
   it("角色选择可切换并进入备份，旧游戏数据仍可读取", async () => {
     await startGame("2026-08-26", "FEMALE");
     await recordGameUnlocks(["FREESTYLE"]);
@@ -72,6 +84,7 @@ describe("ocean game persistence", () => {
     const oldState = { startedOn: state.startedOn, goals: state.goals, checkins: state.checkins, unlocks: state.unlocks };
     await db.settings.put({ key: GAME_STATE_SETTING_KEY, value: oldState });
     expect((await loadGameState())?.avatarStyle).toBeUndefined();
+    expect((await loadGameState())?.voyagePoints).toBeUndefined();
     expect(backupPayloadSchema.safeParse(await readBackupPayload()).success).toBe(true);
   });
 
