@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import coralScene from "./assets/game/journey-coral.webp";
+import auroraPortScene from "./assets/game/journey-aurora-port.webp";
+import butterflyLighthouseScene from "./assets/game/journey-butterfly-lighthouse.webp";
+import crescentRestScene from "./assets/game/journey-crescent-rest.webp";
+import dawnShoalScene from "./assets/game/journey-dawn-shoal.webp";
+import departureScene from "./assets/game/journey-departure.webp";
+import dolphinBayScene from "./assets/game/journey-dolphin-bay.webp";
+import glowIslandScene from "./assets/game/journey-glow-island.webp";
 import mapScene from "./assets/game/journey-map.webp";
-import mistScene from "./assets/game/journey-mist.webp";
-import restScene from "./assets/game/journey-rest.webp";
-import starsScene from "./assets/game/journey-stars.webp";
+import meteorRestScene from "./assets/game/journey-meteor-rest.webp";
+import rainIslandScene from "./assets/game/journey-rain-island.webp";
+import restIslandScene from "./assets/game/journey-rest-island.webp";
+import starBeaconScene from "./assets/game/journey-star-beacon.webp";
+import stormEyeScene from "./assets/game/journey-storm-eye.webp";
+import worldTreeScene from "./assets/game/journey-world-tree.webp";
 import {
   JOURNEY_DESTINATIONS,
   JOURNEY_REGIONS,
@@ -27,10 +36,35 @@ export interface JourneyMapProps {
 }
 
 const SCENE_IMAGES: Record<JourneySceneId, string> = {
-  CORAL: coralScene,
-  MIST: mistScene,
-  STARS: starsScene,
-  REST: restScene
+  DEPARTURE: departureScene,
+  DAWN_SHOAL: dawnShoalScene,
+  REST_ISLAND: restIslandScene,
+  DOLPHIN_BAY: dolphinBayScene,
+  BUTTERFLY_LIGHTHOUSE: butterflyLighthouseScene,
+  RAIN_ISLAND: rainIslandScene,
+  CRESCENT_REST: crescentRestScene,
+  STORM_EYE: stormEyeScene,
+  AURORA_PORT: auroraPortScene,
+  GLOW_ISLAND: glowIslandScene,
+  METEOR_REST: meteorRestScene,
+  WORLD_TREE: worldTreeScene,
+  STAR_BEACON: starBeaconScene
+};
+
+const SCENE_PRESENTATION: Record<JourneySceneId, { copy: "left" | "right" | "bottom"; focus: string }> = {
+  DEPARTURE: { copy: "left", focus: "center" },
+  DAWN_SHOAL: { copy: "right", focus: "center" },
+  REST_ISLAND: { copy: "right", focus: "left center" },
+  DOLPHIN_BAY: { copy: "left", focus: "center" },
+  BUTTERFLY_LIGHTHOUSE: { copy: "bottom", focus: "center" },
+  RAIN_ISLAND: { copy: "left", focus: "center" },
+  CRESCENT_REST: { copy: "right", focus: "left center" },
+  STORM_EYE: { copy: "bottom", focus: "center" },
+  AURORA_PORT: { copy: "right", focus: "left center" },
+  GLOW_ISLAND: { copy: "right", focus: "left center" },
+  METEOR_REST: { copy: "left", focus: "center" },
+  WORLD_TREE: { copy: "right", focus: "left center" },
+  STAR_BEACON: { copy: "bottom", focus: "center" }
 };
 
 const TYPE_LABELS: Record<JourneyDestination["type"], string> = {
@@ -60,7 +94,8 @@ export default function JourneyMap({ voyagePoints, recalculatedPoints, week }: J
   }, [currentDestinationId]);
 
   const routePoints = JOURNEY_DESTINATIONS.map((destination) => `${destination.x * 10},${destination.y * 7}`).join(" ");
-  const scene = resting ? "REST" : selected.scene;
+  const scene = selected.scene;
+  const presentation = SCENE_PRESENTATION[scene];
   const seasonComplete = voyagePoints >= JOURNEY_DESTINATIONS.at(-1)!.threshold;
   const protectedVoyage = recalculatedPoints < voyagePoints;
   const goalProgress = week.goalPlannedSessions > 0
@@ -108,8 +143,8 @@ export default function JourneyMap({ voyagePoints, recalculatedPoints, week }: J
       </div>
     </div>
 
-    <section className={`journey-destination${reached ? " reached" : " locked"}`} aria-live="polite">
-      {reached && <img className="journey-destination-art" src={SCENE_IMAGES[scene]} alt="" loading="lazy" />}
+    <section className={`journey-destination copy-${presentation.copy}${reached ? " reached" : " locked"}`} aria-live="polite">
+      {reached && <img className="journey-destination-art" src={SCENE_IMAGES[scene]} alt="" loading="lazy" style={{ objectPosition: presentation.focus }} />}
       <div className="journey-destination-overlay" />
       <div className="journey-destination-copy">
         <span>{JOURNEY_REGIONS[selected.region]} · {TYPE_LABELS[selected.type]}</span>

@@ -69,7 +69,20 @@ export interface GameSnapshot {
 }
 
 export type JourneyRegionId = "CORAL" | "MIST" | "STARS";
-export type JourneySceneId = "CORAL" | "MIST" | "STARS" | "REST";
+export type JourneySceneId =
+  | "DEPARTURE"
+  | "DAWN_SHOAL"
+  | "REST_ISLAND"
+  | "DOLPHIN_BAY"
+  | "BUTTERFLY_LIGHTHOUSE"
+  | "RAIN_ISLAND"
+  | "CRESCENT_REST"
+  | "STORM_EYE"
+  | "AURORA_PORT"
+  | "GLOW_ISLAND"
+  | "METEOR_REST"
+  | "WORLD_TREE"
+  | "STAR_BEACON";
 export type JourneyDestinationType = "START" | "MILESTONE" | "REST" | "REWARD" | "CHALLENGE" | "FINALE";
 
 export interface JourneyDestination {
@@ -91,19 +104,19 @@ export const JOURNEY_REGIONS: Readonly<Record<JourneyRegionId, string>> = {
 };
 
 export const JOURNEY_DESTINATIONS: ReadonlyArray<JourneyDestination> = [
-  { id: "DEPARTURE", region: "CORAL", scene: "CORAL", threshold: 0, name: "启航港", description: "从温暖海湾出发，让每天的记录成为航程。", type: "START", x: 9, y: 78 },
-  { id: "DAWN_SHOAL", region: "CORAL", scene: "CORAL", threshold: 50, name: "晨光浅滩", description: "阳光穿过清澈浅海，第一段航程已经完成。", type: "MILESTONE", x: 22, y: 66 },
-  { id: "REST_ISLAND", region: "CORAL", scene: "REST", threshold: 100, name: "栖息岛", description: "在安静海湾靠岸，回顾本周，也允许自己慢下来。", type: "REST", x: 34, y: 76 },
-  { id: "DOLPHIN_BAY", region: "CORAL", scene: "CORAL", threshold: 150, name: "海豚湾", description: "海豚伙伴会在这里加入你的长期旅程。", type: "REWARD", x: 42, y: 58 },
-  { id: "BUTTERFLY_LIGHTHOUSE", region: "CORAL", scene: "CORAL", threshold: 300, name: "蝶翼灯塔", description: "灯塔照亮通往云雾海的航道。", type: "REWARD", x: 31, y: 43 },
-  { id: "RAIN_ISLAND", region: "MIST", scene: "MIST", threshold: 400, name: "雨林岛", description: "穿过瀑布与薄雾，进入更深的绿色海域。", type: "MILESTONE", x: 47, y: 33 },
-  { id: "CRESCENT_REST", region: "MIST", scene: "REST", threshold: 500, name: "月牙驿岛", description: "月牙形港湾为长途航行留出喘息空间。", type: "REST", x: 58, y: 45 },
-  { id: "STORM_EYE", region: "MIST", scene: "MIST", threshold: 600, name: "风暴眼", description: "稳定的日常，比一次冲刺更能穿过风暴。这里是航线场景，不附加额外任务或失败规则。", type: "CHALLENGE", x: 65, y: 29 },
-  { id: "AURORA_PORT", region: "MIST", scene: "MIST", threshold: 700, name: "极光港", description: "云层散开，星夜洋已经出现在前方。", type: "MILESTONE", x: 72, y: 42 },
-  { id: "GLOW_ISLAND", region: "STARS", scene: "STARS", threshold: 850, name: "浮光岛", description: "海面收集星光，新的岛屿在夜色中浮现。", type: "MILESTONE", x: 78, y: 60 },
-  { id: "METEOR_REST", region: "STARS", scene: "REST", threshold: 1000, name: "流星驿站", description: "在流星划过时靠岸，不必每天都全速前进。", type: "REST", x: 87, y: 73 },
-  { id: "WORLD_TREE", region: "STARS", scene: "STARS", threshold: 1100, name: "世界树海岸", description: "发光的树冠记录着一路积累的微小改变。", type: "MILESTONE", x: 91, y: 50 },
-  { id: "STAR_BEACON", region: "STARS", scene: "STARS", threshold: 1200, name: "星潮灯塔", description: "第一季航程完成；之后的每一分仍会被继续珍藏。", type: "FINALE", x: 91, y: 19 }
+  { id: "DEPARTURE", region: "CORAL", scene: "DEPARTURE", threshold: 0, name: "启航港", description: "从温暖海湾出发，让每天的记录成为航程。", type: "START", x: 9, y: 78 },
+  { id: "DAWN_SHOAL", region: "CORAL", scene: "DAWN_SHOAL", threshold: 50, name: "晨光浅滩", description: "阳光穿过清澈浅海，第一段航程已经完成。", type: "MILESTONE", x: 22, y: 66 },
+  { id: "REST_ISLAND", region: "CORAL", scene: "REST_ISLAND", threshold: 100, name: "栖息岛", description: "在安静海湾靠岸，回顾本周，也允许自己慢下来。", type: "REST", x: 34, y: 76 },
+  { id: "DOLPHIN_BAY", region: "CORAL", scene: "DOLPHIN_BAY", threshold: 150, name: "海豚湾", description: "海豚伙伴会在这里加入你的长期旅程。", type: "REWARD", x: 42, y: 58 },
+  { id: "BUTTERFLY_LIGHTHOUSE", region: "CORAL", scene: "BUTTERFLY_LIGHTHOUSE", threshold: 300, name: "蝶翼灯塔", description: "灯塔照亮通往云雾海的航道。", type: "REWARD", x: 31, y: 43 },
+  { id: "RAIN_ISLAND", region: "MIST", scene: "RAIN_ISLAND", threshold: 400, name: "雨林岛", description: "穿过瀑布与薄雾，进入更深的绿色海域。", type: "MILESTONE", x: 47, y: 33 },
+  { id: "CRESCENT_REST", region: "MIST", scene: "CRESCENT_REST", threshold: 500, name: "月牙驿岛", description: "月牙形港湾为长途航行留出喘息空间。", type: "REST", x: 58, y: 45 },
+  { id: "STORM_EYE", region: "MIST", scene: "STORM_EYE", threshold: 600, name: "风暴眼", description: "稳定的日常，比一次冲刺更能穿过风暴。这里是航线场景，不附加额外任务或失败规则。", type: "CHALLENGE", x: 65, y: 29 },
+  { id: "AURORA_PORT", region: "MIST", scene: "AURORA_PORT", threshold: 700, name: "极光港", description: "云层散开，星夜洋已经出现在前方。", type: "MILESTONE", x: 72, y: 42 },
+  { id: "GLOW_ISLAND", region: "STARS", scene: "GLOW_ISLAND", threshold: 850, name: "浮光岛", description: "海面收集星光，新的岛屿在夜色中浮现。", type: "MILESTONE", x: 78, y: 60 },
+  { id: "METEOR_REST", region: "STARS", scene: "METEOR_REST", threshold: 1000, name: "流星驿站", description: "在流星划过时靠岸，不必每天都全速前进。", type: "REST", x: 87, y: 73 },
+  { id: "WORLD_TREE", region: "STARS", scene: "WORLD_TREE", threshold: 1100, name: "世界树海岸", description: "发光的树冠记录着一路积累的微小改变。", type: "MILESTONE", x: 91, y: 50 },
+  { id: "STAR_BEACON", region: "STARS", scene: "STAR_BEACON", threshold: 1200, name: "星潮灯塔", description: "第一季航程完成；之后的每一分仍会被继续珍藏。", type: "FINALE", x: 91, y: 19 }
 ];
 
 export function journeyPosition(points: number): {

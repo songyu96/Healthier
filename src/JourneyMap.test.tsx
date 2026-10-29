@@ -57,4 +57,20 @@ describe("journey map", () => {
     expect(container.textContent).toContain("未设置");
     expect(container.textContent).not.toContain("航程保护期");
   });
+
+  it("十三个地点各自展示不同的场景图片", async () => {
+    await act(async () => root.render(<JourneyMap voyagePoints={1200} recalculatedPoints={1200} week={week} />));
+    const sceneSources = new Set<string>();
+    const copyPositions = new Set<string>();
+    for (const node of container.querySelectorAll<HTMLButtonElement>(".journey-node")) {
+      await act(async () => node.click());
+      const scene = container.querySelector<HTMLImageElement>(".journey-destination-art");
+      expect(scene).not.toBeNull();
+      sceneSources.add(scene!.src);
+      const destination = container.querySelector<HTMLElement>(".journey-destination");
+      copyPositions.add([...destination!.classList].find((name) => name.startsWith("copy-"))!);
+    }
+    expect(sceneSources.size).toBe(13);
+    expect(copyPositions).toEqual(new Set(["copy-left", "copy-right", "copy-bottom"]));
+  });
 });

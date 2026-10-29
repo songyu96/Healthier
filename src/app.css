@@ -353,6 +353,10 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
 .journey-destination-art { object-fit: cover; }
 .journey-destination-overlay { background: linear-gradient(90deg, rgba(4, 30, 43, .83), rgba(4, 30, 43, .24) 62%, rgba(4, 30, 43, .08)); }
 .journey-destination-copy { position: relative; z-index: 2; display: grid; align-content: center; min-height: inherit; max-width: 54%; padding: 24px; text-shadow: 0 1px 8px rgba(0, 0, 0, .52); }
+.journey-destination.copy-right .journey-destination-overlay { background: linear-gradient(270deg, rgba(4, 30, 43, .83), rgba(4, 30, 43, .24) 62%, rgba(4, 30, 43, .08)); }
+.journey-destination.copy-right .journey-destination-copy { margin-left: auto; }
+.journey-destination.copy-bottom .journey-destination-overlay { background: linear-gradient(0deg, rgba(4, 30, 43, .9), rgba(4, 30, 43, .08) 72%); }
+.journey-destination.copy-bottom .journey-destination-copy { align-content: end; max-width: 58%; }
 .journey-destination-copy > span { font-size: 10px; font-weight: 900; letter-spacing: .13em; }
 .journey-destination-copy h2 { margin: 6px 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(22px, 4vw, 34px); }
 .journey-destination-copy p { margin: 0; line-height: 1.7; }
@@ -448,8 +452,10 @@ hr { height: 1px; margin: 20px 0; border: 0; background: var(--line); }
   .journey-node-label { display: none; }
   .journey-node.current .journey-node-label, .journey-node.selected .journey-node-label { display: grid; padding: 3px 5px; border-radius: 7px; background: rgba(4, 33, 46, .64); }
   .journey-map-progress { right: 10px; bottom: 10px; max-width: 70%; }
-  .journey-destination-copy { max-width: 82%; padding: 18px; }
-  .journey-destination-overlay { background: linear-gradient(90deg, rgba(4, 30, 43, .85), rgba(4, 30, 43, .18)); }
+  .journey-destination-copy, .journey-destination.copy-bottom .journey-destination-copy { max-width: 86%; padding: 18px; }
+  .journey-destination.copy-left .journey-destination-overlay { background: linear-gradient(90deg, rgba(4, 30, 43, .88), rgba(4, 30, 43, .12)); }
+  .journey-destination.copy-right .journey-destination-overlay { background: linear-gradient(270deg, rgba(4, 30, 43, .88), rgba(4, 30, 43, .12)); }
+  .journey-destination.copy-bottom .journey-destination-overlay { background: linear-gradient(0deg, rgba(4, 30, 43, .92), rgba(4, 30, 43, .04) 78%); }
   .journey-rest-summary { grid-template-columns: 1fr; margin: -9px 12px 12px; width: auto; }
   .journey-rest-summary p { grid-column: 1; }
   .journey-ledger { grid-template-columns: 1fr; }

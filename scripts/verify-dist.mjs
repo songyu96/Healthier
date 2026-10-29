@@ -1,4 +1,4 @@
-import { access, readFile, readdir } from "node:fs/promises";
+import { access, readFile, readdir, stat } from "node:fs/promises";
 
 const requiredFiles = [
   "dist/index.html",
@@ -30,7 +30,29 @@ assert(indexHtml.includes("manifest.webmanifest"), "index.html 未引用 manifes
 assert(serviceWorker.includes("manifest.webmanifest"), "Service Worker 预缓存未包含 manifest");
 assert(!indexHtml.includes("history fallback"), "HashRouter 部署不应依赖 history fallback");
 const journeyAssets = assetFiles.filter((name) => name.startsWith("journey-") && name.endsWith(".webp"));
-assert(journeyAssets.length === 5, "构建产物必须包含五张旅程插画");
+const expectedJourneyAssets = [
+  "journey-map",
+  "journey-departure",
+  "journey-dawn-shoal",
+  "journey-rest-island",
+  "journey-dolphin-bay",
+  "journey-butterfly-lighthouse",
+  "journey-rain-island",
+  "journey-crescent-rest",
+  "journey-storm-eye",
+  "journey-aurora-port",
+  "journey-glow-island",
+  "journey-meteor-rest",
+  "journey-world-tree",
+  "journey-star-beacon"
+];
+assert(journeyAssets.length === expectedJourneyAssets.length, "构建产物必须包含世界地图和十三张地点插画");
+expectedJourneyAssets.forEach((prefix) => {
+  assert(journeyAssets.some((name) => name.startsWith(`${prefix}-`)), `构建产物缺少旅程插画：${prefix}`);
+});
+const journeyAssetBytes = (await Promise.all(journeyAssets.map(async (name) => (await stat(`dist/assets/${name}`)).size)))
+  .reduce((total, size) => total + size, 0);
+assert(journeyAssetBytes <= 1_200_000, `旅程插画总体积超过 1.2 MB：${journeyAssetBytes} bytes`);
 journeyAssets.forEach((name) => assert(!serviceWorker.includes(name), `旅程插画不应进入预缓存：${name}`));
 assert(serviceWorker.includes("healthier-journey-art-v1"), "Service Worker 缺少旅程插画运行时缓存");
 
