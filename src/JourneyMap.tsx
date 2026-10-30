@@ -80,6 +80,34 @@ function formatPoints(points: number): string {
   return points.toFixed(1).replace(/\.0$/, "");
 }
 
+function SceneAtmosphere({ scene, focus }: { scene: JourneySceneId; focus: string }) {
+  const lighthouse = scene === "BUTTERFLY_LIGHTHOUSE" || scene === "STAR_BEACON";
+  if (!lighthouse && !["DOLPHIN_BAY", "AURORA_PORT", "METEOR_REST", "STORM_EYE"].includes(scene)) return null;
+  return <svg key={scene} className="journey-atmosphere" viewBox="0 0 1280 720"
+    preserveAspectRatio={focus.startsWith("left") ? "xMinYMid slice" : "xMidYMid slice"} aria-hidden="true" focusable="false">
+    {scene === "AURORA_PORT" && <g className="journey-aurora">
+      <path d="M80 15 Q390 190 730 70 T1300 85" />
+      <path d="M240 -20 Q600 160 1000 30 T1420 60" />
+    </g>}
+    {scene === "METEOR_REST" && <g className="journey-meteors">
+      <path className="journey-meteor" d="M940 80 l-100 60" />
+      <path className="journey-meteor journey-meteor-later" d="M1130 170 l-74 44" />
+    </g>}
+    {scene === "DOLPHIN_BAY" && <g className="journey-ripples">
+      <ellipse cx="700" cy="590" rx="24" ry="5" />
+      <ellipse className="journey-ripple-later" cx="870" cy="565" rx="18" ry="4" />
+    </g>}
+    {scene === "STORM_EYE" && <g className="journey-mist">
+      <path d="M160 165 Q360 70 580 120" />
+      <path d="M850 490 Q1060 465 1170 350" />
+    </g>}
+    {lighthouse && <g transform={scene === "STAR_BEACON" ? "translate(640 252)" : "translate(640 57)"}>
+      <path className="journey-beacon-beam" d="M0 0 L420 -42 Q432 0 420 42 Z" />
+      <circle className="journey-beacon-glow" r="9" />
+    </g>}
+  </svg>;
+}
+
 export default function JourneyMap({ voyagePoints, recalculatedPoints, week }: JourneyMapProps) {
   const position = useMemo(() => journeyPosition(voyagePoints), [voyagePoints]);
   const currentDestinationId = position.current.id;
@@ -145,6 +173,7 @@ export default function JourneyMap({ voyagePoints, recalculatedPoints, week }: J
 
     <section className={`journey-destination copy-${presentation.copy}${reached ? " reached" : " locked"}`} aria-live="polite">
       {reached && <img className="journey-destination-art" src={SCENE_IMAGES[scene]} alt="" loading="lazy" style={{ objectPosition: presentation.focus }} />}
+      {reached && !resting && <SceneAtmosphere scene={scene} focus={presentation.focus} />}
       <div className="journey-destination-overlay" />
       <div className="journey-destination-copy">
         <span>{JOURNEY_REGIONS[selected.region]} · {TYPE_LABELS[selected.type]}</span>
