@@ -33,6 +33,8 @@ export interface JourneyMapProps {
   voyagePoints: number;
   recalculatedPoints: number;
   week: JourneyWeekSummary;
+  initialDestinationId?: JourneyDestination["id"];
+  initialResting?: boolean;
 }
 
 const SCENE_IMAGES: Record<JourneySceneId, string> = {
@@ -108,18 +110,18 @@ function SceneAtmosphere({ scene, focus }: { scene: JourneySceneId; focus: strin
   </svg>;
 }
 
-export default function JourneyMap({ voyagePoints, recalculatedPoints, week }: JourneyMapProps) {
+export default function JourneyMap({ voyagePoints, recalculatedPoints, week, initialDestinationId, initialResting = false }: JourneyMapProps) {
   const position = useMemo(() => journeyPosition(voyagePoints), [voyagePoints]);
   const currentDestinationId = position.current.id;
-  const [selectedId, setSelectedId] = useState(currentDestinationId);
-  const [resting, setResting] = useState(false);
+  const [selectedId, setSelectedId] = useState(initialDestinationId ?? currentDestinationId);
+  const [resting, setResting] = useState(initialResting);
   const selected = JOURNEY_DESTINATIONS.find((destination) => destination.id === selectedId) ?? position.current;
   const reached = voyagePoints >= selected.threshold;
 
   useEffect(() => {
-    setSelectedId(currentDestinationId);
-    setResting(false);
-  }, [currentDestinationId]);
+    setSelectedId(initialDestinationId ?? currentDestinationId);
+    setResting(initialResting);
+  }, [currentDestinationId, initialDestinationId, initialResting]);
 
   const routePoints = JOURNEY_DESTINATIONS.map((destination) => `${destination.x * 10},${destination.y * 7}`).join(" ");
   const scene = selected.scene;

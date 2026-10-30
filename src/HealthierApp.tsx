@@ -8,7 +8,7 @@ import {
   type FormEvent,
   type PropsWithChildren
 } from "react";
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { registerSW } from "virtual:pwa-register";
 import {
@@ -108,6 +108,7 @@ import {
 import { AppProvider, useApp } from "./context/AppContext";
 
 const GamePage = lazy(() => import("./GamePage"));
+const JourneyPreviewPage = import.meta.env.DEV ? lazy(() => import("./JourneyPreviewPage")) : null;
 const BookKnowledgePage = lazy(() => import("./BookKnowledgePage"));
 
 const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
@@ -1799,6 +1800,10 @@ function EmptyState({ text }: { text: string }) {
 }
 
 export default function HealthierApp() {
+  const location = useLocation();
+  if (JourneyPreviewPage && location.pathname === "/dev/journey") {
+    return <Suspense fallback={<p role="status">正在加载设计预览…</p>}><JourneyPreviewPage /></Suspense>;
+  }
   return (
     <AppProvider>
       <Layout>
